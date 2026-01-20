@@ -28,6 +28,8 @@ export function AgentBadge({ agentId, size = 'md', showRole = false, isActive = 
           isActive && 'ring-2 ring-offset-2 ring-indigo-500 agent-avatar-active'
         )}
         title={`${agent.name} - ${agent.role}`}
+        aria-label={agent.name}
+        role="img"
       >
         {agent.avatar}
       </div>

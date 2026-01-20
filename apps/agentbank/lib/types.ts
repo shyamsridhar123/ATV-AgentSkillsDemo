@@ -142,4 +142,7 @@ export interface ChatState {
   currentAgent: AgentId;
   isThinking: boolean;
   isHandingOff: boolean;
+  handoffTarget?: AgentId;
+  error?: string;
+  isSlowResponse: boolean;
 }

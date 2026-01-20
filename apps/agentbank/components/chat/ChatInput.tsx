@@ -39,6 +39,7 @@ export function ChatInput({ onSend, disabled }: ChatInputProps) {
         <button
           className="p-2.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
           title="Attach file"
+          aria-label="Attach file"
         >
           <Paperclip className="w-5 h-5" />
         </button>
@@ -71,6 +72,7 @@ export function ChatInput({ onSend, disabled }: ChatInputProps) {
           onClick={handleSubmit}
           disabled={!message.trim() || disabled}
           className="p-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+          aria-label="Send message"
         >
           <Send className="w-5 h-5" />
         </button>

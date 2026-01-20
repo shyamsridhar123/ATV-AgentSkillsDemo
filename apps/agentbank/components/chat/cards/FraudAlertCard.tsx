@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { formatCurrency, formatDate } from '@/lib/utils';
-import { AlertTriangle, Shield, MapPin, Calendar, CreditCard, CheckCircle } from 'lucide-react';
+import { AlertTriangle, Shield, MapPin, Calendar, CreditCard, CheckCircle, X } from 'lucide-react';
 
 interface FraudAlertCardProps {
   data: Record<string, unknown>;
@@ -11,11 +11,65 @@ interface FraudAlertCardProps {
 export function FraudAlertCard({ data }: FraudAlertCardProps) {
   const [resolved, setResolved] = useState(false);
   const [action, setAction] = useState<string | null>(null);
+  const [showBlockConfirm, setShowBlockConfirm] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const handleAction = (actionType: string) => {
-    setAction(actionType);
-    setTimeout(() => setResolved(true), 1000);
+    // Show confirmation for Block Card action - P0
+    if (actionType === 'Block Card') {
+      setShowBlockConfirm(true);
+      return;
+    }
+    processAction(actionType);
   };
+
+  const processAction = (actionType: string) => {
+    setIsProcessing(true);
+    setAction(actionType);
+    setTimeout(() => {
+      setResolved(true);
+      setIsProcessing(false);
+    }, 1000);
+  };
+
+  const confirmBlockCard = () => {
+    setShowBlockConfirm(false);
+    processAction('Block Card');
+  };
+
+  // Block Card Confirmation Modal - P0
+  if (showBlockConfirm) {
+    return (
+      <div className="rich-card overflow-hidden border-red-200">
+        <div className="bg-gradient-to-r from-amber-500 to-amber-600 px-6 py-4 text-white">
+          <div className="flex items-center gap-3">
+            <CreditCard className="w-5 h-5" />
+            <span className="font-semibold">Confirm Block Card</span>
+          </div>
+        </div>
+        <div className="p-6 space-y-4">
+          <p className="text-gray-700">
+            Are you sure you want to block this card? You won&apos;t be able to make purchases until you request a new card.
+          </p>
+          <div className="flex gap-3">
+            <button
+              onClick={() => setShowBlockConfirm(false)}
+              className="flex-1 px-4 py-2.5 text-gray-700 bg-gray-100 rounded-lg font-medium hover:bg-gray-200 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={confirmBlockCard}
+              className="flex-1 px-4 py-2.5 text-white bg-red-600 rounded-lg font-medium hover:bg-red-700 transition-colors flex items-center justify-center gap-2"
+            >
+              <CreditCard className="w-4 h-4" />
+              Block Card
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (resolved) {
     return (
