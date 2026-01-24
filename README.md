@@ -6,7 +6,7 @@
 
 > *"You are the trailer park. I am the tornado."*
 
-She might disappear for a bit. She might be sharpening her knives or torching someone else's empire. But when Beth shows up? The job gets done. Period.
+She might disappear for a bit. She's handling things. But when Beth shows up? The job gets done. Period.
 
 ---
 
@@ -14,15 +14,15 @@ She might disappear for a bit. She might be sharpening her knives or torching so
 
 Beth is a master AI orchestrator system—a ruthless, hyper-competent coordinator that runs your development team the way Beth Dutton runs Schwartz & Meyer. No hand-holding. No excuses. Just results.
 
-She commands an army of specialized agents, each with their own expertise, and she's not afraid to put them to work simultaneously while she lights a cigarette and watches it all burn into production-ready code.
+She commands a team of specialized agents, each with their own expertise, and she's not afraid to put them to work in parallel while she oversees every detail—delivering production-ready code.
 
 **She handles:**
 - Product strategy that makes competitors weep
-- Research that finds the real dirt
+- Research that uncovers the real insights
 - Designs so sharp they cut
 - Code that actually works
 - Security that locks the gates
-- Tests that find every weakness before your enemies do
+- Tests that find every weakness before they reach production
 
 ## The Family
 
@@ -32,7 +32,7 @@ Beth doesn't work alone. She's got people—loyal, skilled, and ready to execute
 |-------|------|--------------|
 | **@Beth** | The Boss | Orchestrates everything. Routes work. Takes names. |
 | **@product-manager** | The Strategist | PRDs, roadmaps, requirements. Knows what users need before they do. |
-| **@researcher** | The Intelligence | Competitive analysis, user insights, market dirt. |
+| **@researcher** | The Intelligence | Competitive analysis, user insights, market intelligence. |
 | **@ux-designer** | The Architect | Interface design, design systems. Makes it beautiful AND functional. |
 | **@frontend-engineer** | The Craftsman | React/TypeScript/Next.js. Pixel-perfect, performance-obsessed. |
 | **@developer** | The Builder | Full-stack implementation. Gets it done. |
@@ -125,7 +125,7 @@ Don't waste her time. Be direct.
 ```
 
 ```
-@tester Accessibility audit. WCAG 2.1 AA. No excuses.
+@tester Accessibility audit. WCAG 2.1 AA. Full compliance.
 ```
 
 ## The Structure
@@ -156,9 +156,9 @@ Beth operates on a few principles:
 
 1. **Protect the family** — Your codebase is the ranch. She defends it.
 2. **No weakness** — Tests, security, accessibility. Cover every flank.
-3. **Move fast, break enemies** — Parallel execution, aggressive timelines.
+3. **Move fast, ship faster** — Parallel execution, ambitious timelines.
 4. **Loyalty earns trust** — Agents that perform get the good work.
-5. **Results over feelings** — She doesn't care if the code is pretty if it doesn't ship.
+5. **Results matter** — Working software that ships beats perfect plans that don't.
 
 ## Quality Standards
 
@@ -167,7 +167,7 @@ Beth doesn't ship garbage:
 - **Accessibility**: WCAG 2.1 AA minimum. Everyone uses the product.
 - **Performance**: Core Web Vitals green. LCP < 2.5s. No exceptions.
 - **Security**: OWASP compliant. Regular audits. Zero tolerance for vulnerabilities.
-- **Type Safety**: Full TypeScript coverage. No `any` unless you want a lecture.
+- **Type Safety**: Full TypeScript coverage. No `any` types.
 - **Test Coverage**: Unit, integration, E2E. If it's not tested, it's not done.
 
 ## A Word of Warning
@@ -188,7 +188,7 @@ Don't second-guess her. Don't ask her to explain herself. Just tell her what you
 
 - VS Code with GitHub Copilot extension
 - GitHub Copilot Chat enabled
-- The spine to actually ship something
+- A project ready to ship
 
 ## License
 
