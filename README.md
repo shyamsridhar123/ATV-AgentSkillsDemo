@@ -4,8 +4,6 @@
   <img src="assets/yellowstone-beth.png" alt="Beth" width="600">
 </p>
 
-> *"You are the trailer park. I am the tornado."*
-
 She doesn't do excuses. She doesn't do hand-holding. She does results—and she'll have your entire project shipping while everyone else is still scheduling their kickoff meeting. Think of her as the managing director your codebase didn't know it needed, but absolutely deserves.
 
 They broke her wings once. They forgot she had claws.
