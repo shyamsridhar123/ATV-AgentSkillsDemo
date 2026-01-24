@@ -19,7 +19,7 @@ Last updated: 2026-01-24
 | beth-y4l | Rewrite Why Beth section | Beth | ✅ Done | Positive tone, humor about competence |
 | beth-pqd | Update README cigarette line | Beth | ✅ Done | Watching crew build code |
 | beth-mr1 | Strengthen beads enforcement in Beth | Beth | ✅ Done | Response framework now requires issue ID |
-| beth-zre | Update README hero image | — | ⏳ Blocked | Waiting for user to save image to assets/ |
+| beth-zre | Update README hero image | Beth | ✅ Done | Updated to yellowstone-beth.png |
 | beth-wkl | Create frontend-engineer agent | — | 🔲 Queued | Dedicated React/TypeScript UI specialist |
 | beth-eua | Create security-reviewer agent | — | 🔲 Queued | Enterprise security, OWASP, threat modeling |
 | beth-b65 | Create security-analysis skill | — | 🔲 Queued | Vulnerability assessment workflow |
