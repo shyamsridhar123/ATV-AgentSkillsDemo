@@ -2,7 +2,7 @@
 
 > *"I don't have time to explain things twice. Read this."*
 
-Last updated: 2026-01-24
+Last updated: 2026-01-25
 
 ---
 
@@ -20,7 +20,7 @@ Last updated: 2026-01-24
 | beth-pqd | Update README cigarette line | Beth | ✅ Done | Watching crew build code |
 | beth-mr1 | Strengthen beads enforcement in Beth | Beth | ✅ Done | Response framework now requires issue ID |
 | beth-zre | Update README hero image | Beth | ✅ Done | Updated to yellowstone-beth.png |
-| beth-wkl | Create frontend-engineer agent | — | 🔲 Queued | Dedicated React/TypeScript UI specialist |
+| beth-wkl | Create frontend-engineer agent | Beth | ✅ Done | Pixel-perfect React/TS specialist with shadcn/ui MCP |
 | beth-eua | Create security-reviewer agent | — | 🔲 Queued | Enterprise security, OWASP, threat modeling |
 | beth-b65 | Create security-analysis skill | — | 🔲 Queued | Vulnerability assessment workflow |
 | beth-sd7 | Create MCP setup guide | — | 🔲 Queued | Onboarding for optional MCP servers |
@@ -31,7 +31,9 @@ Last updated: 2026-01-24
 
 ### High Priority (P1)
 
-- [ ] **frontend-engineer.agent.md** — Pixel-perfect React/TypeScript specialist. Separate from full-stack developer.
+- [x] **frontend-engineer.agent.md** — Pixel-perfect React/TypeScript specialist with shadcn/ui MCP integration.
+- [x] **shadcn-ui skill** — Component patterns, theming, and MCP server usage.
+- [x] **.vscode/mcp.json** — shadcn MCP server configuration.
 - [ ] **security-reviewer.agent.md** — Enterprise security agent. OWASP, compliance, threat modeling.
 - [ ] **security-analysis skill** — Skill module for security workflows.
 - [ ] **MCP setup guide** — Onboarding guide for optional MCP servers (web search, Playwright, Azure, Microsoft Learn). Skills gracefully degrade if not configured.
@@ -76,12 +78,13 @@ The Beth orchestrator system is being built. Core personality and README are com
 
 - Beth agent (orchestrator) — Live
 - Product Manager, Researcher, UX Designer, Developer, Tester — Existing
+- **Frontend Engineer** — NEW: Pixel-perfect React/TS with shadcn/ui MCP
 - PRD, Framer, React Best Practices, Web Design skills — Existing
+- **shadcn-ui skill** — NEW: Component patterns and MCP integration
 
 **What's Coming:**
 
-- Frontend Engineer agent
-- Security Reviewer agent  
+- Security Reviewer agent
 - Security Analysis skill
 - MCP Setup Guide (web search, Playwright, Azure, Microsoft Learn)
 - MCP-enhanced skills (optional, graceful degradation)

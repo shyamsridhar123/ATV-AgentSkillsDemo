@@ -22,14 +22,15 @@ Agents use `.agent.md` files with YAML frontmatter defining:
 - `handoffs` - Other agents this agent can transfer control to
 - `infer: true` - Enables the agent to be invoked as a subagent
 
-### The Six Agents
+### The Seven Agents
 | Agent | Purpose | Primary Tools |
 |-------|---------|---------------|
-| `IDEO-Orchestrator` | Routes work, spawns subagents | `runSubagent`, search tools |
+| `Beth` | Orchestrator - Routes work, spawns subagents | `runSubagent`, search tools |
 | `product-manager` | PRDs, requirements, roadmaps | PRD skill |
 | `researcher` | User/market research, competitive analysis | Research synthesis |
 | `ux-designer` | Interface design, design systems | Framer skill |
-| `developer` | React/TypeScript/Next.js implementation | All editing tools, Framer skill |
+| `frontend-engineer` | Pixel-perfect React/TypeScript UI | shadcn-ui skill, shadcn MCP |
+| `developer` | Full-stack React/TypeScript/Next.js | All editing tools, Framer skill |
 | `tester` | QA, accessibility, performance testing | Testing tools |
 
 ### Subagent vs Handoff Pattern
@@ -55,6 +56,7 @@ Skills are domain-knowledge modules in `.github/skills/<name>/SKILL.md`. Agents 
 | Framer Components | `skills/framer-components/` | "framer component", "property controls" |
 | Vercel React Best Practices | `skills/vercel-react-best-practices/` | React/Next.js performance work |
 | Web Design Guidelines | `skills/web-design-guidelines/` | "review my UI", "check accessibility" |
+| shadcn/ui Components | `skills/shadcn-ui/` | "shadcn", "ui component", component installation |
 
 ## Development Conventions
 
