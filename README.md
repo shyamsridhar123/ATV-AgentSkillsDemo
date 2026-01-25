@@ -26,12 +26,12 @@ She commands an army of specialized agents, each with their own expertise, and s
 
 ## Getting Started
 
-**Project scope** (no install required):
+**Project scope:**
 ```bash
 npx beth-copilot init
 ```
 
-**Global install** (use anywhere):
+**Global install:**
 ```bash
 npm i -g beth-copilot
 beth init
