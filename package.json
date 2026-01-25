@@ -1,0 +1,36 @@
+{
+  "name": "beth-copilot",
+  "version": "1.0.0",
+  "description": "Beth - A ruthless, hyper-competent AI orchestrator for GitHub Copilot multi-agent workflows",
+  "keywords": [
+    "github-copilot",
+    "ai-agents",
+    "copilot-chat",
+    "multi-agent",
+    "orchestrator",
+    "react",
+    "nextjs",
+    "typescript"
+  ],
+  "author": "Steph Schofield",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/stephschofield/beth.git"
+  },
+  "homepage": "https://github.com/stephschofield/beth#readme",
+  "bugs": {
+    "url": "https://github.com/stephschofield/beth/issues"
+  },
+  "bin": {
+    "beth": "./bin/cli.js"
+  },
+  "files": [
+    "bin/",
+    "templates/"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "type": "module"
+}

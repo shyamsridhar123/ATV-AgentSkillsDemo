@@ -98,14 +98,18 @@ Concern → Security (threat model) → Developer (remediation) → Tester (pene
 
 ## Getting Started
 
-**New here?** Follow the [Installation Guide](docs/INSTALLATION.md) for complete setup instructions.
+**One command to install:**
 
-**Quick start:**
-1. Clone this repo and open in VS Code
-2. Ensure GitHub Copilot + Copilot Chat extensions are installed
+```bash
+npx beth-copilot init
+```
+
+**Then:**
+
+1. Open your project in VS Code
+2. Ensure GitHub Copilot + Copilot Chat are installed
 3. Switch to **Agent mode** in Copilot Chat
 4. Type `@Beth` and tell her what you need
-5. Stay out of her way
 
 For detailed setup including prerequisites, task tracking, and optional MCP servers, see [docs/INSTALLATION.md](docs/INSTALLATION.md).
 

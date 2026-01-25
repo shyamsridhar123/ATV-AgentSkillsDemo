@@ -72,7 +72,30 @@ sudo apt-get install -y nodejs
 
 ## Installation
 
-### Option A: Clone the Repository (Recommended for New Projects)
+### Option A: npx (Recommended - One Command)
+
+The fastest way to add Beth to any project:
+
+```bash
+# Navigate to your project
+cd your-project
+
+# Run the installer
+npx beth-copilot init
+```
+
+That's it. Beth and her team are now installed in your project.
+
+**Options:**
+
+```bash
+npx beth-copilot init --force        # Overwrite existing files
+npx beth-copilot init --skip-backlog # Don't create Backlog.md
+npx beth-copilot init --skip-mcp     # Don't create mcp.json.example
+npx beth-copilot help                # Show all options
+```
+
+### Option B: Clone the Repository (For New Projects)
 
 ```bash
 # Clone Beth
@@ -86,7 +109,7 @@ git add -A
 git commit -m "Initial commit with Beth agent system"
 ```
 
-### Option B: Add Beth to an Existing Project
+### Option C: Add Beth to an Existing Project (Manual)
 
 ```bash
 # From your project root
@@ -108,7 +131,7 @@ git add -A
 git commit -m "Add Beth agent system"
 ```
 
-### Option C: Manual Setup (Copy Files)
+### Option D: Manual Setup (Copy Files)
 
 If you prefer manual control, copy these directories/files to your project:
 

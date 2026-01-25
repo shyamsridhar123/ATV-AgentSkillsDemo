@@ -24,6 +24,7 @@ Last updated: 2026-01-25
 | Add new agent handoffs to Beth | frontend-engineer and security-reviewer wired in |
 | Remove beads dependencies | Migrated to backlog.md CLI tool |
 | Create comprehensive installation guide | docs/INSTALLATION.md with full setup instructions |
+| Create npm package | `npx beth-copilot init` for one-command installation |
 
 ---
 
@@ -82,6 +83,7 @@ The Beth orchestrator system is operational. Core personality, README, and full 
 - All skills — PRD, Framer, React Best Practices, Web Design, shadcn-ui, Security Analysis
 - Installation guide — docs/INSTALLATION.md
 - MCP setup guide — docs/MCP-SETUP.md
+- npm package — `npx beth-copilot init` for one-command installation
 
 **What's Coming:**
 
