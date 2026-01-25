@@ -24,6 +24,16 @@ She commands an army of specialized agents, each with their own expertise, and s
 - Security that locks the gates
 - Tests that find every weakness before your enemies do
 
+## Getting Started
+
+```bash
+npx beth-copilot init
+```
+
+That's it. One command. Then open VS Code, switch Copilot Chat to **Agent mode**, and type `@Beth`.
+
+For detailed setup (prerequisites, task tracking, MCP servers): [docs/INSTALLATION.md](docs/INSTALLATION.md)
+
 ## The Family
 
 Beth doesn't work alone. She's got people—loyal, skilled, and ready to execute.
@@ -95,23 +105,6 @@ Report → Tester (reproduce) → Developer (fix) → Security (verify) → Test
 ```
 Concern → Security (threat model) → Developer (remediation) → Tester (penetration)
 ```
-
-## Getting Started
-
-**One command to install:**
-
-```bash
-npx beth-copilot init
-```
-
-**Then:**
-
-1. Open your project in VS Code
-2. Ensure GitHub Copilot + Copilot Chat are installed
-3. Switch to **Agent mode** in Copilot Chat
-4. Type `@Beth` and tell her what you need
-
-For detailed setup including prerequisites, task tracking, and optional MCP servers, see [docs/INSTALLATION.md](docs/INSTALLATION.md).
 
 ## Quick Commands
 
