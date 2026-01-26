@@ -3,7 +3,7 @@
   "servers": {
     "shadcn": {
       "command": "npx",
-      "args": ["shadcn@latest", "mcp"]
+      "args": ["shadcn@3.7.0", "mcp"]
     }
   }
 }

@@ -194,15 +194,46 @@ ${COLORS.cyan}"They broke my wings and forgot I had claws."${COLORS.reset}
 `);
 }
 
+// Input validation constants
+const ALLOWED_COMMANDS = ['init', 'help', '--help', '-h'];
+const ALLOWED_FLAGS = ['--force', '--skip-backlog', '--skip-mcp'];
+const MAX_ARG_LENGTH = 50;
+
+// Validate and sanitize input
+function validateArgs(args) {
+  for (const arg of args) {
+    // Prevent excessively long arguments (log injection, DoS)
+    if (arg.length > MAX_ARG_LENGTH) {
+      logError('Invalid argument: input too long');
+      process.exit(1);
+    }
+    // Only allow expected characters (alphanumeric, dash)
+    if (!/^[a-zA-Z0-9-]+$/.test(arg)) {
+      logError('Invalid argument: unexpected characters');
+      process.exit(1);
+    }
+  }
+}
+
 // Parse arguments
 const args = process.argv.slice(2);
-const command = args[0];
+validateArgs(args);
+
+const command = args[0]?.toLowerCase();
 
 const options = {
   force: args.includes('--force'),
   skipBacklog: args.includes('--skip-backlog'),
   skipMcp: args.includes('--skip-mcp'),
 };
+
+// Validate unknown flags
+const unknownFlags = args.filter(arg => arg.startsWith('--') && !ALLOWED_FLAGS.includes(arg));
+if (unknownFlags.length > 0) {
+  logError(`Unknown flag: ${unknownFlags[0].slice(0, MAX_ARG_LENGTH)}`);
+  console.log('Run "npx beth-copilot help" for usage information.');
+  process.exit(1);
+}
 
 switch (command) {
   case 'init':
@@ -217,7 +248,7 @@ switch (command) {
     showHelp();
     break;
   default:
-    logError(`Unknown command: ${command}`);
+    logError(`Unknown command: ${command.slice(0, MAX_ARG_LENGTH)}`);
     console.log('Run "npx beth-copilot help" for usage information.');
     process.exit(1);
 }

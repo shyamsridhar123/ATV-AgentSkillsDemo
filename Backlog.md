@@ -10,6 +10,7 @@ Last updated: 2026-01-25
 
 | Task | Notes |
 |------|-------|
+| Full security review for enterprise readiness | HIGH findings fixed, SECURITY.md created |
 | Rebrand orchestrator to Beth | Agent renamed, personality defined |
 | Update README with Beth persona | Full rewrite complete |
 | Create Backlog.md | Single-source tracking |
@@ -30,7 +31,7 @@ Last updated: 2026-01-25
 
 ## In Progress
 
-- [ ] **Full security review for enterprise production readiness** — Security-reviewer audit of entire repository
+*Nothing currently in progress.*
 
 ---
 

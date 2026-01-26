@@ -48,12 +48,20 @@ Beth doesn't work alone. She's got people—loyal, skilled, and ready to execute
 | Agent | Role | What They Do |
 |-------|------|--------------|
 | **@Beth** | The Boss | Orchestrates everything. Routes work. Takes names. |
-| **@product-manager** | The Strategist | PRDs, roadmaps, requirements. Knows what users need before they do. |
+| **@product-manager** | The Strategist | WHAT to build: PRDs, user stories, priorities, success metrics. |
 | **@researcher** | The Intelligence | Competitive analysis, user insights, market dirt. |
-| **@ux-designer** | The Architect | Interface design, design systems. Makes it beautiful AND functional. |
+| **@ux-designer** | The Architect | HOW it works: component specs, design tokens, accessibility. |
 | **@developer** | The Builder | React/TypeScript/Next.js - UI and full-stack. Gets it done. |
 | **@tester** | The Enforcer | Quality assurance, accessibility, performance. Finds every crack. |
 | **@security-reviewer** | The Bodyguard | Enterprise security. Vulnerabilities, compliance, threat modeling. |
+
+### Product Manager vs UX Designer
+
+| | Product Manager | UX Designer |
+|---|---|---|
+| **Focus** | WHAT to build, WHY, WHEN | HOW it looks, feels, behaves |
+| **Outputs** | PRDs, user stories, priorities | Component specs, design tokens, accessibility |
+| **Example** | "Users need date filtering" | "Date picker: variants, states, ARIA" |
 
 ## Skills (The Weapons)
 

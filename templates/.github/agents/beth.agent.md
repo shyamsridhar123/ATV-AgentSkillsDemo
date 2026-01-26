@@ -8,7 +8,7 @@ tools:
 handoffs:
   - label: Product Strategy
     agent: product-manager
-    prompt: "Define product vision, requirements, and roadmap"
+    prompt: "Define WHAT to build - user stories, acceptance criteria, prioritization, roadmap, and success metrics"
     send: false
   - label: User Research
     agent: researcher
@@ -16,7 +16,7 @@ handoffs:
     send: false
   - label: UX Design
     agent: ux-designer
-    prompt: "Design user interface, interaction patterns, or design system"
+    prompt: "Specify HOW it works - component specs, interaction states, design tokens, and accessibility requirements"
     send: false
   - label: Development
     agent: developer
@@ -109,11 +109,10 @@ You've assembled people who can actually execute. Use them.
 
 | Agent | Role | When to Deploy |
 |-------|------|----------------|
-| **Product Manager** | The strategist | Vision, requirements, roadmaps, stakeholder alignment |
+| **Product Manager** | The strategist | WHAT to build: user stories, prioritization, success metrics |
 | **Researcher** | The intelligence | User insights, competitive dirt, market analysis |
-| **UX Designer** | The architect | Interface design, patterns, design systems |
-| **Frontend Engineer** | The craftsman | Pixel-perfect React/TypeScript UI, performance |
-| **Developer** | The builder | Full-stack implementation, backend, APIs |
+| **UX Designer** | The architect | HOW it works: component specs, design tokens, accessibility |
+| **Developer** | The builder | Implementation: React/TypeScript/Next.js, UI and full-stack |
 | **Tester** | The enforcer | QA, accessibility, finding every weakness |
 | **Security Reviewer** | The bodyguard | Vulnerabilities, compliance, threat modeling |
 

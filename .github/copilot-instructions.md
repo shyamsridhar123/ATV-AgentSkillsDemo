@@ -34,12 +34,26 @@ Agents use `.agent.md` files with YAML frontmatter defining:
 | Agent | Purpose | Primary Tools |
 |-------|---------|---------------|
 | `Beth` | Orchestrator - Routes work, spawns subagents | `runSubagent`, search tools |
-| `product-manager` | PRDs, requirements, roadmaps | PRD skill |
+| `product-manager` | WHAT to build: PRDs, user stories, priorities, success metrics | PRD skill |
 | `researcher` | User/market research, competitive analysis | Research synthesis |
-| `ux-designer` | Interface design, design systems | Framer skill |
+| `ux-designer` | HOW it works: component specs, design tokens, accessibility | Framer skill |
 | `developer` | React/TypeScript/Next.js - UI and full-stack | shadcn-ui skill, shadcn MCP, all editing tools |
 | `security-reviewer` | Security audits, threat modeling, compliance | security-analysis skill |
 | `tester` | QA, accessibility, performance testing | Testing tools |
+
+### Product Manager vs UX Designer
+
+These agents serve distinct purposes in the IDEO workflow:
+
+| | Product Manager | UX Designer |
+|---|---|---|
+| **Focus** | WHAT to build, WHY, WHEN | HOW it looks, feels, behaves |
+| **Outputs** | PRDs, user stories, RICE scores, roadmaps | Component specs, wireframes, design tokens, accessibility requirements |
+| **Key Question** | "Is this worth building?" | "How should this work?" |
+| **Example** | "Users need date filtering" (acceptance criteria) | "The date picker has these variants, states, and ARIA attributes" (spec) |
+
+**Use Product Manager** when defining requirements, prioritizing features, or making build/no-build decisions.
+**Use UX Designer** when specifying component behavior, design systems, or accessibility compliance.
 
 ### Subagent vs Handoff Pattern
 - **Handoffs**: User clicks button → context transferred → user reviews
@@ -114,8 +128,8 @@ Apply human-centered design methodology across agent workflows:
 | Phase | Agent | Activities |
 |-------|-------|------------|
 | **Empathize** | `@researcher` | User interviews, observation, pain point discovery |
-| **Define** | `@product-manager` | Problem framing, requirements, success criteria |
-| **Ideate** | `@ux-designer` | Solution exploration, design patterns, prototypes |
+| **Define** | `@product-manager` | Problem framing, requirements, priorities, success metrics |
+| **Ideate** | `@ux-designer` | Component specs, design tokens, interaction patterns |
 | **Prototype** | `@developer` | Build to learn, rapid iteration, feature spikes |
 | **Test** | `@tester` | Validate assumptions, accessibility audits, performance |
 
@@ -174,9 +188,9 @@ export async function deleteUser(userId: string) {
 
 ### New Feature Flow
 1. `@Beth` → analyzes request, proposes workflow
-2. `@product-manager` → defines requirements (uses PRD skill)
+2. `@product-manager` → defines WHAT (requirements, priorities, success metrics)
 3. `@researcher` → validates user needs (optional)
-4. `@ux-designer` → designs interface
+4. `@ux-designer` → specifies HOW (component specs, tokens, accessibility)
 5. `@developer` → implements in React/TypeScript
 6. `@security-reviewer` → audits for vulnerabilities
 7. `@tester` → verifies quality
