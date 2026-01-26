@@ -3,10 +3,16 @@
 import { fileURLToPath } from 'url';
 import { dirname, join, relative } from 'path';
 import { existsSync, mkdirSync, readdirSync, statSync, copyFileSync, readFileSync, writeFileSync } from 'fs';
+import { createRequire } from 'module';
 
+const require = createRequire(import.meta.url);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const TEMPLATES_DIR = join(__dirname, '..', 'templates');
+
+// Get current package version
+const packageJson = require('../package.json');
+const CURRENT_VERSION = packageJson.version;
 
 const COLORS = {
   reset: '\x1b[0m',
@@ -35,6 +41,37 @@ function logError(message) {
 
 function logInfo(message) {
   log(`  ${message}`, COLORS.cyan);
+}
+
+async function checkForUpdates() {
+  try {
+    const response = await fetch('https://registry.npmjs.org/beth-copilot/latest', {
+      signal: AbortSignal.timeout(3000) // 3 second timeout
+    });
+    
+    if (!response.ok) return null;
+    
+    const data = await response.json();
+    const latestVersion = data.version;
+    
+    if (latestVersion && latestVersion !== CURRENT_VERSION) {
+      // Compare versions (simple semver check)
+      const current = CURRENT_VERSION.split('.').map(Number);
+      const latest = latestVersion.split('.').map(Number);
+      
+      for (let i = 0; i < 3; i++) {
+        if (latest[i] > current[i]) {
+          return latestVersion;
+        } else if (latest[i] < current[i]) {
+          return null;
+        }
+      }
+    }
+    return null;
+  } catch {
+    // Network error, timeout, etc. - silently continue
+    return null;
+  }
 }
 
 function showHelp() {
@@ -101,9 +138,20 @@ function copyDirRecursive(src, dest, options = {}) {
   return copiedFiles;
 }
 
-function init(options = {}) {
+async function init(options = {}) {
   const { force = false, skipBacklog = false, skipMcp = false } = options;
   const cwd = process.cwd();
+  
+  // Check for updates
+  const latestVersion = await checkForUpdates();
+  if (latestVersion) {
+    console.log(`
+${COLORS.yellow}╔════════════════════════════════════════════════════════════╗
+║  ${COLORS.bright}Update available!${COLORS.reset}${COLORS.yellow} ${CURRENT_VERSION} → ${latestVersion}                          ║
+║  Run: ${COLORS.cyan}npx beth-copilot@latest init${COLORS.yellow} to get the latest      ║
+╚════════════════════════════════════════════════════════════╝${COLORS.reset}
+`);
+  }
   
   console.log(`
 ${COLORS.bright}🤠 Beth is moving in.${COLORS.reset}
@@ -237,7 +285,7 @@ if (unknownFlags.length > 0) {
 
 switch (command) {
   case 'init':
-    init(options);
+    await init(options);
     break;
   case 'help':
   case '--help':
