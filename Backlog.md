@@ -10,6 +10,8 @@ Last updated: 2026-01-25
 
 | Task | Notes |
 |------|-------|
+| Add GitHub Actions security workflow | npm audit, gitleaks, CodeQL, SBOM generation |
+| Add pre-commit hooks with gitleaks | Secret scanning before commit |
 | Full security review for enterprise readiness | HIGH findings fixed, SECURITY.md created |
 | Rebrand orchestrator to Beth | Agent renamed, personality defined |
 | Update README with Beth persona | Full rewrite complete |

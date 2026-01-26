@@ -63,6 +63,39 @@ The CLI performs file operations (copying templates). It:
 - Does not execute any copied files
 - Uses Node.js built-in `fs` functions with no shell execution
 
+## Automated Security Tooling
+
+This repository uses automated security scanning:
+
+### GitHub Actions (`.github/workflows/security.yml`)
+
+- **npm audit**: Runs on every PR and weekly, fails on high/moderate vulnerabilities
+- **Gitleaks**: Scans for accidentally committed secrets
+- **CodeQL**: Static analysis for JavaScript security issues
+- **SBOM generation**: Creates CycloneDX Software Bill of Materials
+
+### Pre-commit Hooks (`.pre-commit-config.yaml`)
+
+Install locally to catch issues before commit:
+
+```bash
+pip install pre-commit
+pre-commit install
+```
+
+Hooks include:
+- **Gitleaks**: Block commits containing secrets
+- **File checks**: Large files, merge conflicts, private keys
+- **Markdown linting**: Keep docs clean
+
+### Manual SBOM Generation
+
+Generate a Software Bill of Materials for compliance:
+
+```bash
+npx @cyclonedx/cyclonedx-npm --output-file sbom.json
+```
+
 ## Security Best Practices for Users
 
 1. **Review before running**: Inspect template files before using in production
@@ -70,6 +103,7 @@ The CLI performs file operations (copying templates). It:
 3. **Audit regularly**: Run `npm audit` on projects using this package
 4. **Least privilege**: Only enable MCP servers you actually need
 5. **Secret hygiene**: Never commit API keys or credentials
+6. **Use pre-commit hooks**: Install gitleaks to catch secrets before they're committed
 
 ## Acknowledgments
 
