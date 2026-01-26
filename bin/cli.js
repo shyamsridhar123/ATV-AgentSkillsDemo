@@ -4,6 +4,7 @@ import { fileURLToPath } from 'url';
 import { dirname, join, relative } from 'path';
 import { existsSync, mkdirSync, readdirSync, statSync, copyFileSync, readFileSync, writeFileSync } from 'fs';
 import { createRequire } from 'module';
+import { execSync, spawn } from 'child_process';
 
 const require = createRequire(import.meta.url);
 const __filename = fileURLToPath(import.meta.url);
@@ -72,6 +73,60 @@ async function checkForUpdates() {
     // Network error, timeout, etc. - silently continue
     return null;
   }
+}
+
+function isBacklogCliInstalled() {
+  try {
+    execSync('backlog --version', { stdio: 'ignore' });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function promptYesNo(question) {
+  const readline = await import('readline');
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+  });
+  
+  return new Promise((resolve) => {
+    rl.question(`${question} (y/N) `, (answer) => {
+      rl.close();
+      resolve(answer.toLowerCase() === 'y' || answer.toLowerCase() === 'yes');
+    });
+  });
+}
+
+async function installBacklogCli() {
+  log('\nInstalling backlog.md CLI...', COLORS.cyan);
+  
+  return new Promise((resolve) => {
+    const child = spawn('npm', ['install', '-g', 'backlog.md'], {
+      stdio: 'inherit',
+      shell: true
+    });
+    
+    child.on('close', (code) => {
+      if (code === 0) {
+        logSuccess('backlog.md CLI installed successfully!');
+        resolve(true);
+      } else {
+        logWarning('Failed to install backlog.md CLI. You can install it manually:');
+        logInfo('npm i -g backlog.md');
+        logInfo('  or');
+        logInfo('bun i -g backlog.md');
+        resolve(false);
+      }
+    });
+    
+    child.on('error', () => {
+      logWarning('Failed to install backlog.md CLI. You can install it manually:');
+      logInfo('npm i -g backlog.md');
+      resolve(false);
+    });
+  });
 }
 
 function showHelp() {
@@ -225,6 +280,24 @@ ${COLORS.cyan}"I don't do excuses. I do results."${COLORS.reset}
     copiedFiles.forEach(f => logInfo(f));
   } else {
     logWarning('No files were copied. Use --force to overwrite existing files.');
+  }
+
+  // Check for backlog.md CLI
+  if (!skipBacklog && !isBacklogCliInstalled()) {
+    console.log('');
+    logWarning('backlog.md CLI is not installed.');
+    logInfo('The CLI provides TUI boards, web UI, and task management commands.');
+    logInfo('Learn more: https://github.com/MrLesk/Backlog.md');
+    console.log('');
+    
+    const shouldInstall = await promptYesNo('Would you like to install the backlog.md CLI globally?');
+    if (shouldInstall) {
+      await installBacklogCli();
+    } else {
+      logInfo('Skipped. You can install it later with: npm i -g backlog.md');
+    }
+  } else if (!skipBacklog) {
+    logSuccess('backlog.md CLI is already installed');
   }
 
   // Next steps
