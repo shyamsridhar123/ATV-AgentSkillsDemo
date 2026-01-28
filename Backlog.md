@@ -26,6 +26,8 @@ Last updated: 2026-01-25
 | Create MCP setup guide | docs/MCP-SETUP.md with all optional servers |
 | Update all agent handoffs | security-reviewer and developer wired in |
 | Remove beads dependencies | Migrated to backlog.md CLI tool |
+| Restore beads with dual tracking | beads for agents, Backlog.md for humans |
+| Add multi-agent coordination system | Epic patterns, dependencies, subagent templates |
 | Create comprehensive installation guide | docs/INSTALLATION.md with full setup instructions |
 | Create npm package | `npx beth-copilot init` for one-command installation |
 
