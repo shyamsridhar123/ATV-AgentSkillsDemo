@@ -75,29 +75,38 @@ flowchart TB
     Security --> Reports
 ```
 
-## Agent Interaction Patterns
+## Agent Orchestration Model
 
-### Handoffs vs Subagents
+Beth runs **everything**. No user intervention required between steps. She spawns subagents, they execute autonomously, report back, and she continues the workflow.
 
 ```mermaid
-flowchart LR
-    subgraph Handoff["🔄 Handoff Pattern"]
+flowchart TB
+    subgraph Orchestration["⚡ Beth's Orchestration"]
         direction TB
-        H1[Beth routes work]
-        H2[User reviews context]
-        H3[User clicks handoff button]
-        H4[Target agent activates]
-        H1 --> H2 --> H3 --> H4
+        B1[Beth receives request]
+        B2[Beth analyzes & plans]
+        B3[Beth spawns subagent]
+        B4[Agent executes autonomously]
+        B5[Results returned to Beth]
+        B6{More work?}
+        B7[Beth delivers results]
+        
+        B1 --> B2 --> B3 --> B4 --> B5 --> B6
+        B6 -->|Yes| B3
+        B6 -->|No| B7
     end
+```
 
-    subgraph Subagent["⚡ Subagent Pattern"]
-        direction TB
-        S1[Beth spawns subagent]
-        S2[Agent executes autonomously]
-        S3[Results returned to Beth]
-        S4[Beth continues workflow]
-        S1 --> S2 --> S3 --> S4
-    end
+### Subagent Invocation
+
+```typescript
+// Beth spawns specialists as needed
+runSubagent({
+  agentName: "developer",
+  prompt: "Implement the dashboard component with real-time updates...",
+  description: "Build dashboard"
+})
+// Agent works → Returns results → Beth continues
 ```
 
 ## Workflow Patterns
@@ -211,7 +220,7 @@ sequenceDiagram
     B->>U: Audit complete ✅
 ```
 
-## Agent Handoff Relationships
+## Agent Delegation Graph
 
 ```mermaid
 flowchart TB
@@ -243,7 +252,7 @@ flowchart TB
         TCore["QA & a11y<br/>Performance"]
     end
 
-    %% Beth's handoffs
+    %% Beth delegates to all
     BethCore -->|"Product Strategy"| PMCore
     BethCore -->|"User Research"| RCore
     BethCore -->|"UX Design"| UXCore
@@ -251,33 +260,33 @@ flowchart TB
     BethCore -->|"Security Review"| SCore
     BethCore -->|"Quality Assurance"| TCore
 
-    %% PM handoffs
-    PMCore -->|"Validate"| RCore
-    PMCore -->|"Design Brief"| UXCore
-    PMCore -->|"Feasibility"| DCore
+    %% PM can spawn subagents
+    PMCore -.->|"subagent"| RCore
+    PMCore -.->|"subagent"| UXCore
+    PMCore -.->|"subagent"| DCore
 
-    %% Researcher handoffs
-    RCore -->|"Synthesize"| PMCore
-    RCore -->|"Design Implications"| UXCore
+    %% Researcher can spawn subagents
+    RCore -.->|"subagent"| PMCore
+    RCore -.->|"subagent"| UXCore
 
-    %% UX handoffs
-    UXCore -->|"Implement"| DCore
-    UXCore -->|"Validate"| RCore
-    UXCore -->|"Align"| PMCore
+    %% UX can spawn subagents
+    UXCore -.->|"subagent"| DCore
+    UXCore -.->|"subagent"| RCore
+    UXCore -.->|"subagent"| PMCore
 
-    %% Developer handoffs
-    DCore -->|"Test"| TCore
-    DCore -->|"Design Review"| UXCore
-    DCore -->|"Feasibility"| PMCore
+    %% Developer can spawn subagents
+    DCore -.->|"subagent"| TCore
+    DCore -.->|"subagent"| UXCore
+    DCore -.->|"subagent"| PMCore
 
-    %% Security handoffs
-    SCore -->|"Remediate"| DCore
-    SCore -->|"Security Tests"| TCore
+    %% Security can spawn subagents
+    SCore -.->|"subagent"| DCore
+    SCore -.->|"subagent"| TCore
 
-    %% Tester handoffs
-    TCore -->|"Bug Fix"| DCore
-    TCore -->|"Quality Report"| PMCore
-    TCore -->|"Design Verify"| UXCore
+    %% Tester can spawn subagents
+    TCore -.->|"subagent"| DCore
+    TCore -.->|"subagent"| PMCore
+    TCore -.->|"subagent"| UXCore
 ```
 
 ## Skills Loading Pattern
@@ -416,14 +425,19 @@ flowchart TB
 
 ## Summary
 
-**Beth** is the ruthless orchestrator who:
+**Beth** is the autonomous orchestrator who:
+
 1. **Receives** user requests
 2. **Assesses** what's really needed (not just what was asked)
 3. **Plans** the optimal workflow
-4. **Delegates** to specialist agents
-5. **Delivers** results without excuses
+4. **Spawns subagents** to execute work autonomously
+5. **Coordinates** results between specialists
+6. **Delivers** final results without excuses
+
+No user intervention between steps. Beth runs the show.
 
 The system follows **IDEO Design Thinking** principles:
+
 - **Empathize** → Researcher
 - **Define** → Product Manager  
 - **Ideate** → UX Designer
