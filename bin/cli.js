@@ -133,6 +133,21 @@ async function promptYesNo(question) {
   });
 }
 
+async function promptForInput(question) {
+  const readline = await import('readline');
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+  });
+  
+  return new Promise((resolve) => {
+    rl.question(`${question} `, (answer) => {
+      rl.close();
+      resolve(answer.trim());
+    });
+  });
+}
+
 async function installBacklogCli() {
   log('\nInstalling backlog.md CLI...', COLORS.cyan);
   
@@ -410,7 +425,8 @@ ${COLORS.cyan}"I don't do excuses. I do results."${COLORS.reset}
     
     let bdPath = getBeadsPath();
     
-    if (!bdPath) {
+    // Loop until beads is installed
+    while (!bdPath) {
       logWarning('beads CLI is not installed.');
       logInfo('Beth requires beads for task tracking. Agents use it to coordinate work.');
       logInfo('Learn more: https://github.com/steveyegge/beads');
@@ -419,25 +435,56 @@ ${COLORS.cyan}"I don't do excuses. I do results."${COLORS.reset}
       const shouldInstallBeads = await promptYesNo('Install beads CLI now? (required)');
       if (shouldInstallBeads) {
         const installed = await installBeads();
-        if (!installed) {
-          logError('beads installation failed. Beth requires beads to function.');
-          logInfo('Install manually and run "beth init" again.');
-          process.exit(1);
-        }
-        
-        // Re-check for beads after installation
-        bdPath = getBeadsPath();
-        if (!bdPath) {
-          logWarning('beads installed but not found in PATH.');
-          logInfo('You may need to restart your terminal or add ~/.local/bin to your PATH.');
-          logInfo('Then run: bd init');
-          process.exit(1);
+        if (installed) {
+          // Re-check for beads after installation
+          bdPath = getBeadsPath();
+          if (!bdPath) {
+            console.log('');
+            logWarning('beads installed but not found in common paths.');
+            logInfo('The installer may have placed it in a custom location.');
+            console.log('');
+            logInfo('Please try one of these options:');
+            logInfo('  1. Open a NEW terminal and run: npx beth-copilot init');
+            logInfo('  2. Add ~/.local/bin to your PATH and retry');
+            logInfo('  3. Run: source ~/.bashrc (or ~/.zshrc) then retry');
+            console.log('');
+            
+            const retryCheck = await promptYesNo('Retry detection? (select No to enter path manually)');
+            if (retryCheck) {
+              bdPath = getBeadsPath();
+              continue;
+            }
+            
+            // Allow manual path entry
+            const customPath = await promptForInput('Enter full path to bd binary (or press Enter to retry installation):');
+            if (customPath && existsSync(customPath)) {
+              bdPath = customPath;
+              logSuccess(`Found beads at: ${bdPath}`);
+            } else if (customPath) {
+              logError(`File not found: ${customPath}`);
+            }
+          }
+        } else {
+          console.log('');
+          logError('Installation script failed.');
+          logInfo('You can try installing manually:');
+          logInfo('  curl -fsSL https://raw.githubusercontent.com/steveyegge/beads/main/scripts/install.sh | bash');
+          console.log('');
         }
       } else {
-        logError('beads is required for Beth to function.');
-        logInfo('Install beads and run "beth init" again:');
-        logInfo('  curl -fsSL https://raw.githubusercontent.com/steveyegge/beads/main/scripts/install.sh | bash');
-        process.exit(1);
+        console.log('');
+        logError('beads is REQUIRED for Beth to function.');
+        logInfo('Beth agents use beads to track tasks, dependencies, and coordinate work.');
+        logInfo('Without beads, the multi-agent workflow will not work correctly.');
+        console.log('');
+        
+        const tryAgain = await promptYesNo('Would you like to try installing beads?');
+        if (!tryAgain) {
+          logError('Cannot continue without beads. Exiting.');
+          logInfo('Install beads manually and run "npx beth-copilot init" again:');
+          logInfo('  curl -fsSL https://raw.githubusercontent.com/steveyegge/beads/main/scripts/install.sh | bash');
+          process.exit(1);
+        }
       }
     }
     
@@ -452,11 +499,20 @@ ${COLORS.cyan}"I don't do excuses. I do results."${COLORS.reset}
     // Initialize beads in the project if not already done
     if (!isBeadsInitialized(cwd)) {
       logInfo('beads not initialized in this project.');
-      const shouldInitBeads = await promptYesNo('Initialize beads now?');
-      if (shouldInitBeads) {
-        await initializeBeads(cwd);
-      } else {
-        logWarning('Remember to run "bd init" before using Beth.');
+      let initialized = false;
+      
+      while (!initialized) {
+        const shouldInitBeads = await promptYesNo('Initialize beads now? (required)');
+        if (shouldInitBeads) {
+          initialized = await initializeBeads(cwd);
+          if (!initialized) {
+            logWarning('Initialization failed. Let\'s try again.');
+          }
+        } else {
+          logError('beads must be initialized for Beth to work correctly.');
+          logInfo('The .beads directory stores task tracking data used by all agents.');
+          console.log('');
+        }
       }
     } else {
       logSuccess('beads is initialized in this project');
@@ -465,22 +521,81 @@ ${COLORS.cyan}"I don't do excuses. I do results."${COLORS.reset}
     logWarning('Skipped beads check (--skip-beads). Beth may not function correctly.');
   }
 
-  // Check for backlog.md CLI (optional)
-  if (!skipBacklog && !isBacklogCliInstalled()) {
+  // Check for backlog.md CLI (REQUIRED for Beth)
+  if (!skipBacklog) {
     console.log('');
-    logWarning('backlog.md CLI is not installed (optional).');
-    logInfo('The CLI provides TUI boards, web UI, and task management commands.');
-    logInfo('Learn more: https://github.com/MrLesk/Backlog.md');
-    console.log('');
+    log('Checking backlog.md CLI (required for task management)...', COLORS.cyan);
     
-    const shouldInstall = await promptYesNo('Would you like to install the backlog.md CLI globally?');
-    if (shouldInstall) {
-      await installBacklogCli();
-    } else {
-      logInfo('Skipped. You can install it later with: npm i -g backlog.md');
+    // Loop until backlog.md is installed
+    while (!isBacklogCliInstalled()) {
+      logWarning('backlog.md CLI is not installed.');
+      logInfo('Beth requires backlog.md for human-readable task tracking and boards.');
+      logInfo('Learn more: https://github.com/MrLesk/Backlog.md');
+      console.log('');
+      
+      const shouldInstall = await promptYesNo('Install backlog.md CLI now? (required)');
+      if (shouldInstall) {
+        const installed = await installBacklogCli();
+        if (installed) {
+          // Verify installation
+          if (isBacklogCliInstalled()) {
+            break;
+          } else {
+            logWarning('Installation completed but backlog CLI not found in PATH.');
+            logInfo('Try opening a new terminal or running: source ~/.bashrc');
+            console.log('');
+            
+            const retryCheck = await promptYesNo('Retry detection?');
+            if (retryCheck && isBacklogCliInstalled()) {
+              break;
+            }
+          }
+        } else {
+          console.log('');
+          logError('Installation failed.');
+          logInfo('You can try installing manually:');
+          logInfo('  npm install -g backlog.md');
+          logInfo('  bun install -g backlog.md');
+          console.log('');
+        }
+      } else {
+        console.log('');
+        logError('backlog.md is REQUIRED for Beth to function.');
+        logInfo('Beth uses Backlog.md to maintain human-readable task history and boards.');
+        logInfo('This complements beads for a complete task management workflow.');
+        console.log('');
+        
+        const tryAgain = await promptYesNo('Would you like to try installing backlog.md?');
+        if (!tryAgain) {
+          logError('Cannot continue without backlog.md. Exiting.');
+          logInfo('Install manually and run "npx beth-copilot init" again:');
+          logInfo('  npm install -g backlog.md');
+          process.exit(1);
+        }
+      }
     }
-  } else if (!skipBacklog) {
-    logSuccess('backlog.md CLI is already installed');
+    
+    logSuccess('backlog.md CLI is installed');
+  } else {
+    logWarning('Skipped backlog check (--skip-backlog). Beth may not function correctly.');
+  }
+
+  // Final verification
+  console.log('');
+  log('Verifying installation...', COLORS.cyan);
+  
+  const finalBeadsOk = skipBeads || getBeadsPath();
+  const finalBacklogOk = skipBacklog || isBacklogCliInstalled();
+  const finalBeadsInit = skipBeads || isBeadsInitialized(cwd);
+  
+  if (finalBeadsOk && finalBacklogOk && finalBeadsInit) {
+    logSuccess('All dependencies installed and configured!');
+  } else {
+    if (!finalBeadsOk) logError('beads CLI not found');
+    if (!finalBacklogOk) logError('backlog.md CLI not found');
+    if (!finalBeadsInit) logError('beads not initialized in project');
+    logError('Setup incomplete. Please resolve issues above and run init again.');
+    process.exit(1);
   }
 
   // Next steps
