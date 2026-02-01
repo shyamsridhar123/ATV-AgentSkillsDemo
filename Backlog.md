@@ -2,7 +2,7 @@
 
 > *"I don't have time to explain things twice. Read this."*
 
-Last updated: 2026-01-25
+Last updated: 2026-02-01
 
 ---
 
@@ -10,6 +10,7 @@ Last updated: 2026-01-25
 
 | Task | Notes |
 |------|-------|
+| Add Work Tracking to all agent files | All 7 agents now reference AGENTS.md and use beads + Backlog.md dual tracking |
 | Add GitHub Actions security workflow | npm audit, gitleaks, CodeQL, SBOM generation |
 | Add pre-commit hooks with gitleaks | Secret scanning before commit |
 | Full security review for enterprise readiness | HIGH findings fixed, SECURITY.md created |

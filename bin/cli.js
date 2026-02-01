@@ -44,6 +44,32 @@ function logInfo(message) {
   log(`  ${message}`, COLORS.cyan);
 }
 
+function logDebug(message) {
+  if (globalThis.VERBOSE) {
+    log(`  [debug] ${message}`, COLORS.yellow);
+  }
+}
+
+function showPathDiagnostics() {
+  const homeDir = process.env.HOME || process.env.USERPROFILE || '';
+  const isWindows = process.platform === 'win32';
+  
+  console.log('');
+  log('PATH Diagnostics:', COLORS.bright);
+  logInfo(`Platform: ${process.platform}`);
+  logInfo(`HOME: ${homeDir}`);
+  logInfo(`PATH: ${process.env.PATH}`);
+  
+  if (isWindows) {
+    logInfo(`APPDATA: ${process.env.APPDATA || '(not set)'}`);
+    logInfo(`npm prefix: Run "npm config get prefix" to check`);
+  } else {
+    logInfo(`npm prefix: Run "npm config get prefix" to check`);
+    logInfo(`Common locations: ~/.local/bin, /usr/local/bin, ~/.npm-global/bin`);
+  }
+  console.log('');
+}
+
 async function checkForUpdates() {
   try {
     const response = await fetch('https://registry.npmjs.org/beth-copilot/latest', {
@@ -78,9 +104,12 @@ async function checkForUpdates() {
 function getBacklogPath() {
   // Check if backlog is available in PATH
   try {
+    logDebug('Checking if backlog is in PATH...');
     execSync('backlog --version', { stdio: 'ignore' });
+    logDebug('Found backlog in PATH');
     return 'backlog';
   } catch {
+    logDebug('backlog not in PATH, checking common locations...');
     // Check common installation paths
     const homeDir = process.env.HOME || process.env.USERPROFILE || '';
     const isWindows = process.platform === 'win32';
@@ -98,11 +127,14 @@ function getBacklogPath() {
     ];
     
     for (const backlogPath of commonPaths) {
+      logDebug(`Checking: ${backlogPath}`);
       if (existsSync(backlogPath)) {
+        logDebug(`Found at: ${backlogPath}`);
         return backlogPath;
       }
     }
     
+    logDebug('backlog not found in any common location');
     return null;
   }
 }
@@ -114,9 +146,12 @@ function isBacklogCliInstalled() {
 function getBeadsPath() {
   // Check if bd is available in PATH
   try {
+    logDebug('Checking if bd is in PATH...');
     execSync('bd --version', { stdio: 'ignore' });
+    logDebug('Found bd in PATH');
     return 'bd';
   } catch {
+    logDebug('bd not in PATH, checking common locations...');
     // Check common installation paths based on platform
     const homeDir = process.env.HOME || process.env.USERPROFILE || '';
     const isWindows = process.platform === 'win32';
@@ -140,11 +175,14 @@ function getBeadsPath() {
     ];
     
     for (const bdPath of commonPaths) {
+      logDebug(`Checking: ${bdPath}`);
       if (existsSync(bdPath)) {
+        logDebug(`Found at: ${bdPath}`);
         return bdPath;
       }
     }
     
+    logDebug('bd not found in any common location');
     return null;
   }
 }
@@ -203,18 +241,27 @@ async function installBacklogCli() {
     
     child.on('close', (code) => {
       if (code === 0) {
-        logSuccess('backlog.md CLI installed successfully!');
-        resolve(true);
+        // CRITICAL: Verify installation actually worked before claiming success
+        const verifiedPath = getBacklogPath();
+        if (verifiedPath) {
+          logSuccess('backlog.md CLI installed and verified!');
+          resolve(true);
+        } else {
+          logWarning('npm reported success but backlog CLI not found in PATH.');
+          logInfo('This can happen if npm global bin is not in your PATH.');
+          if (globalThis.VERBOSE) {
+            showPathDiagnostics();
+          } else {
+            logInfo('Run with --verbose for PATH diagnostics.');
+          }
+          console.log('');
+          showBacklogAlternatives(isMac);
+          resolve(false);
+        }
       } else {
         logError('npm install failed.');
         console.log('');
-        logInfo('Alternative installation methods:');
-        if (isMac) {
-          logInfo('  Homebrew: brew install backlog-md');
-        }
-        logInfo('  Bun:      bun install -g backlog.md');
-        logInfo('');
-        logInfo('Learn more: https://github.com/MrLesk/Backlog.md');
+        showBacklogAlternatives(isMac);
         resolve(false);
       }
     });
@@ -227,8 +274,19 @@ async function installBacklogCli() {
   });
 }
 
+function showBacklogAlternatives(isMac) {
+  logInfo('Alternative installation methods:');
+  if (isMac) {
+    logInfo('  Homebrew: brew install backlog-md');
+  }
+  logInfo('  Bun:      bun install -g backlog.md');
+  logInfo('');
+  logInfo('Learn more: https://github.com/MrLesk/Backlog.md');
+}
+
 async function installBeads() {
   const isWindows = process.platform === 'win32';
+  const isMac = process.platform === 'darwin';
   
   log('\nInstalling beads CLI via npm...', COLORS.cyan);
   logInfo('npm install -g @beads/bd');
@@ -241,21 +299,28 @@ async function installBeads() {
     
     child.on('close', (code) => {
       if (code === 0) {
-        logSuccess('beads CLI installed successfully!');
-        resolve(true);
+        // CRITICAL: Verify installation actually worked before claiming success
+        // npm can exit 0 even when the package isn't properly installed
+        const verifiedPath = getBeadsPath();
+        if (verifiedPath) {
+          logSuccess('beads CLI installed and verified!');
+          resolve(true);
+        } else {
+          logWarning('npm reported success but beads CLI not found in PATH.');
+          logInfo('This can happen if npm global bin is not in your PATH.');
+          if (globalThis.VERBOSE) {
+            showPathDiagnostics();
+          } else {
+            logInfo('Run with --verbose for PATH diagnostics.');
+          }
+          console.log('');
+          showBeadsAlternatives(isWindows, isMac);
+          resolve(false);
+        }
       } else {
         logError('npm install failed.');
         console.log('');
-        logInfo('Alternative installation methods:');
-        if (isWindows) {
-          logInfo('  PowerShell: irm https://raw.githubusercontent.com/steveyegge/beads/main/install.ps1 | iex');
-        } else {
-          logInfo('  Homebrew:   brew install beads');
-          logInfo('  Script:     curl -fsSL https://raw.githubusercontent.com/steveyegge/beads/main/scripts/install.sh | bash');
-        }
-        logInfo('  Go:         go install github.com/steveyegge/beads/cmd/bd@latest');
-        logInfo('');
-        logInfo('Learn more: https://github.com/steveyegge/beads');
+        showBeadsAlternatives(isWindows, isMac);
         resolve(false);
       }
     });
@@ -266,6 +331,22 @@ async function installBeads() {
       resolve(false);
     });
   });
+}
+
+function showBeadsAlternatives(isWindows, isMac) {
+  logInfo('Alternative installation methods:');
+  if (isWindows) {
+    logInfo('  PowerShell: irm https://raw.githubusercontent.com/steveyegge/beads/main/install.ps1 | iex');
+    logInfo('  Go:         go install github.com/steveyegge/beads/cmd/bd@latest');
+  } else {
+    if (isMac) {
+      logInfo('  Homebrew:   brew install beads');
+    }
+    logInfo('  Script:     curl -fsSL https://raw.githubusercontent.com/steveyegge/beads/main/scripts/install.sh | bash');
+    logInfo('  Go:         go install github.com/steveyegge/beads/cmd/bd@latest');
+  }
+  logInfo('');
+  logInfo('Learn more: https://github.com/steveyegge/beads');
 }
 
 async function initializeBeads(cwd) {
@@ -314,6 +395,7 @@ ${COLORS.bright}Options:${COLORS.reset}
   --skip-backlog                      Don't create Backlog.md
   --skip-mcp                          Don't create mcp.json.example
   --skip-beads                        Skip beads check (not recommended)
+  --verbose                           Show detailed diagnostics on errors
 
 ${COLORS.bright}Examples:${COLORS.reset}
   npx beth-copilot init               Set up Beth in current project
@@ -385,6 +467,7 @@ ${COLORS.yellow}╔════════════════════�
   console.log(`
 ${COLORS.bright}🤠 Beth is moving in.${COLORS.reset}
 ${COLORS.cyan}"I don't do excuses. I do results."${COLORS.reset}
+${COLORS.yellow}Tip: Run with --verbose for detailed diagnostics if you hit issues.${COLORS.reset}
 `);
 
   // Check if templates exist
@@ -690,7 +773,7 @@ ${COLORS.cyan}"They broke my wings and forgot I had claws."${COLORS.reset}
 
 // Input validation constants
 const ALLOWED_COMMANDS = ['init', 'help', '--help', '-h'];
-const ALLOWED_FLAGS = ['--force', '--skip-backlog', '--skip-mcp', '--skip-beads'];
+const ALLOWED_FLAGS = ['--force', '--skip-backlog', '--skip-mcp', '--skip-beads', '--verbose'];
 const MAX_ARG_LENGTH = 50;
 
 // Validate and sanitize input
@@ -720,7 +803,11 @@ const options = {
   skipBacklog: args.includes('--skip-backlog'),
   skipMcp: args.includes('--skip-mcp'),
   skipBeads: args.includes('--skip-beads'),
+  verbose: args.includes('--verbose'),
 };
+
+// Set global verbose flag for logDebug
+globalThis.VERBOSE = options.verbose;
 
 // Validate unknown flags (exclude --help which is handled as a command)
 const unknownFlags = args.filter(arg => arg.startsWith('--') && !ALLOWED_FLAGS.includes(arg) && arg !== '--help');

@@ -1,6 +1,6 @@
 {
   "name": "beth-copilot",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "description": "Beth - A ruthless, hyper-competent AI orchestrator for GitHub Copilot multi-agent workflows",
   "keywords": [
     "github-copilot",
