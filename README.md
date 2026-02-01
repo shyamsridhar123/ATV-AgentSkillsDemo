@@ -73,6 +73,7 @@ Beth's team comes equipped:
 | **Framer Components** | Build custom React components with property controls |
 | **React/Next.js Best Practices** | Vercel-grade performance patterns |
 | **Web Design Guidelines** | WCAG compliance, UI review, accessibility |
+| **shadcn/ui** | Component library patterns, installation, and best practices |
 | **Security Analysis** | OWASP, threat modeling, vulnerability assessment |
 
 ## How Beth Works
@@ -219,6 +220,13 @@ Beth's agents work fine without them, but these make them smarter:
 | **Web Search** | Internet research | See [MCP Setup Guide](docs/MCP-SETUP.md) |
 
 Full details: [docs/MCP-SETUP.md](docs/MCP-SETUP.md)
+
+## Documentation
+
+- [Installation Guide](docs/INSTALLATION.md) — Full setup instructions
+- [MCP Setup](docs/MCP-SETUP.md) — Optional server integrations
+- [Changelog](CHANGELOG.md) — Version history and updates
+- [Security Policy](SECURITY.md) — Vulnerability reporting
 
 ## License
 
