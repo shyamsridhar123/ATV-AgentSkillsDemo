@@ -1,14 +1,6 @@
-# Beth - AI Agent System
+# AI Agent Skills Demo Repository
 
-A ruthless, hyper-competent AI orchestrator for GitHub Copilot multi-agent workflows.
-
-## Installation
-
-```bash
-npx beth-copilot init
-```
-
-That's it. See [docs/INSTALLATION.md](../docs/INSTALLATION.md) for detailed setup.
+This repository demonstrates GitHub Copilot's multi-agent system with custom agents, skills, and handoffs for building IDEO-style digital products.
 
 ## Architecture Overview
 
@@ -128,8 +120,8 @@ Apply human-centered design methodology across agent workflows:
 | Phase | Agent | Activities |
 |-------|-------|------------|
 | **Empathize** | `@researcher` | User interviews, observation, pain point discovery |
-| **Define** | `@product-manager` | Problem framing, requirements, priorities, success metrics |
-| **Ideate** | `@ux-designer` | Component specs, design tokens, interaction patterns |
+| **Define** | `@product-manager` | Problem framing, requirements, success criteria |
+| **Ideate** | `@ux-designer` | Solution exploration, design patterns, prototypes |
 | **Prototype** | `@developer` | Build to learn, rapid iteration, feature spikes |
 | **Test** | `@tester` | Validate assumptions, accessibility audits, performance |
 
@@ -188,16 +180,16 @@ export async function deleteUser(userId: string) {
 
 ### New Feature Flow
 1. `@Beth` → analyzes request, proposes workflow
-2. `@product-manager` → defines WHAT (requirements, priorities, success metrics)
+2. `@product-manager` → defines requirements (uses PRD skill)
 3. `@researcher` → validates user needs (optional)
-4. `@ux-designer` → specifies HOW (component specs, tokens, accessibility)
+4. `@ux-designer` → designs interface
 5. `@developer` → implements in React/TypeScript
 6. `@security-reviewer` → audits for vulnerabilities
 7. `@tester` → verifies quality
 
 ### Quick Commands
 ```
-@Beth Plan a feature for [description]
+@IDEO-Orchestrator Plan a feature for [description]
 @product-manager Create a PRD for [feature]
 @developer Implement [component/feature]
 @tester Write tests for [component]
