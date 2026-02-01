@@ -84,13 +84,33 @@ function isBacklogCliInstalled() {
   }
 }
 
-function isBeadsInstalled() {
+function getBeadsPath() {
+  // Check if bd is available in PATH
   try {
     execSync('bd --version', { stdio: 'ignore' });
-    return true;
+    return 'bd';
   } catch {
-    return false;
+    // Check common installation paths
+    const homeDir = process.env.HOME || process.env.USERPROFILE || '';
+    const commonPaths = [
+      join(homeDir, '.local', 'bin', 'bd'),
+      join(homeDir, 'bin', 'bd'),
+      '/usr/local/bin/bd',
+      join(homeDir, '.beads', 'bin', 'bd'),
+    ];
+    
+    for (const bdPath of commonPaths) {
+      if (existsSync(bdPath)) {
+        return bdPath;
+      }
+    }
+    
+    return null;
   }
+}
+
+function isBeadsInstalled() {
+  return getBeadsPath() !== null;
 }
 
 function isBeadsInitialized(cwd) {
@@ -176,8 +196,14 @@ async function installBeads() {
 async function initializeBeads(cwd) {
   log('\nInitializing beads in project...', COLORS.cyan);
   
+  const bdPath = getBeadsPath();
+  if (!bdPath) {
+    logWarning('Failed to initialize beads. Run manually: bd init');
+    return false;
+  }
+  
   return new Promise((resolve) => {
-    const child = spawn('bd', ['init'], {
+    const child = spawn(bdPath, ['init'], {
       stdio: 'inherit',
       shell: true,
       cwd
@@ -382,7 +408,9 @@ ${COLORS.cyan}"I don't do excuses. I do results."${COLORS.reset}
     console.log('');
     log('Checking beads (required for task tracking)...', COLORS.cyan);
     
-    if (!isBeadsInstalled()) {
+    let bdPath = getBeadsPath();
+    
+    if (!bdPath) {
       logWarning('beads CLI is not installed.');
       logInfo('Beth requires beads for task tracking. Agents use it to coordinate work.');
       logInfo('Learn more: https://github.com/steveyegge/beads');
@@ -396,12 +424,27 @@ ${COLORS.cyan}"I don't do excuses. I do results."${COLORS.reset}
           logInfo('Install manually and run "beth init" again.');
           process.exit(1);
         }
+        
+        // Re-check for beads after installation
+        bdPath = getBeadsPath();
+        if (!bdPath) {
+          logWarning('beads installed but not found in PATH.');
+          logInfo('You may need to restart your terminal or add ~/.local/bin to your PATH.');
+          logInfo('Then run: bd init');
+          process.exit(1);
+        }
       } else {
         logError('beads is required for Beth to function.');
         logInfo('Install beads and run "beth init" again:');
         logInfo('  curl -fsSL https://raw.githubusercontent.com/steveyegge/beads/main/scripts/install.sh | bash');
         process.exit(1);
       }
+    }
+    
+    // Show path info if not in standard PATH
+    if (bdPath && bdPath !== 'bd') {
+      logSuccess(`beads CLI found at: ${bdPath}`);
+      logInfo('Tip: Add ~/.local/bin to your PATH to use "bd" directly.');
     } else {
       logSuccess('beads CLI is installed');
     }
