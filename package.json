@@ -27,8 +27,14 @@
   },
   "files": [
     "bin/",
-    "templates/"
+    "templates/",
+    "sbom.json"
   ],
+  "scripts": {
+    "test": "node --test bin/lib/*.test.js",
+    "sbom:generate": "npx @cyclonedx/cyclonedx-npm --output-file sbom.json --output-format JSON",
+    "prepublishOnly": "npm run sbom:generate"
+  },
   "engines": {
     "node": ">=18"
   },

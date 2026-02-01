@@ -63,9 +63,78 @@ The CLI performs file operations (copying templates). It:
 - Does not execute any copied files
 - Uses Node.js built-in `fs` functions with no shell execution
 
+### Shell Execution (`shell:true` in spawn)
+
+The CLI uses `child_process.spawn()` with `shell:true` in specific cases. This section documents why, the mitigations in place, and how contributors should handle similar cases.
+
+#### Why shell:true is Used
+
+| Location | Reason | Risk Level |
+| -------- | ------ | ---------- |
+| `installBacklogCli()` | Cross-platform npm execution (npm.cmd on Windows) | None |
+| `installBeads()` | Cross-platform npm execution (npm.cmd on Windows) | None |
+| `initializeBeads()` | Consistency + shell script wrapper support | Low |
+
+#### Security Mitigations
+
+1. **No user input in commands**: All arguments are hardcoded constants. No user-supplied values are passed to the shell.
+
+2. **Path validation**: For `initializeBeads()`, the executable path comes from `getBeadsPath()` which:
+   - First checks if the binary responds to `--version`
+   - Falls back to a hardcoded list of known paths, verified via `existsSync()`
+
+3. **Input sanitization**: CLI arguments are validated before processing:
+
+   ```javascript
+   // Prevent command injection via malformed args
+   if (arg.length > MAX_ARG_LENGTH) { /* reject */ }
+   if (!/^[a-zA-Z0-9-]+$/.test(arg)) { /* reject */ }
+   ```
+
+4. **Allowlist pattern**: Only known commands and flags are accepted:
+
+   ```javascript
+   const ALLOWED_COMMANDS = ['init', 'help', '--help', '-h'];
+   const ALLOWED_FLAGS = ['--force', '--skip-backlog', '--skip-mcp', '--skip-beads', '--verbose'];
+   ```
+
+#### Guidelines for Contributors
+
+When adding new shell execution:
+
+1. **Prefer `shell:false`** - Use it unless cross-platform execution requires otherwise
+2. **Never interpolate user input** - If user input must be used, sanitize with allowlists
+3. **Document rationale** - Add JSDoc comments explaining why shell:true is necessary
+4. **Validate paths** - Use `existsSync()` before executing discovered binaries
+5. **Hardcode arguments** - Prefer `['arg1', 'arg2']` over string concatenation
+
+#### Example: Safe vs Unsafe Patterns
+
+```javascript
+// ✅ SAFE: Hardcoded command and arguments
+spawn('npm', ['install', '-g', 'package-name'], { shell: true });
+
+// ✅ SAFE: Validated path, hardcoded argument
+const bdPath = getBeadsPath(); // Returns validated path or null
+if (bdPath) spawn(bdPath, ['init'], { shell: true });
+
+// ❌ UNSAFE: User input in command
+spawn('npm', ['install', userInput], { shell: true }); // NEVER DO THIS
+
+// ❌ UNSAFE: Unvalidated path
+spawn(userProvidedPath, ['arg'], { shell: true }); // NEVER DO THIS
+```
+
 ## Automated Security Tooling
 
 This repository uses automated security scanning:
+
+### Dependabot (`.github/dependabot.yml`)
+
+- **Security alerts**: Automatic notifications for vulnerable dependencies
+- **Version updates**: Weekly PRs for outdated npm packages and GitHub Actions
+- **Grouped updates**: Minor/patch updates grouped to reduce PR noise
+- **Ecosystem coverage**: npm (production + dev) and GitHub Actions
 
 ### GitHub Actions (`.github/workflows/security.yml`)
 
@@ -88,12 +157,24 @@ Hooks include:
 - **File checks**: Large files, merge conflicts, private keys
 - **Markdown linting**: Keep docs clean
 
-### Manual SBOM Generation
+### SBOM (Software Bill of Materials)
 
-Generate a Software Bill of Materials for compliance:
+**Location:** `sbom.json` is included in every published npm package.
+
+**Format:** [CycloneDX](https://cyclonedx.org/) JSON (industry-standard for supply chain transparency)
+
+The SBOM is automatically regenerated before each npm publish via the `prepublishOnly` hook.
+
+**Regenerate manually:**
 
 ```bash
-npx @cyclonedx/cyclonedx-npm --output-file sbom.json
+npm run sbom:generate
+```
+
+**Direct command (if you need custom options):**
+
+```bash
+npx @cyclonedx/cyclonedx-npm --output-file sbom.json --output-format JSON
 ```
 
 ## Security Best Practices for Users

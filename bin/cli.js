@@ -5,6 +5,7 @@ import { dirname, join, relative } from 'path';
 import { existsSync, mkdirSync, readdirSync, statSync, copyFileSync, readFileSync, writeFileSync } from 'fs';
 import { createRequire } from 'module';
 import { execSync, spawn } from 'child_process';
+import { validateBeadsPath, validateBacklogPath, validateBinaryPath } from './lib/pathValidation.js';
 
 const require = createRequire(import.meta.url);
 const __filename = fileURLToPath(import.meta.url);
@@ -18,11 +19,278 @@ const CURRENT_VERSION = packageJson.version;
 const COLORS = {
   reset: '\x1b[0m',
   bright: '\x1b[1m',
+  dim: '\x1b[2m',
   red: '\x1b[31m',
   green: '\x1b[32m',
   yellow: '\x1b[33m',
+  blue: '\x1b[34m',
+  magenta: '\x1b[35m',
   cyan: '\x1b[36m',
+  white: '\x1b[37m',
+  bgRed: '\x1b[41m',
+  bgYellow: '\x1b[43m',
 };
+
+// Beth's dramatic ASCII banner
+const BETH_ASCII = [
+  '██████╗ ███████╗████████╗██╗  ██╗',
+  '██╔══██╗██╔════╝╚══██╔══╝██║  ██║',
+  '██████╔╝█████╗     ██║   ███████║',
+  '██╔══██╗██╔══╝     ██║   ██╔══██║',
+  '██████╔╝███████╗   ██║   ██║  ██║',
+  '╚═════╝ ╚══════╝   ╚═╝   ╚═╝  ╚═╝',
+];
+
+// Spinning cowboy frames - creates rotation illusion
+const COWBOY_FRAMES = [
+  // Frame 0: Front facing
+  [
+    '    🤠    ',
+    '   /||\\   ',
+    '    ||    ',
+    '   /  \\   ',
+  ],
+  // Frame 1: Slight right turn
+  [
+    '     🤠   ',
+    '    /|\\   ',
+    '     |    ',
+    '    / \\   ',
+  ],
+  // Frame 2: Side view right
+  [
+    '      🤠  ',
+    '      |\\  ',
+    '      |   ',
+    '     /|   ',
+  ],
+  // Frame 3: Back turning right
+  [
+    '       🤠 ',
+    '       |\\ ',
+    '       |  ',
+    '      /|  ',
+  ],
+  // Frame 4: Back view
+  [
+    '        🤠',
+    '       /|\\',
+    '        | ',
+    '       / \\',
+  ],
+  // Frame 5: Back turning left
+  [
+    '       🤠 ',
+    '      /|  ',
+    '       |  ',
+    '       |\\ ',
+  ],
+  // Frame 6: Side view left
+  [
+    '      🤠  ',
+    '     /|   ',
+    '      |   ',
+    '      |\\  ',
+  ],
+  // Frame 7: Slight left turn
+  [
+    '     🤠   ',
+    '    /|    ',
+    '     |    ',
+    '    / \\   ',
+  ],
+];
+
+// Big cowboy for static display
+const BIG_COWBOY = [
+  '       .-=========-.',
+  '       \\"-=======-"/',  
+  '       _|   .=.   |_',
+  '      ((|  {{1}}  |))',
+  '       \\|   /|\\   |/',
+  '        \\__ ___ __/',
+];
+
+const BETH_TAGLINES = [
+  "I don't speak dipshit. I speak in consequences.",
+  "They broke my wings and forgot I had claws.",
+  "I'm the trailer park AND the tornado.",
+  "I don't do excuses. I do results.",
+  "You want my opinion? You're getting it either way.",
+  "I believe in lovin' with your whole soul and destroyin' anything that wants to kill what you love.",
+  "The sting never fades. That's the point.",
+];
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function animateBethBanner() {
+  const gradientColors = [
+    '\x1b[38;5;196m', // bright red
+    '\x1b[38;5;202m', // orange-red
+    '\x1b[38;5;208m', // orange
+    '\x1b[38;5;214m', // gold
+    '\x1b[38;5;220m', // yellow
+    '\x1b[38;5;226m', // bright yellow
+  ];
+  
+  const bethWidth = BETH_ASCII[0].length;
+  const bethHeight = BETH_ASCII.length;
+  const cowboyWidth = 10;
+  const totalHeight = bethHeight;
+  const gap = 3;
+  
+  // Clear some space
+  console.log('\n');
+  
+  // Phase 1: Reveal BETH from left to right with color wave
+  for (let col = 0; col <= bethWidth; col++) {
+    if (col > 0) {
+      process.stdout.write(`\x1b[${totalHeight}A`);
+    }
+    
+    for (let row = 0; row < totalHeight; row++) {
+      let line = '';
+      for (let c = 0; c < bethWidth; c++) {
+        const char = BETH_ASCII[row]?.[c] || ' ';
+        if (c < col) {
+          const colorIndex = Math.floor(((c + row) / (bethWidth + totalHeight)) * gradientColors.length);
+          line += gradientColors[Math.min(colorIndex, gradientColors.length - 1)] + char;
+        } else {
+          line += ' ';
+        }
+      }
+      console.log(line + COLORS.reset);
+    }
+    
+    const delay = col < 5 ? 20 : col < 15 ? 10 : 5;
+    await sleep(delay);
+  }
+  
+  // Phase 2: Flash effect on BETH
+  for (let flash = 0; flash < 3; flash++) {
+    process.stdout.write(`\x1b[${totalHeight}A`);
+    const flashColor = gradientColors[flash % gradientColors.length];
+    for (let row = 0; row < totalHeight; row++) {
+      console.log(flashColor + COLORS.bright + (BETH_ASCII[row] || '') + COLORS.reset);
+    }
+    await sleep(80);
+  }
+  
+  // Phase 3: SPINNING COWBOY TIME - spin next to BETH
+  const spins = 2; // Number of full rotations
+  const framesPerSpin = COWBOY_FRAMES.length;
+  const totalFrames = spins * framesPerSpin;
+  
+  for (let frame = 0; frame < totalFrames; frame++) {
+    process.stdout.write(`\x1b[${totalHeight}A`);
+    const cowboyFrame = COWBOY_FRAMES[frame % framesPerSpin];
+    
+    for (let row = 0; row < totalHeight; row++) {
+      // BETH with gradient
+      let line = '';
+      for (let c = 0; c < bethWidth; c++) {
+        const char = BETH_ASCII[row]?.[c] || ' ';
+        const colorIndex = Math.floor((c / bethWidth) * gradientColors.length);
+        line += gradientColors[Math.min(colorIndex, gradientColors.length - 1)] + COLORS.bright + char;
+      }
+      
+      // Gap
+      line += COLORS.reset + ' '.repeat(gap);
+      
+      // Cowboy (offset to center vertically - cowboy is 4 lines, beth is 6)
+      const cowboyOffset = 1;
+      const cowboyRow = row - cowboyOffset;
+      if (cowboyRow >= 0 && cowboyRow < cowboyFrame.length) {
+        line += COLORS.yellow + cowboyFrame[cowboyRow] + COLORS.reset;
+      }
+      
+      console.log(line);
+    }
+    
+    // Slow down as it settles
+    const baseDelay = frame < totalFrames - framesPerSpin ? 60 : 80 + (frame % framesPerSpin) * 10;
+    await sleep(baseDelay);
+  }
+  
+  // Final pose: front-facing cowboy
+  process.stdout.write(`\x1b[${totalHeight}A`);
+  for (let row = 0; row < totalHeight; row++) {
+    let line = '';
+    for (let c = 0; c < bethWidth; c++) {
+      const char = BETH_ASCII[row]?.[c] || ' ';
+      const colorIndex = Math.floor((c / bethWidth) * gradientColors.length);
+      line += gradientColors[Math.min(colorIndex, gradientColors.length - 1)] + COLORS.bright + char;
+    }
+    line += COLORS.reset + ' '.repeat(gap);
+    
+    const cowboyOffset = 1;
+    const cowboyRow = row - cowboyOffset;
+    if (cowboyRow >= 0 && cowboyRow < COWBOY_FRAMES[0].length) {
+      line += COLORS.yellow + COLORS.bright + COWBOY_FRAMES[0][cowboyRow] + COLORS.reset;
+    }
+    
+    console.log(line);
+  }
+  
+  // Random tagline with dramatic reveal
+  const tagline = BETH_TAGLINES[Math.floor(Math.random() * BETH_TAGLINES.length)];
+  console.log('');
+  
+  // Type out the tagline character by character
+  process.stdout.write(COLORS.cyan + COLORS.bright + '"');
+  for (const char of tagline) {
+    process.stdout.write(char);
+    await sleep(15);
+  }
+  console.log('"' + COLORS.reset);
+  console.log('');
+}
+
+function showBethBannerStatic() {
+  const gradientColors = [
+    '\x1b[38;5;196m', // bright red
+    '\x1b[38;5;202m', // orange-red  
+    '\x1b[38;5;208m', // orange
+    '\x1b[38;5;214m', // gold
+    '\x1b[38;5;220m', // yellow
+    '\x1b[38;5;226m', // bright yellow
+  ];
+  
+  console.log('\n');
+  const bethWidth = BETH_ASCII[0].length;
+  const gap = 3;
+  
+  for (let row = 0; row < BETH_ASCII.length; row++) {
+    let line = '';
+    for (let c = 0; c < bethWidth; c++) {
+      const char = BETH_ASCII[row][c];
+      const colorIndex = Math.floor((c / bethWidth) * gradientColors.length);
+      line += gradientColors[Math.min(colorIndex, gradientColors.length - 1)] + COLORS.bright + char;
+    }
+    line += COLORS.reset + ' '.repeat(gap);
+    
+    // Add cowboy (centered vertically)
+    const cowboyOffset = 1;
+    const cowboyRow = row - cowboyOffset;
+    if (cowboyRow >= 0 && cowboyRow < COWBOY_FRAMES[0].length) {
+      line += COLORS.yellow + COLORS.bright + COWBOY_FRAMES[0][cowboyRow] + COLORS.reset;
+    }
+    
+    console.log(line);
+  }
+  
+  const tagline = BETH_TAGLINES[Math.floor(Math.random() * BETH_TAGLINES.length)];
+  console.log('');
+  console.log(COLORS.cyan + COLORS.bright + '"' + tagline + '"' + COLORS.reset);
+  console.log('');
+}
+
+// Detect if we can do animations (TTY and not piped)
+function canAnimate() {
+  return process.stdout.isTTY && !process.env.CI && !process.env.NO_COLOR;
+}
 
 function log(message, color = '') {
   console.log(`${color}${message}${COLORS.reset}`);
@@ -226,6 +494,19 @@ async function promptForInput(question) {
   });
 }
 
+/**
+ * Installs the backlog.md CLI globally via npm.
+ * 
+ * SECURITY NOTE - shell:true usage:
+ * - Required for cross-platform npm execution (npm.cmd on Windows, npm on Unix)
+ * - Arguments are HARDCODED - no user input is passed to the shell
+ * - Command injection risk: NONE (no dynamic/user-supplied values)
+ * 
+ * Alternative considered: Using platform-specific binary names (npm.cmd vs npm)
+ * would eliminate shell:true but adds complexity and edge cases for non-standard installs.
+ * 
+ * @returns {Promise<boolean>} True if installation succeeded and was verified
+ */
 async function installBacklogCli() {
   const isWindows = process.platform === 'win32';
   const isMac = process.platform === 'darwin';
@@ -233,6 +514,8 @@ async function installBacklogCli() {
   log('\nInstalling backlog.md CLI via npm...', COLORS.cyan);
   logInfo('npm install -g backlog.md');
   
+  // SECURITY: shell:true is required for cross-platform npm execution.
+  // All arguments are hardcoded constants - no user input reaches the shell.
   return new Promise((resolve) => {
     const child = spawn('npm', ['install', '-g', 'backlog.md'], {
       stdio: 'inherit',
@@ -284,6 +567,19 @@ function showBacklogAlternatives(isMac) {
   logInfo('Learn more: https://github.com/MrLesk/Backlog.md');
 }
 
+/**
+ * Installs the beads CLI globally via npm.
+ * 
+ * SECURITY NOTE - shell:true usage:
+ * - Required for cross-platform npm execution (npm.cmd on Windows, npm on Unix)
+ * - Arguments are HARDCODED - no user input is passed to the shell
+ * - Command injection risk: NONE (no dynamic/user-supplied values)
+ * 
+ * Alternative considered: Using platform-specific binary names (npm.cmd vs npm)
+ * would eliminate shell:true but adds complexity and edge cases for non-standard installs.
+ * 
+ * @returns {Promise<boolean>} True if installation succeeded and was verified
+ */
 async function installBeads() {
   const isWindows = process.platform === 'win32';
   const isMac = process.platform === 'darwin';
@@ -291,6 +587,8 @@ async function installBeads() {
   log('\nInstalling beads CLI via npm...', COLORS.cyan);
   logInfo('npm install -g @beads/bd');
   
+  // SECURITY: shell:true is required for cross-platform npm execution.
+  // All arguments are hardcoded constants - no user input reaches the shell.
   return new Promise((resolve) => {
     const child = spawn('npm', ['install', '-g', '@beads/bd'], {
       stdio: 'inherit',
@@ -349,6 +647,23 @@ function showBeadsAlternatives(isWindows, isMac) {
   logInfo('Learn more: https://github.com/steveyegge/beads');
 }
 
+/**
+ * Initializes beads in the current project directory.
+ * 
+ * SECURITY NOTE - shell:true usage:
+ * - bdPath is validated via getBeadsPath() which only returns paths that:
+ *   1. Pass execSync('bd --version') verification, OR
+ *   2. Exist on disk (verified via existsSync) from a HARDCODED list of paths
+ * - Arguments are HARDCODED ('init') - no user input is passed to the shell
+ * - Command injection risk: LOW (bdPath is validated, no user input in args)
+ * 
+ * The shell:true is used for PATH resolution consistency, though it could be
+ * eliminated since we have an absolute path. Kept for consistency with other
+ * spawn calls and to handle edge cases in shell script wrappers.
+ * 
+ * @param {string} cwd - Current working directory (validated by caller)
+ * @returns {Promise<boolean>} True if initialization succeeded
+ */
 async function initializeBeads(cwd) {
   log('\nInitializing beads in project...', COLORS.cyan);
   
@@ -358,6 +673,8 @@ async function initializeBeads(cwd) {
     return false;
   }
   
+  // SECURITY: bdPath is validated by getBeadsPath() (existsSync check).
+  // Only 'init' argument is passed - no user input reaches the shell.
   return new Promise((resolve) => {
     const child = spawn(bdPath, ['init'], {
       stdio: 'inherit',
@@ -383,8 +700,8 @@ async function initializeBeads(cwd) {
 }
 
 function showHelp() {
-  console.log(`
-${COLORS.bright}Beth${COLORS.reset} - AI Orchestrator for GitHub Copilot
+  showBethBannerStatic();
+  console.log(`${COLORS.bright}Beth${COLORS.reset} - AI Orchestrator for GitHub Copilot
 
 ${COLORS.bright}Usage:${COLORS.reset}
   npx beth-copilot init [options]     Initialize Beth in current directory
@@ -464,11 +781,14 @@ ${COLORS.yellow}╔════════════════════�
 `);
   }
   
-  console.log(`
-${COLORS.bright}🤠 Beth is moving in.${COLORS.reset}
-${COLORS.cyan}"I don't do excuses. I do results."${COLORS.reset}
-${COLORS.yellow}Tip: Run with --verbose for detailed diagnostics if you hit issues.${COLORS.reset}
-`);
+  // Show the dramatic Beth banner
+  if (canAnimate()) {
+    await animateBethBanner();
+  } else {
+    showBethBannerStatic();
+  }
+  
+  log(`${COLORS.yellow}Tip: Run with --verbose for detailed diagnostics if you hit issues.${COLORS.reset}`);
 
   // Check if templates exist
   if (!existsSync(TEMPLATES_DIR)) {
@@ -600,11 +920,14 @@ ${COLORS.yellow}Tip: Run with --verbose for detailed diagnostics if you hit issu
             
             // Allow manual path entry
             const customPath = await promptForInput('Enter full path to bd binary (or press Enter to retry installation):');
-            if (customPath && existsSync(customPath)) {
-              bdPath = customPath;
-              logSuccess(`Found beads at: ${bdPath}`);
-            } else if (customPath) {
-              logError(`File not found: ${customPath}`);
+            if (customPath) {
+              const validation = validateBeadsPath(customPath);
+              if (validation.valid) {
+                bdPath = validation.normalizedPath;
+                logSuccess(`Found beads at: ${bdPath}`);
+              } else {
+                logError(`Invalid path: ${validation.error}`);
+              }
             }
           }
         } else {
