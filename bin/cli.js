@@ -5,7 +5,7 @@ import { dirname, join, relative } from 'path';
 import { existsSync, mkdirSync, readdirSync, statSync, copyFileSync, readFileSync, writeFileSync } from 'fs';
 import { createRequire } from 'module';
 import { execSync, spawn } from 'child_process';
-import { validateBeadsPath, validateBacklogPath, validateBinaryPath } from './lib/pathValidation.js';
+import { validateBeadsPath, validateBinaryPath } from './lib/pathValidation.js';
 
 const require = createRequire(import.meta.url);
 const __filename = fileURLToPath(import.meta.url);
@@ -470,48 +470,6 @@ async function checkForUpdates() {
   }
 }
 
-function getBacklogPath() {
-  // Check if backlog is available in PATH
-  try {
-    logDebug('Checking if backlog is in PATH...');
-    execSync('backlog --version', { stdio: 'ignore' });
-    logDebug('Found backlog in PATH');
-    return 'backlog';
-  } catch {
-    logDebug('backlog not in PATH, checking common locations...');
-    // Check common installation paths
-    const homeDir = process.env.HOME || process.env.USERPROFILE || '';
-    const isWindows = process.platform === 'win32';
-    
-    const commonPaths = isWindows ? [
-      join(process.env.APPDATA || '', 'npm', 'backlog.cmd'),
-      join(homeDir, 'AppData', 'Roaming', 'npm', 'backlog.cmd'),
-      join(homeDir, 'AppData', 'Local', 'npm-global', 'backlog.cmd'),
-    ] : [
-      join(homeDir, '.local', 'bin', 'backlog'),
-      join(homeDir, 'bin', 'backlog'),
-      '/usr/local/bin/backlog',
-      join(homeDir, '.npm-global', 'bin', 'backlog'),
-      join(homeDir, '.bun', 'bin', 'backlog'),
-    ];
-    
-    for (const backlogPath of commonPaths) {
-      logDebug(`Checking: ${backlogPath}`);
-      if (existsSync(backlogPath)) {
-        logDebug(`Found at: ${backlogPath}`);
-        return backlogPath;
-      }
-    }
-    
-    logDebug('backlog not found in any common location');
-    return null;
-  }
-}
-
-function isBacklogCliInstalled() {
-  return getBacklogPath() !== null;
-}
-
 function getBeadsPath() {
   // Check if bd is available in PATH
   try {
@@ -593,79 +551,6 @@ async function promptForInput(question) {
       resolve(answer.trim());
     });
   });
-}
-
-/**
- * Installs the backlog.md CLI globally via npm.
- * 
- * SECURITY NOTE - shell:true usage:
- * - Required for cross-platform npm execution (npm.cmd on Windows, npm on Unix)
- * - Arguments are HARDCODED - no user input is passed to the shell
- * - Command injection risk: NONE (no dynamic/user-supplied values)
- * 
- * Alternative considered: Using platform-specific binary names (npm.cmd vs npm)
- * would eliminate shell:true but adds complexity and edge cases for non-standard installs.
- * 
- * @returns {Promise<boolean>} True if installation succeeded and was verified
- */
-async function installBacklogCli() {
-  const isWindows = process.platform === 'win32';
-  const isMac = process.platform === 'darwin';
-  
-  log('\nInstalling backlog.md CLI via npm...', COLORS.cyan);
-  logInfo('npm install -g backlog.md');
-  
-  // SECURITY: shell:true is required for cross-platform npm execution.
-  // All arguments are hardcoded constants - no user input reaches the shell.
-  return new Promise((resolve) => {
-    const child = spawn('npm', ['install', '-g', 'backlog.md'], {
-      stdio: 'inherit',
-      shell: true
-    });
-    
-    child.on('close', (code) => {
-      if (code === 0) {
-        // CRITICAL: Verify installation actually worked before claiming success
-        const verifiedPath = getBacklogPath();
-        if (verifiedPath) {
-          logSuccess('backlog.md CLI installed and verified!');
-          resolve(true);
-        } else {
-          logWarning('npm reported success but backlog CLI not found in PATH.');
-          logInfo('This can happen if npm global bin is not in your PATH.');
-          if (globalThis.VERBOSE) {
-            showPathDiagnostics();
-          } else {
-            logInfo('Run with --verbose for PATH diagnostics.');
-          }
-          console.log('');
-          showBacklogAlternatives(isMac);
-          resolve(false);
-        }
-      } else {
-        logError('npm install failed.');
-        console.log('');
-        showBacklogAlternatives(isMac);
-        resolve(false);
-      }
-    });
-    
-    child.on('error', () => {
-      logError('Failed to run npm.');
-      logInfo('Make sure npm is installed and in your PATH.');
-      resolve(false);
-    });
-  });
-}
-
-function showBacklogAlternatives(isMac) {
-  logInfo('Alternative installation methods:');
-  if (isMac) {
-    logInfo('  Homebrew: brew install backlog-md');
-  }
-  logInfo('  Bun:      bun install -g backlog.md');
-  logInfo('');
-  logInfo('Learn more: https://github.com/MrLesk/Backlog.md');
 }
 
 /**
@@ -823,8 +708,8 @@ ${COLORS.bright}Examples:${COLORS.reset}
   npx beth-copilot doctor             Verify installation health
 
 ${COLORS.bright}What gets installed:${COLORS.reset}
-  .github/agents/                     8 specialized AI agents
-  .github/skills/                     6 domain knowledge modules
+  .github/agents/                     7 specialized AI agents
+  .github/skills/                     8 domain knowledge modules
   .github/copilot-instructions.md     Copilot configuration
   .vscode/settings.json               Recommended VS Code settings
   AGENTS.md                           Workflow documentation
@@ -1096,87 +981,17 @@ ${COLORS.yellow}╔════════════════════�
     logWarning('Skipped beads check (--skip-beads). Beth may not function correctly.');
   }
 
-  // Check for backlog.md CLI (REQUIRED for Beth)
-  if (!skipBacklog) {
-    console.log('');
-    log('Checking backlog.md CLI (required for task management)...', COLORS.cyan);
-    
-    let backlogPath = getBacklogPath();
-    
-    // Loop until backlog.md is installed
-    while (!backlogPath) {
-      logWarning('backlog.md CLI is not installed.');
-      logInfo('Beth requires backlog.md for human-readable task tracking and boards.');
-      logInfo('Learn more: https://github.com/MrLesk/Backlog.md');
-      console.log('');
-      
-      const shouldInstall = await promptYesNo('Install backlog.md CLI now? (required)');
-      if (shouldInstall) {
-        const installed = await installBacklogCli();
-        if (installed) {
-          // Re-check for backlog after installation
-          backlogPath = getBacklogPath();
-          if (!backlogPath) {
-            console.log('');
-            logWarning('backlog.md installed but not found in common paths.');
-            logInfo('The installer may have placed it in a custom location.');
-            console.log('');
-            logInfo('Please try one of these options:');
-            logInfo('  1. Open a NEW terminal and run: npx beth-copilot init');
-            logInfo('  2. Run: source ~/.bashrc (or ~/.zshrc) then retry');
-            console.log('');
-            
-            const retryCheck = await promptYesNo('Retry detection?');
-            if (retryCheck) {
-              backlogPath = getBacklogPath();
-            }
-          }
-        } else {
-          console.log('');
-          logError('Installation failed.');
-          logInfo('You can try installing manually:');
-          logInfo('  npm install -g backlog.md');
-          if (process.platform === 'darwin') {
-            logInfo('  brew install backlog-md');
-          }
-          logInfo('  bun install -g backlog.md');
-          console.log('');
-        }
-      } else {
-        console.log('');
-        logError('backlog.md is REQUIRED for Beth to function.');
-        logInfo('Beth uses Backlog.md to maintain human-readable task history and boards.');
-        logInfo('This complements beads for a complete task management workflow.');
-        console.log('');
-        
-        const tryAgain = await promptYesNo('Would you like to try installing backlog.md?');
-        if (!tryAgain) {
-          logError('Cannot continue without backlog.md. Exiting.');
-          logInfo('Install manually and run "npx beth-copilot init" again:');
-          logInfo('  npm install -g backlog.md');
-          process.exit(1);
-        }
-      }
-    }
-    
-    logSuccess('backlog.md CLI is installed');
-  } else {
-    logWarning('Skipped backlog check (--skip-backlog). Beth may not function correctly.');
-  }
-
   // Final verification
   console.log('');
   log('Verifying installation...', COLORS.cyan);
   
   const finalBeadsOk = skipBeads || getBeadsPath();
-  const finalBacklogOk = skipBacklog || getBacklogPath();
   const finalBeadsInit = skipBeads || isBeadsInitialized(cwd);
   
-  if (finalBeadsOk && finalBacklogOk && finalBeadsInit) {
+  if (finalBeadsOk && finalBeadsInit) {
     logSuccess('All dependencies installed and configured!');
   } else {
     if (!finalBeadsOk) logError('beads CLI not found');
-    if (!finalBacklogOk) logError('backlog.md CLI not found');
     if (!finalBeadsInit) logError('beads not initialized in project');
     logError('Setup incomplete. Please resolve issues above and run init again.');
     process.exit(1);

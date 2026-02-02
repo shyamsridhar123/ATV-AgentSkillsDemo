@@ -248,8 +248,7 @@ export async function doctor(options: DoctorOptions = {}, exitOnFailure = true):
   
   const results: CheckResult[] = [
     checkNodeVersion(),
-    checkCli('beads', 'bd', 'npm install -g @beads/bd'),
-    checkCli('backlog.md', 'backlog', 'npm install -g backlog.md'),
+    checkCli('beads', 'bd', 'curl -fsSL https://raw.githubusercontent.com/steveyegge/beads/main/scripts/install.sh | bash'),
     checkAgents(cwd),
     checkSkills(cwd),
     checkBeadsInit(cwd),
