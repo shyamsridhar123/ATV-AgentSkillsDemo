@@ -12,6 +12,19 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const TEMPLATES_DIR = join(__dirname, '..', 'templates');
 
+// TypeScript commands are in dist/ after build
+const DIST_DIR = join(__dirname, '..', 'dist');
+
+// Dynamic import for TypeScript commands (lazy loaded)
+async function loadTsCommand(commandName) {
+  const commandPath = join(DIST_DIR, 'cli', 'commands', `${commandName}.js`);
+  if (!existsSync(commandPath)) {
+    console.error(`Command '${commandName}' not found. Run 'npm run build' first.`);
+    process.exit(1);
+  }
+  return import(commandPath);
+}
+
 // Get current package version
 const packageJson = require('../package.json');
 const CURRENT_VERSION = packageJson.version;
@@ -793,6 +806,8 @@ function showHelp() {
 
 ${COLORS.bright}Usage:${COLORS.reset}
   npx beth-copilot init [options]     Initialize Beth in current directory
+  npx beth-copilot doctor             Check system health and dependencies
+  npx beth-copilot quickstart         Run init + doctor + beads setup
   npx beth-copilot help               Show this help message
 
 ${COLORS.bright}Options:${COLORS.reset}
@@ -805,6 +820,7 @@ ${COLORS.bright}Options:${COLORS.reset}
 ${COLORS.bright}Examples:${COLORS.reset}
   npx beth-copilot init               Set up Beth in current project
   npx beth-copilot init --force       Overwrite existing Beth files
+  npx beth-copilot doctor             Verify installation health
 
 ${COLORS.bright}What gets installed:${COLORS.reset}
   .github/agents/                     8 specialized AI agents
@@ -1183,7 +1199,7 @@ ${COLORS.cyan}"They broke my wings and forgot I had claws."${COLORS.reset}
 }
 
 // Input validation constants
-const ALLOWED_COMMANDS = ['init', 'help', '--help', '-h'];
+const ALLOWED_COMMANDS = ['init', 'help', '--help', '-h', 'doctor', 'quickstart'];
 const ALLOWED_FLAGS = ['--force', '--skip-backlog', '--skip-mcp', '--skip-beads', '--verbose'];
 const MAX_ARG_LENGTH = 50;
 
@@ -1231,6 +1247,18 @@ if (unknownFlags.length > 0) {
 switch (command) {
   case 'init':
     await init(options);
+    break;
+  case 'doctor':
+    {
+      const { doctor } = await loadTsCommand('doctor');
+      await doctor(options);
+    }
+    break;
+  case 'quickstart':
+    {
+      const { quickstart } = await loadTsCommand('quickstart');
+      await quickstart(options);
+    }
     break;
   case 'help':
   case '--help':

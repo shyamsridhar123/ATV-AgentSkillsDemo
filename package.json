@@ -27,18 +27,29 @@
   },
   "files": [
     "bin/",
+    "dist/",
     "templates/",
     "assets/",
     "sbom.json",
     "CHANGELOG.md"
   ],
   "scripts": {
+    "build": "tsc",
+    "build:watch": "tsc --watch",
     "test": "node --test bin/lib/*.test.js",
+    "test:ts": "node --test dist/**/*.test.js",
     "sbom:generate": "npx @cyclonedx/cyclonedx-npm --output-file sbom.json --output-format JSON",
-    "prepublishOnly": "npm run sbom:generate"
+    "prepublishOnly": "npm run build && npm run sbom:generate"
   },
   "engines": {
     "node": ">=18"
   },
-  "type": "module"
+  "type": "module",
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "typescript": "^5.3.0"
+  },
+  "dependencies": {
+    "gray-matter": "^4.0.3"
+  }
 }

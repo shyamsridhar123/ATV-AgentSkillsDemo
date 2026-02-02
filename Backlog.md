@@ -10,6 +10,7 @@ Last updated: 2026-02-01
 
 | Task | Notes |
 |------|-------|
+| CLI TypeScript Foundation + Commands | TypeScript build system, doctor/quickstart commands, agent schema types, pathValidation migration |
 | Add Work Tracking to all agent files | All 7 agents now reference AGENTS.md and use beads + Backlog.md dual tracking |
 | Add GitHub Actions security workflow | npm audit, gitleaks, CodeQL, SBOM generation |
 | Add pre-commit hooks with gitleaks | Secret scanning before commit |
