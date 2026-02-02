@@ -41,6 +41,7 @@ Last updated: 2026-02-01
 | Create azure-operations skill | .github/skills/azure-operations/SKILL.md for Azure MCP |
 | Fix MCP-SETUP.md package names | Corrected Brave/Playwright packages, removed nonexistent MS Learn MCP |
 | Update tester/developer agents for Playwright | MCP integration patterns added |
+| Create PR and review process documentation | CONTRIBUTING.md, PR template, issue templates for bug/feature/security |
 
 ---
 

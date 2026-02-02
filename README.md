@@ -225,6 +225,7 @@ Full details: [docs/MCP-SETUP.md](docs/MCP-SETUP.md)
 
 - [Installation Guide](docs/INSTALLATION.md) — Full setup instructions
 - [MCP Setup](docs/MCP-SETUP.md) — Optional server integrations
+- [Contributing Guide](CONTRIBUTING.md) — How to contribute (PR process, review checklist)
 - [Changelog](CHANGELOG.md) — Version history and updates
 - [Security Policy](SECURITY.md) — Vulnerability reporting
 
