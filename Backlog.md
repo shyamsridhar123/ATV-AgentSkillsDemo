@@ -35,6 +35,12 @@ Last updated: 2026-02-01
 | Document shell:true security constraints | JSDoc in cli.js + Shell Execution section in SECURITY.md |
 | Include SBOM in npm package | CycloneDX JSON, auto-generates on publish |
 | Add Dependabot configuration | Weekly npm/GH Actions updates, grouped PRs |
+| Add Beth orchestrator reference to all agents | 12 agent files updated with Team Coordination section |
+| Review copilot-instructions.md consistency | Template fixed, main file already consistent |
+| Create web-search skill | .github/skills/web-search/SKILL.md for Brave Search MCP |
+| Create azure-operations skill | .github/skills/azure-operations/SKILL.md for Azure MCP |
+| Fix MCP-SETUP.md package names | Corrected Brave/Playwright packages, removed nonexistent MS Learn MCP |
+| Update tester/developer agents for Playwright | MCP integration patterns added |
 
 ---
 
@@ -52,12 +58,7 @@ Last updated: 2026-02-01
 
 ### Medium Priority (P2)
 
-- [ ] **Update agents to reference Beth as orchestrator** — Ensure all agents know Beth is the coordinator
-- [ ] **Review and update copilot-instructions.md** — Ensure consistency with Beth-first architecture
-- [ ] **Upgrade skills for web search MCP** — Enhance researcher agent with web search when configured
-- [ ] **Upgrade skills for Playwright MCP** — Enhance tester/frontend agents with browser automation
-- [ ] **Upgrade skills for Azure MCP** — Enhance developer/security agents with Azure cloud ops
-- [ ] **Upgrade skills for Microsoft Learn MCP** — Enhance all agents with MS Learn documentation access
+*All P2 items completed.*
 
 ### Low Priority (P3)
 

@@ -3,9 +3,9 @@
   "bomFormat": "CycloneDX",
   "specVersion": "1.6",
   "version": 1,
-  "serialNumber": "urn:uuid:3383197c-750b-4445-87b5-9405d7babc03",
+  "serialNumber": "urn:uuid:d65254d0-0268-4133-9580-2fd3dca6cb0f",
   "metadata": {
-    "timestamp": "2026-02-01T09:18:12.662Z",
+    "timestamp": "2026-02-01T09:19:13.714Z",
     "tools": {
       "components": [
         {
@@ -82,8 +82,8 @@
     "component": {
       "type": "application",
       "name": "beth-copilot",
-      "version": "1.0.11",
-      "bom-ref": "beth-copilot@1.0.11",
+      "version": "1.0.12",
+      "bom-ref": "beth-copilot@1.0.12",
       "author": "Steph Schofield",
       "description": "Beth - A ruthless, hyper-competent AI orchestrator for GitHub Copilot multi-agent workflows",
       "licenses": [
@@ -94,7 +94,7 @@
           }
         }
       ],
-      "purl": "pkg:npm/beth-copilot@1.0.11?vcs_url=git%2Bhttps%3A%2F%2Fgithub.com%2Fstephschofield%2Fbeth.git",
+      "purl": "pkg:npm/beth-copilot@1.0.12?vcs_url=git%2Bhttps%3A%2F%2Fgithub.com%2Fstephschofield%2Fbeth.git",
       "externalReferences": [
         {
           "url": "git+https://github.com/stephschofield/beth.git",
@@ -123,7 +123,7 @@
   "components": [],
   "dependencies": [
     {
-      "ref": "beth-copilot@1.0.11"
+      "ref": "beth-copilot@1.0.12"
     }
   ]
 }

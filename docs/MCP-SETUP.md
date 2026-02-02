@@ -25,7 +25,6 @@ Then add servers as needed.
 | **shadcn/ui** | Component browsing, installation | Frontend Engineer |
 | **Playwright** | Browser automation, E2E testing | Tester, Frontend Engineer |
 | **Azure** | Cloud resource management | Developer, Security Reviewer |
-| **Microsoft Learn** | Documentation access | All agents |
 | **Web Search** | Internet research | Researcher |
 
 ---
@@ -67,7 +66,7 @@ Browser automation for E2E tests and visual regression.
   "servers": {
     "playwright": {
       "command": "npx",
-      "args": ["@anthropic-ai/mcp-server-playwright"]
+      "args": ["@playwright/mcp@latest"]
     }
   }
 }
@@ -91,6 +90,10 @@ import { test, expect } from '@playwright/test';
 
 Manage Azure resources, deployments, and security configurations.
 
+**Recommended:** Install via VS Code extension `ms-azuretools.vscode-azure-mcp-server` for the best experience.
+
+Alternatively, configure manually:
+
 ```json
 {
   "servers": {
@@ -111,7 +114,7 @@ Manage Azure resources, deployments, and security configurations.
 3. Set subscription: `az account set --subscription <id>`
 
 **Capabilities:**
-- Resource management
+- Resource management (41+ services)
 - Deployment operations
 - Security configuration
 - Cost analysis
@@ -120,28 +123,15 @@ Manage Azure resources, deployments, and security configurations.
 
 ---
 
-### Microsoft Learn (Documentation)
+### Microsoft Documentation Access
 
-Access Microsoft documentation and learning paths.
+> **Note:** There is no dedicated Microsoft Learn MCP server. For documentation access, agents use the `fetch` tool with learn.microsoft.com URLs directly.
 
-```json
-{
-  "servers": {
-    "microsoft-learn": {
-      "command": "npx",
-      "args": ["@microsoft/mcp-server-learn"]
-    }
-  }
-}
-```
+**Example usage:**
+- Fetch specific docs: `https://learn.microsoft.com/en-us/azure/...`
+- Access API references: `https://learn.microsoft.com/en-us/dotnet/api/...`
 
-**Capabilities:**
-- Search documentation
-- Retrieve code samples
-- Access best practices
-- Find troubleshooting guides
-
-**Without MCP:** Search docs.microsoft.com manually.
+**Without fetch tool:** Search docs.microsoft.com manually and share relevant URLs.
 
 ---
 
@@ -154,7 +144,7 @@ Internet search for competitive analysis and research.
   "servers": {
     "web-search": {
       "command": "npx",
-      "args": ["@anthropic-ai/mcp-server-brave-search"],
+      "args": ["@brave/brave-search-mcp-server"],
       "env": {
         "BRAVE_API_KEY": "${env:BRAVE_API_KEY}"
       }
@@ -184,7 +174,7 @@ Internet search for competitive analysis and research.
     },
     "playwright": {
       "command": "npx",
-      "args": ["@anthropic-ai/mcp-server-playwright"]
+      "args": ["@playwright/mcp@latest"]
     },
     "azure": {
       "command": "npx",
@@ -195,7 +185,7 @@ Internet search for competitive analysis and research.
     },
     "web-search": {
       "command": "npx",
-      "args": ["@anthropic-ai/mcp-server-brave-search"],
+      "args": ["@brave/brave-search-mcp-server"],
       "env": {
         "BRAVE_API_KEY": "${env:BRAVE_API_KEY}"
       }
