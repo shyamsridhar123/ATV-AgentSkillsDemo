@@ -1,0 +1,37 @@
+# Gitleaks configuration for beth-copilot
+# https://github.com/gitleaks/gitleaks
+
+title = "beth-copilot gitleaks config"
+
+[extend]
+# Use the default gitleaks config as base
+useDefault = true
+
+[allowlist]
+description = "Global allowlist"
+
+# Allow example/placeholder patterns in documentation
+regexTarget = "match"
+regexes = [
+  # Example API keys in docs (clearly fake)
+  '''your-api-key-here''',
+  '''sk-xxx''',
+  '''AZURE_.*=your-.*''',
+  # Security documentation examples (showing bad patterns on purpose)
+  '''sk_live_abc123''',
+  '''API_KEY = 'sk_live_abc123''',
+  '''NEXT_PUBLIC_API_SECRET=sk_live''',
+]
+
+# Files to ignore
+paths = [
+  # Test fixtures
+  '''test/fixtures/.*''',
+  # Generated files
+  '''package-lock\.json''',
+  # Documentation examples
+  '''docs/.*\.md''',
+  # Agent instruction files (contain security anti-pattern examples)
+  '''\.github/agents/security-reviewer\.agent\.md''',
+  '''templates/\.github/agents/security-reviewer\.agent\.md''',
+]

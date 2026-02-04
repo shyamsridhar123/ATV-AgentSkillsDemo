@@ -1,0 +1,56 @@
+{
+  "name": "beth-copilot",
+  "version": "1.0.14",
+  "description": "Beth - A ruthless, hyper-competent AI orchestrator for GitHub Copilot multi-agent workflows",
+  "keywords": [
+    "github-copilot",
+    "ai-agents",
+    "copilot-chat",
+    "multi-agent",
+    "orchestrator",
+    "react",
+    "nextjs",
+    "typescript"
+  ],
+  "author": "Steph Schofield",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/stephschofield/beth.git"
+  },
+  "homepage": "https://github.com/stephschofield/beth#readme",
+  "bugs": {
+    "url": "https://github.com/stephschofield/beth/issues"
+  },
+  "bin": {
+    "beth": "./bin/cli.js"
+  },
+  "files": [
+    "bin/",
+    "dist/",
+    "templates/",
+    "assets/",
+    "sbom.json",
+    "CHANGELOG.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "build:watch": "tsc --watch",
+    "test": "node --test bin/lib/*.test.js",
+    "test:ts": "pnpm run build && node --test dist/lib/*.test.js dist/cli/commands/*.test.js dist/core/agents/*.test.js dist/core/skills/*.test.js",
+    "test:all": "pnpm run test && pnpm run test:ts",
+    "sbom:generate": "npx @cyclonedx/cyclonedx-npm --output-file sbom.json --output-format JSON",
+    "prepublishOnly": "npm run build && npm run sbom:generate"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "type": "module",
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "typescript": "^5.3.0"
+  },
+  "dependencies": {
+    "gray-matter": "^4.0.3"
+  }
+}
