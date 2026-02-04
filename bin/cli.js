@@ -2,7 +2,7 @@
 
 import { fileURLToPath } from 'url';
 import { dirname, join, relative } from 'path';
-import { existsSync, mkdirSync, readdirSync, statSync, copyFileSync, readFileSync, writeFileSync } from 'fs';
+import { existsSync, mkdirSync, readdirSync, statSync, copyFileSync, readFileSync, writeFileSync, unlinkSync } from 'fs';
 import { createRequire } from 'module';
 import { execSync, spawn } from 'child_process';
 import { validateBeadsPath, validateBinaryPath } from './lib/pathValidation.js';
@@ -729,7 +729,21 @@ ${COLORS.bright}Documentation:${COLORS.reset}
 function copyDirRecursive(src, dest, options = {}) {
   const { force = false, copiedFiles = [] } = options;
   
-  if (!existsSync(dest)) {
+  if (existsSync(dest)) {
+    const destStats = statSync(dest);
+    if (!destStats.isDirectory()) {
+      if (force) {
+        // Destination exists as a file but should be a directory - remove it
+        unlinkSync(dest);
+        mkdirSync(dest, { recursive: true });
+      } else {
+        throw new Error(
+          `Cannot copy directory: "${dest}" exists as a file, not a directory. ` +
+          `Run with --force to overwrite, or remove the file manually.`
+        );
+      }
+    }
+  } else {
     mkdirSync(dest, { recursive: true });
   }
 

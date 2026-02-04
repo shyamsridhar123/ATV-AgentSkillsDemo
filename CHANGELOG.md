@@ -6,6 +6,13 @@ All notable changes to Beth are documented here. Format based on [Keep a Changel
 
 ---
 
+## [1.0.13] - 2026-02-04
+
+### Fixed
+- **ENOTDIR crash during init** — Fixed `copyDirRecursive` crashing when destination path exists as a file instead of a directory. Now properly detects the conflict and provides a clear error message (or removes the file with `--force`).
+
+---
+
 ## [Unreleased]
 
 ### Added
