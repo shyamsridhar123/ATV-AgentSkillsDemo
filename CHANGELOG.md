@@ -6,6 +6,13 @@ All notable changes to Beth are documented here. Format based on [Keep a Changel
 
 ---
 
+## [1.0.14] - 2026-02-04
+
+### Changed
+- **User-friendly error messages** — CLI errors now display formatted boxes with clear problem descriptions, fix instructions, and the exact command to run. No more raw stack traces.
+
+---
+
 ## [1.0.13] - 2026-02-04
 
 ### Fixed

@@ -409,6 +409,54 @@ function logError(message) {
   log(`✗ ${message}`, COLORS.red);
 }
 
+/**
+ * User-facing error with actionable fix instructions
+ */
+class UserError extends Error {
+  constructor(message, { problem, fix, command } = {}) {
+    super(message);
+    this.name = 'UserError';
+    this.problem = problem;
+    this.fix = fix;
+    this.command = command;
+  }
+}
+
+/**
+ * Display a user-friendly error with fix instructions
+ */
+function showUserError(error) {
+  console.log('');
+  console.log(`${COLORS.red}╔════════════════════════════════════════════════════════════╗${COLORS.reset}`);
+  console.log(`${COLORS.red}║${COLORS.reset}  ${COLORS.bright}${COLORS.red}Installation Error${COLORS.reset}                                       ${COLORS.red}║${COLORS.reset}`);
+  console.log(`${COLORS.red}╚════════════════════════════════════════════════════════════╝${COLORS.reset}`);
+  console.log('');
+  
+  if (error.problem) {
+    console.log(`${COLORS.bright}Problem:${COLORS.reset}`);
+    console.log(`  ${error.problem}`);
+    console.log('');
+  }
+  
+  if (error.fix) {
+    console.log(`${COLORS.bright}Fix:${COLORS.reset}`);
+    console.log(`  ${error.fix}`);
+    console.log('');
+  }
+  
+  if (error.command) {
+    console.log(`${COLORS.bright}Run this command:${COLORS.reset}`);
+    console.log(`  ${COLORS.cyan}${error.command}${COLORS.reset}`);
+    console.log('');
+  }
+  
+  if (globalThis.VERBOSE) {
+    console.log(`${COLORS.dim}Stack trace:${COLORS.reset}`);
+    console.log(`${COLORS.dim}${error.stack}${COLORS.reset}`);
+    console.log('');
+  }
+}
+
 function logInfo(message) {
   log(`  ${message}`, COLORS.cyan);
 }
@@ -737,9 +785,14 @@ function copyDirRecursive(src, dest, options = {}) {
         unlinkSync(dest);
         mkdirSync(dest, { recursive: true });
       } else {
-        throw new Error(
-          `Cannot copy directory: "${dest}" exists as a file, not a directory. ` +
-          `Run with --force to overwrite, or remove the file manually.`
+        const relativePath = relative(process.cwd(), dest);
+        throw new UserError(
+          `Path conflict: ${relativePath}`,
+          {
+            problem: `"${relativePath}" exists as a file, but Beth needs it to be a directory.`,
+            fix: 'Either remove the file manually, or use --force to let Beth handle it.',
+            command: 'npx beth-copilot@latest init --force'
+          }
         );
       }
     }
@@ -1075,7 +1128,15 @@ if (unknownFlags.length > 0) {
 
 switch (command) {
   case 'init':
-    await init(options);
+    try {
+      await init(options);
+    } catch (error) {
+      if (error instanceof UserError) {
+        showUserError(error);
+        process.exit(1);
+      }
+      throw error;
+    }
     break;
   case 'doctor':
     {
