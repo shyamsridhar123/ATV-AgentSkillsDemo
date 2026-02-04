@@ -1,6 +1,14 @@
-# AI Agent Skills Demo Repository
+# Beth - AI Agent System
 
-This repository demonstrates GitHub Copilot's multi-agent system with custom agents, skills, and handoffs for building IDEO-style digital products.
+A ruthless, hyper-competent AI orchestrator for GitHub Copilot multi-agent workflows.
+
+## Installation
+
+```bash
+npx beth-copilot init
+```
+
+That's it. See [docs/INSTALLATION.md](../docs/INSTALLATION.md) for detailed setup.
 
 ## Architecture Overview
 
@@ -22,15 +30,30 @@ Agents use `.agent.md` files with YAML frontmatter defining:
 - `handoffs` - Other agents this agent can transfer control to
 - `infer: true` - Enables the agent to be invoked as a subagent
 
-### The Six Agents
+### The Seven Agents
 | Agent | Purpose | Primary Tools |
 |-------|---------|---------------|
-| `IDEO-Orchestrator` | Routes work, spawns subagents | `runSubagent`, search tools |
-| `product-manager` | PRDs, requirements, roadmaps | PRD skill |
+| `Beth` | Orchestrator - Routes work, spawns subagents | `runSubagent`, search tools |
+| `product-manager` | WHAT to build: PRDs, user stories, priorities, success metrics | PRD skill |
 | `researcher` | User/market research, competitive analysis | Research synthesis |
-| `ux-designer` | Interface design, design systems | Framer skill |
-| `developer` | React/TypeScript/Next.js implementation | All editing tools, Framer skill |
+| `ux-designer` | HOW it works: component specs, design tokens, accessibility | Framer skill |
+| `developer` | React/TypeScript/Next.js - UI and full-stack | shadcn-ui skill, shadcn MCP, all editing tools |
+| `security-reviewer` | Security audits, threat modeling, compliance | security-analysis skill |
 | `tester` | QA, accessibility, performance testing | Testing tools |
+
+### Product Manager vs UX Designer
+
+These agents serve distinct purposes in the IDEO workflow:
+
+| | Product Manager | UX Designer |
+|---|---|---|
+| **Focus** | WHAT to build, WHY, WHEN | HOW it looks, feels, behaves |
+| **Outputs** | PRDs, user stories, RICE scores, roadmaps | Component specs, wireframes, design tokens, accessibility requirements |
+| **Key Question** | "Is this worth building?" | "How should this work?" |
+| **Example** | "Users need date filtering" (acceptance criteria) | "The date picker has these variants, states, and ARIA attributes" (spec) |
+
+**Use Product Manager** when defining requirements, prioritizing features, or making build/no-build decisions.
+**Use UX Designer** when specifying component behavior, design systems, or accessibility compliance.
 
 ### Subagent vs Handoff Pattern
 - **Handoffs**: User clicks button → context transferred → user reviews
@@ -55,6 +78,8 @@ Skills are domain-knowledge modules in `.github/skills/<name>/SKILL.md`. Agents 
 | Framer Components | `skills/framer-components/` | "framer component", "property controls" |
 | Vercel React Best Practices | `skills/vercel-react-best-practices/` | React/Next.js performance work |
 | Web Design Guidelines | `skills/web-design-guidelines/` | "review my UI", "check accessibility" |
+| shadcn/ui Components | `skills/shadcn-ui/` | "shadcn", "ui component", component installation |
+| Security Analysis | `skills/security-analysis/` | "security review", "OWASP", "threat model", "compliance" |
 
 ## Development Conventions
 
@@ -103,8 +128,8 @@ Apply human-centered design methodology across agent workflows:
 | Phase | Agent | Activities |
 |-------|-------|------------|
 | **Empathize** | `@researcher` | User interviews, observation, pain point discovery |
-| **Define** | `@product-manager` | Problem framing, requirements, success criteria |
-| **Ideate** | `@ux-designer` | Solution exploration, design patterns, prototypes |
+| **Define** | `@product-manager` | Problem framing, requirements, priorities, success metrics |
+| **Ideate** | `@ux-designer` | Component specs, design tokens, interaction patterns |
 | **Prototype** | `@developer` | Build to learn, rapid iteration, feature spikes |
 | **Test** | `@tester` | Validate assumptions, accessibility audits, performance |
 
@@ -162,16 +187,17 @@ export async function deleteUser(userId: string) {
 ## Workflow Patterns
 
 ### New Feature Flow
-1. `@IDEO-Orchestrator` → analyzes request, proposes workflow
-2. `@product-manager` → defines requirements (uses PRD skill)
+1. `@Beth` → analyzes request, proposes workflow
+2. `@product-manager` → defines WHAT (requirements, priorities, success metrics)
 3. `@researcher` → validates user needs (optional)
-4. `@ux-designer` → designs interface
+4. `@ux-designer` → specifies HOW (component specs, tokens, accessibility)
 5. `@developer` → implements in React/TypeScript
-6. `@tester` → verifies quality
+6. `@security-reviewer` → audits for vulnerabilities
+7. `@tester` → verifies quality
 
 ### Quick Commands
 ```
-@IDEO-Orchestrator Plan a feature for [description]
+@Beth Plan a feature for [description]
 @product-manager Create a PRD for [feature]
 @developer Implement [component/feature]
 @tester Write tests for [component]
