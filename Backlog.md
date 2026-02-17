@@ -10,6 +10,7 @@ Last updated: 2026-02-17
 
 | Task | Notes |
 |------|-------|
+| Phase 2 Wave 1: types + retry + config (.3, .2, .6) | `src/providers/types.ts` (17 types, LLMError class), `retry.ts` (exponential backoff + jitter, RetryError), `config.ts` (env → ~/.beth/.env precedence, ConfigError). All compile clean, 239 tests pass. |
 | Restructure Phase 2 dependency tree (beth-47w) | Types (.3) before interface (.1) to avoid contract churn. Streaming (.5) parallel with Azure client (.4). Added .9 for test-runner path. SDK: `openai` not `@azure/openai`. Config (.6): process.env → ~/.beth/.env precedence. |
 | E2E Test Suite Implementation (beth-0nl) | 155 tests across 7 subtasks: CLI E2E (init, doctor, quickstart) + Agent validation (frontmatter, handoffs, tools, suite integration). All passing. |
 | Full security review (beth-svq) | Overall risk: LOW. 0 critical/high findings. 2 medium (both well-mitigated). Clean npm audit, comprehensive path validation, minimal dependencies. |
@@ -56,7 +57,7 @@ Last updated: 2026-02-17
 
 | Task | Notes |
 |------|-------|
-| Phase 2: LLM Provider Integration (beth-47w) | 9 subtasks (restructured). Wave 1: types (.3), retry (.2), config (.6) in parallel. Wave 2: interface (.1, depends on .3), streaming (.5, depends on .3). Wave 3: Azure client (.4). Wave 4: tests (.7) + test-runner (.9). Wave 5: exports/docs (.8). SDK: use `openai` npm package with AzureOpenAI class, NOT `@azure/openai`. |
+| Phase 2: LLM Provider Integration (beth-47w) | **Wave 1 COMPLETE** (.3 types, .2 retry, .6 config). Wave 2 unblocked: interface (.1) + streaming (.5). Wave 3: Azure client (.4). Wave 4: tests (.7) + test-runner (.9). Wave 5: exports/docs (.8). SDK: use `openai` npm package with AzureOpenAI class, NOT `@azure/openai`. |
 
 ---
 
@@ -66,7 +67,7 @@ Last updated: 2026-02-17
 
 | Task | Notes |
 |------|-------|
-| Phase 2 Wave 1: .3 + .2 + .6 | Types, retry, config — all unblocked, run parallel |
+| ~~Phase 2 Wave 1: .3 + .2 + .6~~ | ~~DONE — types, retry, config all landed~~ |
 | Phase 2 Wave 2: .1 + .5 | Interface (needs .3), streaming (needs .3) — parallel after Wave 1 |
 | Phase 2 Wave 3: .4 | Azure OpenAI client — needs .1, .2, .3 |
 | Phase 2 Wave 4-5: .7 + .9, then .8 | Tests, test-runner update, then exports/docs |
