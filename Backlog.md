@@ -53,7 +53,9 @@ Last updated: 2026-02-16
 
 ## In Progress
 
-*None*
+| Task | Notes |
+|------|-------|
+| Phase 2: LLM Provider Integration (beth-47w) | 8 subtasks: Provider interface, retry logic, types, Azure OpenAI Responses API client, streaming handler, config management, tests, docs. Using patterns from Sharkbait repo analysis. |
 
 ---
 
@@ -61,7 +63,9 @@ Last updated: 2026-02-16
 
 ### High Priority (P1)
 
-*All P1 items completed.*
+| Task | Notes |
+|------|-------|
+| Phase 2 subtasks (.1-.8) | Interface, retry, types parallelizable; Azure client blocked on those 3 |
 
 ### Medium Priority (P2)
 
