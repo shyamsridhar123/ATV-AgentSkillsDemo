@@ -10,80 +10,17 @@ import assert from 'node:assert';
 import { join } from 'node:path';
 import { mkdirSync, writeFileSync, rmSync, existsSync } from 'node:fs';
 import { loadAgent, loadAgents } from './loader.js';
+import type { AgentHandoff, AgentLoadError } from './types.js';
 
 // Test fixtures directory
 const TEST_DIR = join(process.cwd(), 'test-fixtures-handoffs');
 const TEMPLATES_AGENTS_DIR = join(process.cwd(), 'templates', '.github', 'agents');
 
 /**
- * Helper to create a temporary agent file with given frontmatter
+ * Type guard to check if loadAgent result is an error
  */
-function createTestAgent(filename: string, frontmatter: Record<string, unknown>): string {
-  const filePath = join(TEST_DIR, filename);
-  const yaml = Object.entries(frontmatter)
-    .map(([key, value]) => `${key}: ${formatYamlValue(value)}`)
-    .join('\n');
-
-  const content = `---
-${yaml}
----
-
-# Test Agent
-
-This is a test agent body.
-`;
-
-  writeFileSync(filePath, content, 'utf-8');
-  return filePath;
-}
-
-/**
- * Format a value for YAML output
- */
-function formatYamlValue(value: unknown, indent = 0): string {
-  if (value === null || value === undefined) {
-    return 'null';
-  }
-  if (typeof value === 'boolean') {
-    return value ? 'true' : 'false';
-  }
-  if (typeof value === 'number') {
-    return String(value);
-  }
-  if (typeof value === 'string') {
-    // Quote strings with special characters
-    if (value.includes(':') || value.includes('#') || value.includes('\n') || value === '') {
-      return `"${value.replace(/"/g, '\\"')}"`;
-    }
-    return value;
-  }
-  if (Array.isArray(value)) {
-    if (value.length === 0) {
-      return '[]';
-    }
-    const items = value.map((item) => {
-      if (typeof item === 'object' && item !== null) {
-        // Format object in array
-        const objLines = Object.entries(item)
-          .map(([k, v], i) => {
-            const prefix = i === 0 ? '- ' : '  ';
-            return `${prefix}${k}: ${formatYamlValue(v, indent + 2)}`;
-          })
-          .join('\n' + ' '.repeat(indent));
-        return objLines;
-      }
-      return `- ${formatYamlValue(item)}`;
-    });
-    return '\n' + items.map((i) => ' '.repeat(indent) + i).join('\n');
-  }
-  if (typeof value === 'object') {
-    const entries = Object.entries(value);
-    if (entries.length === 0) {
-      return '{}';
-    }
-    return entries.map(([k, v]) => `${k}: ${formatYamlValue(v)}`).join(', ');
-  }
-  return String(value);
+function isError(result: ReturnType<typeof loadAgent>): result is { error: AgentLoadError } {
+  return 'error' in result;
 }
 
 /**
@@ -243,7 +180,7 @@ handoffs:
 
       const result = loadAgent(filePath);
 
-      assert.ok('error' in result, 'Should fail validation');
+      assert.ok(isError(result), 'Should fail validation');
       assert.ok(
         result.error.message.includes('missing required fields') ||
         result.error.message.includes('label'),
@@ -261,7 +198,7 @@ handoffs:
 
       const result = loadAgent(filePath);
 
-      assert.ok('error' in result, 'Should fail validation');
+      assert.ok(isError(result), 'Should fail validation');
       assert.ok(
         result.error.message.includes('missing required fields') ||
         result.error.message.includes('agent'),
@@ -279,7 +216,7 @@ handoffs:
 
       const result = loadAgent(filePath);
 
-      assert.ok('error' in result, 'Should fail validation');
+      assert.ok(isError(result), 'Should fail validation');
       assert.ok(
         result.error.message.includes('missing required fields') ||
         result.error.message.includes('prompt'),
@@ -298,7 +235,7 @@ handoffs:
 
       const result = loadAgent(filePath);
 
-      assert.ok('error' in result, 'Should fail validation for empty label');
+      assert.ok(isError(result), 'Should fail validation for empty label');
       assert.ok(
         result.error.message.includes('missing required fields') ||
         result.error.message.includes('label'),
@@ -317,7 +254,7 @@ handoffs:
 
       const result = loadAgent(filePath);
 
-      assert.ok('error' in result, 'Should fail validation for empty agent');
+      assert.ok(isError(result), 'Should fail validation for empty agent');
       assert.ok(
         result.error.message.includes('missing required fields') ||
         result.error.message.includes('agent'),
@@ -336,7 +273,7 @@ handoffs:
 
       const result = loadAgent(filePath);
 
-      assert.ok('error' in result, 'Should fail validation for empty prompt');
+      assert.ok(isError(result), 'Should fail validation for empty prompt');
       assert.ok(
         result.error.message.includes('missing required fields') ||
         result.error.message.includes('prompt'),
@@ -352,7 +289,7 @@ handoffs: "not an array"
 
       const result = loadAgent(filePath);
 
-      assert.ok('error' in result, 'Should fail validation for non-array handoffs');
+      assert.ok(isError(result), 'Should fail validation for non-array handoffs');
       assert.ok(
         result.error.message.includes('must be an array'),
         `Error should mention array requirement: ${result.error.message}`
@@ -371,7 +308,7 @@ handoffs:
       const result = loadAgent(filePath);
 
       // YAML interprets this as an object with keys, not an array
-      assert.ok('error' in result, 'Should fail validation for object handoffs');
+      assert.ok(isError(result), 'Should fail validation for object handoffs');
       assert.ok(
         result.error.message.includes('must be an array'),
         `Error should mention array requirement: ${result.error.message}`
@@ -391,7 +328,7 @@ handoffs:
 
       const result = loadAgent(filePath);
 
-      assert.ok('error' in result, 'Should fail when any handoff is invalid');
+      assert.ok(isError(result), 'Should fail when any handoff is invalid');
       assert.ok(
         result.error.message.includes('index 1') ||
         result.error.message.includes('missing required fields'),
@@ -456,7 +393,7 @@ handoffs:
         if (!agent.frontmatter.handoffs) continue;
 
         for (let i = 0; i < agent.frontmatter.handoffs.length; i++) {
-          const handoff = agent.frontmatter.handoffs[i];
+          const handoff: AgentHandoff = agent.frontmatter.handoffs[i];
 
           assert.ok(
             typeof handoff.label === 'string' && handoff.label.length > 0,
