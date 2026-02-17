@@ -2,7 +2,7 @@
 
 > *"I don't have time to explain things twice. Read this."*
 
-Last updated: 2026-02-04
+Last updated: 2026-02-16
 
 ---
 
@@ -10,6 +10,7 @@ Last updated: 2026-02-04
 
 | Task | Notes |
 |------|-------|
+| Full security review (beth-svq) | Overall risk: LOW. 0 critical/high findings. 2 medium (both well-mitigated). Clean npm audit, comprehensive path validation, minimal dependencies. |
 | Fix CLI ENOTDIR crash + user-friendly errors (v1.0.13-14) | `copyDirRecursive` now detects file-vs-directory conflicts, UserError class for formatted error boxes with Problem/Fix/Command sections |
 | CLI Phase 1 Complete: Agent & Skill Loaders | `src/core/agents/loader.ts`, `src/core/skills/loader.ts` with trigger extraction, 118 tests passing, updated architecture docs for Azure OpenAI |
 | CLI Polish & Documentation Fixes | Fixed security-reviewer.agent.md syntax, removed unnecessary backlog.md CLI dependency, corrected agent/skill counts in help, all 86 tests passing |
@@ -51,7 +52,9 @@ Last updated: 2026-02-04
 
 ## In Progress
 
-*Nothing currently in progress.*
+| Task | Issue | Notes |
+|------|-------|-------|
+| E2E Test Suite Implementation | `beth-0nl` | Epic with 7 subtasks: CLI E2E tests (init, doctor, quickstart) + Agent validation tests (frontmatter, handoffs, tools, full integration) |
 
 ---
 
