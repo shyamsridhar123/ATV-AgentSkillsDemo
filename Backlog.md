@@ -10,6 +10,7 @@ Last updated: 2026-02-17
 
 | Task | Notes |
 |------|-------|
+| Phase 2 Wave 3: Azure OpenAI client (.4) | `src/providers/azure.ts` — `AzureOpenAIProvider` extends `LLMProviderBase`. `AzureOpenAI` + `getBearerTokenProvider` for Entra ID auth (no API keys). Streaming with tool call deltas, error mapping to `LLMError`, retry for transient failures. `openai` v6.22.0 added. |
 | Phase 2 Wave 2: interface + streaming (.1, .5) | `src/providers/interface.ts` (LLMProviderBase abstract class, ChatRequestOptions, ProviderFactory/Registry), `streaming.ts` (StreamAccumulator class, collectStream, mapStream). Parallel implementation, 239 tests pass. |
 | Phase 2 Wave 1: types + retry + config (.3, .2, .6) | `src/providers/types.ts` (17 types, LLMError class), `retry.ts` (exponential backoff + jitter, RetryError), `config.ts` (env → ~/.beth/.env precedence, ConfigError). All compile clean, 239 tests pass. |
 | Restructure Phase 2 dependency tree (beth-47w) | Types (.3) before interface (.1) to avoid contract churn. Streaming (.5) parallel with Azure client (.4). Added .9 for test-runner path. SDK: `openai` not `@azure/openai`. Config (.6): process.env → ~/.beth/.env precedence. |
@@ -58,7 +59,7 @@ Last updated: 2026-02-17
 
 | Task | Notes |
 |------|-------|
-| Phase 2: LLM Provider Integration (beth-47w) | **Wave 1 COMPLETE** (.3 types, .2 retry, .6 config). **Wave 2 COMPLETE** (.1 interface, .5 streaming). Wave 3 unblocked: Azure client (.4). Wave 4: tests (.7) + test-runner (.9). Wave 5: exports/docs (.8). SDK: use `openai` npm package with AzureOpenAI class, NOT `@azure/openai`. |
+| Phase 2: LLM Provider Integration (beth-47w) | **Waves 1-3 COMPLETE**. Wave 3: Azure OpenAI client (.4) landed — `AzureOpenAI` + Entra ID `TokenCredential` auth, streaming, tool calls, error mapping. Wave 4 unblocked: tests (.7) + test-runner (.9). Wave 5: exports/docs (.8). |
 
 ---
 
@@ -70,7 +71,7 @@ Last updated: 2026-02-17
 |------|-------|
 | ~~Phase 2 Wave 1: .3 + .2 + .6~~ | ~~DONE — types, retry, config all landed~~ |
 | ~~Phase 2 Wave 2: .1 + .5~~ | ~~DONE — interface + streaming landed~~ |
-| Phase 2 Wave 3: .4 | Azure OpenAI client — needs .1, .2, .3 (all done, unblocked) |
+| ~~Phase 2 Wave 3: .4~~ | ~~DONE — Azure OpenAI client landed with Entra ID auth~~ |
 | Phase 2 Wave 4-5: .7 + .9, then .8 | Tests, test-runner update, then exports/docs |
 
 ### Medium Priority (P2)
