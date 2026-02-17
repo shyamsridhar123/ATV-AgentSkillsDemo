@@ -213,14 +213,15 @@ export abstract class LLMProviderBase {
    * Get a redacted summary of the configuration for logging.
    *
    * Returns configuration information safe for logging, with
-   * sensitive values (API keys, endpoints) masked.
+   * sensitive values (endpoints) masked. Credential type is shown
+   * but no secrets are exposed.
    */
   getConfigSummary(): Record<string, string> {
     return {
       provider: this.name,
       model: this.config.model,
       endpoint: this.maskEndpoint(this.config.endpoint),
-      apiKey: this.config.apiKey ? '***' : '(not set)',
+      auth: 'Entra ID (TokenCredential)',
     };
   }
 

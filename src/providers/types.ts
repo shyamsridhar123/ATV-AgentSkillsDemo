@@ -3,7 +3,10 @@
  *
  * Type definitions for the LLM provider abstraction layer.
  * Designed to be compatible with OpenAI/Azure OpenAI API shapes (Responses API).
+ * Authentication uses Entra ID (Azure AD) via @azure/identity TokenCredential.
  */
+
+import type { TokenCredential } from '@azure/identity';
 
 // =============================================================================
 // Error Types
@@ -244,6 +247,7 @@ export type LLMProvider = 'azure-openai';
 /**
  * Configuration for an LLM provider connection.
  * Contains credentials, model selection, and generation parameters.
+ * Authentication uses Entra ID via TokenCredential.
  */
 export interface LLMConfig {
   /** The LLM provider to use */
@@ -255,8 +259,8 @@ export interface LLMConfig {
   /** API endpoint URL */
   endpoint: string;
 
-  /** API key for authentication */
-  apiKey: string;
+  /** Entra ID token credential for authentication */
+  credential: TokenCredential;
 
   /** API version (required for Azure OpenAI) */
   apiVersion?: string;

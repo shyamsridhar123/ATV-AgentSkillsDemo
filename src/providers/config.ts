@@ -2,12 +2,15 @@
  * Configuration management for LLM providers.
  *
  * Loads and validates configuration from environment variables and ~/.beth/.env file.
+ * Uses Entra ID (Azure AD) for authentication via @azure/identity.
  * Follows a precedence order: process.env > ~/.beth/.env
  */
 
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import { homedir } from 'os';
+import type { TokenCredential } from '@azure/identity';
+import { DefaultAzureCredential } from '@azure/identity';
 
 /** Default API version for Azure OpenAI */
 const DEFAULT_API_VERSION = '2024-12-01-preview';
@@ -15,20 +18,20 @@ const DEFAULT_API_VERSION = '2024-12-01-preview';
 /** Environment variable names for Azure OpenAI configuration */
 const ENV_KEYS = {
   ENDPOINT: 'AZURE_OPENAI_ENDPOINT',
-  API_KEY: 'AZURE_OPENAI_API_KEY',
   DEPLOYMENT: 'AZURE_OPENAI_DEPLOYMENT',
   API_VERSION: 'AZURE_OPENAI_API_VERSION',
 } as const;
 
 /**
  * Configuration for an LLM provider.
+ * Authentication is handled via Entra ID (DefaultAzureCredential).
  */
 export interface ProviderConfig {
   /** Azure OpenAI resource endpoint URL */
   endpoint: string;
 
-  /** API key for authentication */
-  apiKey: string;
+  /** Entra ID token credential for authentication */
+  credential: TokenCredential;
 
   /** Model deployment name */
   deployment: string;
@@ -53,7 +56,8 @@ export class ConfigError extends Error {
     const message =
       `Missing required configuration: ${fieldList}\n\n` +
       `Set these environment variables, or add them to ~/.beth/.env:\n` +
-      missingFields.map((f) => `  ${f}=<value>`).join('\n');
+      missingFields.map((f) => `  ${f}=<value>`).join('\n') +
+      `\n\nAuthentication uses Entra ID (az login or AZURE_CLIENT_ID/AZURE_TENANT_ID/AZURE_CLIENT_SECRET).`;
 
     super(message);
     this.name = 'ConfigError';
@@ -172,6 +176,13 @@ function loadDotEnvFile(): Record<string, string> {
  * 1. `process.env` - Explicit environment variables
  * 2. `~/.beth/.env` - User dotfile fallback
  *
+ * Authentication uses Entra ID via DefaultAzureCredential, which supports:
+ * - Azure CLI (`az login`)
+ * - Environment variables (AZURE_CLIENT_ID, AZURE_TENANT_ID, AZURE_CLIENT_SECRET)
+ * - Managed Identity (in Azure environments)
+ * - Visual Studio Code credentials
+ *
+ * @param credential - Optional custom TokenCredential (defaults to DefaultAzureCredential)
  * @returns Validated provider configuration
  * @throws {ConfigError} If required fields are missing or endpoint is invalid
  *
@@ -187,7 +198,7 @@ function loadDotEnvFile(): Record<string, string> {
  * }
  * ```
  */
-export function loadConfig(): ProviderConfig {
+export function loadConfig(credential?: TokenCredential): ProviderConfig {
   // Load dotenv file as fallback
   const dotEnvVars = loadDotEnvFile();
 
@@ -198,7 +209,6 @@ export function loadConfig(): ProviderConfig {
 
   // Gather values
   const endpoint = getValue(ENV_KEYS.ENDPOINT);
-  const apiKey = getValue(ENV_KEYS.API_KEY);
   const deployment = getValue(ENV_KEYS.DEPLOYMENT);
   const apiVersion = getValue(ENV_KEYS.API_VERSION) ?? DEFAULT_API_VERSION;
 
@@ -207,9 +217,6 @@ export function loadConfig(): ProviderConfig {
 
   if (!endpoint) {
     missingFields.push(ENV_KEYS.ENDPOINT);
-  }
-  if (!apiKey) {
-    missingFields.push(ENV_KEYS.API_KEY);
   }
   if (!deployment) {
     missingFields.push(ENV_KEYS.DEPLOYMENT);
@@ -226,7 +233,7 @@ export function loadConfig(): ProviderConfig {
 
   return {
     endpoint: endpoint!,
-    apiKey: apiKey!,
+    credential: credential ?? new DefaultAzureCredential(),
     deployment: deployment!,
     apiVersion,
   };
