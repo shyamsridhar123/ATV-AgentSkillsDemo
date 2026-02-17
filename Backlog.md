@@ -3,6 +3,7 @@
 > *"I don't have time to explain things twice. Read this."*
 
 Last updated: 2026-02-17
+Epic closed: Phase 2 LLM Provider Integration
 
 ---
 
@@ -10,6 +11,8 @@ Last updated: 2026-02-17
 
 | Task | Notes |
 |------|-------|
+| **Phase 2: LLM Provider Integration COMPLETE** | Epic beth-47w closed. 9/9 subtasks done. `src/providers/` — types, retry, config, interface, streaming, azure client, barrel exports, 193 unit tests (359 total TS tests), test scripts updated. |
+| Phase 2 Wave 4-5: tests + exports (.7, .8, .9) | 193 provider tests across 5 files (types, retry, config, streaming, azure). Barrel exports in `src/providers/index.ts`. `test:ts` script updated for providers path. CLI-ARCHITECTURE.md Phase 2 section updated to reflect reality. |
 | Phase 2 Wave 3: Azure OpenAI client (.4) | `src/providers/azure.ts` — `AzureOpenAIProvider` extends `LLMProviderBase`. `AzureOpenAI` + `getBearerTokenProvider` for Entra ID auth (no API keys). Streaming with tool call deltas, error mapping to `LLMError`, retry for transient failures. `openai` v6.22.0 added. |
 | Phase 2 Wave 2: interface + streaming (.1, .5) | `src/providers/interface.ts` (LLMProviderBase abstract class, ChatRequestOptions, ProviderFactory/Registry), `streaming.ts` (StreamAccumulator class, collectStream, mapStream). Parallel implementation, 239 tests pass. |
 | Phase 2 Wave 1: types + retry + config (.3, .2, .6) | `src/providers/types.ts` (17 types, LLMError class), `retry.ts` (exponential backoff + jitter, RetryError), `config.ts` (env → ~/.beth/.env precedence, ConfigError). All compile clean, 239 tests pass. |
@@ -59,7 +62,7 @@ Last updated: 2026-02-17
 
 | Task | Notes |
 |------|-------|
-| Phase 2: LLM Provider Integration (beth-47w) | **Waves 1-3 COMPLETE**. Wave 3: Azure OpenAI client (.4) landed — `AzureOpenAI` + Entra ID `TokenCredential` auth, streaming, tool calls, error mapping. Wave 4 unblocked: tests (.7) + test-runner (.9). Wave 5: exports/docs (.8). |
+| *No active work* | Phase 2 complete. Ready for Phase 3. |
 
 ---
 
@@ -69,10 +72,7 @@ Last updated: 2026-02-17
 
 | Task | Notes |
 |------|-------|
-| ~~Phase 2 Wave 1: .3 + .2 + .6~~ | ~~DONE — types, retry, config all landed~~ |
-| ~~Phase 2 Wave 2: .1 + .5~~ | ~~DONE — interface + streaming landed~~ |
-| ~~Phase 2 Wave 3: .4~~ | ~~DONE — Azure OpenAI client landed with Entra ID auth~~ |
-| Phase 2 Wave 4-5: .7 + .9, then .8 | Tests, test-runner update, then exports/docs |
+| ~~Phase 2~~ | ~~COMPLETE — All 9 subtasks closed, epic closed~~ |
 
 ### Medium Priority (P2)
 

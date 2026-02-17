@@ -78,21 +78,26 @@ Make Beth work identically whether invoked via GitHub Copilot custom agents OR a
    - Extract trigger phrases from description
    - Build trigger → skill content map
 
-### Phase 2: LLM Integration
+### Phase 2: LLM Integration ✅
 
-5. **Create LLM provider interface** in `src/providers/interface.ts`:
-   ```typescript
-   interface LLMProvider {
-     chat(messages: Message[], options?: ChatOptions): AsyncIterableIterator<StreamChunk>;
-     countTokens(text: string): number;
-   }
-   ```
+5. **LLM provider interface** in `src/providers/interface.ts` ✅:
+   - `LLMProviderBase` abstract class with `chat()`, `chatStream()`, `countTokens()`
+   - `ChatRequestOptions` for per-request overrides (tools, temperature, etc.)
+   - `ProviderFactory` and `ProviderRegistry` types for dynamic instantiation
 
-6. **Implement Azure OpenAI provider** in `src/providers/azure.ts`:
-   - Use `@azure/openai` SDK for API calls
-   - Handle streaming responses
-   - Map Beth tool calls to OpenAI tool_call format
-   - Implement context window management (128k tokens for GPT-4)
+6. **Azure OpenAI provider** in `src/providers/azure.ts` ✅:
+   - Uses `openai` npm package (not `@azure/openai`) with `AzureOpenAI` client
+   - Entra ID auth via `@azure/identity` `TokenCredential` + `getBearerTokenProvider`
+   - Streaming with tool call delta assembly
+   - Error mapping to `LLMError` with retry for transient failures
+
+   Supporting modules:
+   - `src/providers/types.ts` — 17 types, `LLMError` class with error codes
+   - `src/providers/retry.ts` — Exponential backoff with jitter, `RetryError`
+   - `src/providers/config.ts` — `process.env` → `~/.beth/.env` precedence, `ConfigError`
+   - `src/providers/streaming.ts` — `StreamAccumulator`, `collectStream`, `mapStream`
+   - `src/providers/index.ts` — Barrel exports for the provider module
+   - 193 unit tests across 5 test files (359 total TS tests passing)
 
 ### Phase 3: Tool Abstraction
 
