@@ -54,7 +54,7 @@ describe('Agent Loader', () => {
       assert.strictEqual(agent.id, 'beth');
       assert.strictEqual(agent.frontmatter.name, 'Beth');
       assert.ok(agent.frontmatter.description?.includes('orchestrator'));
-      assert.strictEqual(agent.frontmatter.model, 'Claude Opus 4.5');
+      assert.strictEqual(agent.frontmatter.model, 'Claude Opus 4.6');
       assert.strictEqual(agent.frontmatter.infer, true);
       assert.ok(Array.isArray(agent.frontmatter.tools));
       assert.ok(Array.isArray(agent.frontmatter.handoffs));

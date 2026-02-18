@@ -56,7 +56,7 @@ describe('doctor command integration', () => {
       const agentContent = `---
 name: test-agent
 description: A test agent
-model: Claude Opus 4.5
+model: Claude Opus 4.6
 tools:
   - readFile
   - editFiles

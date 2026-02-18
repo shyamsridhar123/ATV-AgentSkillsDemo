@@ -165,13 +165,13 @@ describe('Tools validation via loader', () => {
 });
 
 describe('Model field validation', () => {
-  it('should accept Claude Opus 4.5 model', () => {
+  it('should accept Claude Opus 4.6 model', () => {
     const frontmatter: AgentFrontmatter = {
       name: 'test-agent',
-      model: 'Claude Opus 4.5',
+      model: 'Claude Opus 4.6',
     };
 
-    assert.strictEqual(frontmatter.model, 'Claude Opus 4.5');
+    assert.strictEqual(frontmatter.model, 'Claude Opus 4.6');
   });
 
   it('should accept claude-3-opus model', () => {

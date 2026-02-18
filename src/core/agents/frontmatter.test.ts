@@ -41,7 +41,7 @@ describe('Agent Frontmatter Validation', () => {
       const content = `---
 name: Test Agent
 description: A test agent for validation
-model: Claude Opus 4.5
+model: Claude Opus 4.6
 tools:
   - codebase
   - readFile
@@ -67,7 +67,7 @@ This is the body content.
       assert.strictEqual(agent.id, 'complete');
       assert.strictEqual(agent.frontmatter.name, 'Test Agent');
       assert.strictEqual(agent.frontmatter.description, 'A test agent for validation');
-      assert.strictEqual(agent.frontmatter.model, 'Claude Opus 4.5');
+      assert.strictEqual(agent.frontmatter.model, 'Claude Opus 4.6');
       assert.deepStrictEqual(agent.frontmatter.tools, ['codebase', 'readFile', 'editFiles']);
       assert.strictEqual(agent.frontmatter.infer, true);
       assert.ok(Array.isArray(agent.frontmatter.handoffs));
@@ -262,7 +262,7 @@ Agent with complex model identifier.
     it('2. missing name field returns error', () => {
       const content = `---
 description: Agent without a name
-model: Claude Opus 4.5
+model: Claude Opus 4.6
 ---
 
 This agent is missing the required name field.

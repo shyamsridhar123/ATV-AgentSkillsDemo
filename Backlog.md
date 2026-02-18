@@ -2,8 +2,7 @@
 
 > *"I don't have time to explain things twice. Read this."*
 
-Last updated: 2026-02-17
-Epic closed: Phase 2 LLM Provider Integration
+Last updated: 2026-02-18
 
 ---
 
@@ -11,6 +10,7 @@ Epic closed: Phase 2 LLM Provider Integration
 
 | Task | Notes |
 |------|-------|
+| Update agent models + add DeepWiki MCP | All agents set to Claude Opus 4.6 (security-reviewer → GPT 5.3-codex). Added DeepWiki MCP server (`https://mcp.deepwiki.com/mcp`) to both `mcp.json.example` files. |
 | **Phase 2: LLM Provider Integration COMPLETE** | Epic beth-47w closed. 9/9 subtasks done. `src/providers/` — types, retry, config, interface, streaming, azure client, barrel exports, 193 unit tests (359 total TS tests), test scripts updated. |
 | Phase 2 Wave 4-5: tests + exports (.7, .8, .9) | 193 provider tests across 5 files (types, retry, config, streaming, azure). Barrel exports in `src/providers/index.ts`. `test:ts` script updated for providers path. CLI-ARCHITECTURE.md Phase 2 section updated to reflect reality. |
 | Phase 2 Wave 3: Azure OpenAI client (.4) | `src/providers/azure.ts` — `AzureOpenAIProvider` extends `LLMProviderBase`. `AzureOpenAI` + `getBearerTokenProvider` for Entra ID auth (no API keys). Streaming with tool call deltas, error mapping to `LLMError`, retry for transient failures. `openai` v6.22.0 added. |
