@@ -6,6 +6,13 @@ All notable changes to Beth are documented here. Format based on [Keep a Changel
 
 ---
 
+## [Unreleased]
+
+### Fixed
+- Security-reviewer agent format — Removed obsolete `chatagent` wrapper to match standard YAML frontmatter format used by all other agents
+
+---
+
 ## [1.0.11] - 2026-02-01
 
 ### Changed
