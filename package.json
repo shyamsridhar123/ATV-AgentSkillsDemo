@@ -37,7 +37,7 @@
     "build": "tsc",
     "build:watch": "tsc --watch",
     "test": "node --test bin/lib/*.test.js",
-    "test:ts": "pnpm run build && node --test dist/lib/*.test.js dist/cli/commands/*.test.js dist/core/agents/*.test.js dist/core/skills/*.test.js dist/providers/*.test.js",
+    "test:ts": "pnpm run build && node --test dist/lib/*.test.js dist/cli/commands/*.test.js dist/core/agents/*.test.js dist/core/skills/*.test.js dist/providers/*.test.js dist/tools/*.test.js dist/tools/cli/*.test.js dist/tools/mcp/*.test.js",
     "test:all": "pnpm run test && pnpm run test:ts",
     "sbom:generate": "npx @cyclonedx/cyclonedx-npm --output-file sbom.json --output-format JSON",
     "prepublishOnly": "npm run build && npm run sbom:generate"

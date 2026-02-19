@@ -733,6 +733,48 @@ async function initializeBeads(cwd) {
   });
 }
 
+/**
+ * Runs `bd doctor` to verify beads configuration health.
+ * 
+ * SECURITY NOTE - shell:true usage:
+ * - bdPath is validated via getBeadsPath() (same as initializeBeads)
+ * - Arguments are HARDCODED ('doctor') - no user input is passed to the shell
+ * - Command injection risk: LOW (bdPath is validated, no user input in args)
+ * 
+ * @returns {Promise<boolean>} True if bd doctor passed
+ */
+async function runBeadsDoctor() {
+  log('\nRunning beads doctor to verify configuration...', COLORS.cyan);
+  
+  const bdPath = getBeadsPath();
+  if (!bdPath) {
+    logWarning('Cannot run beads doctor: bd not found.');
+    return false;
+  }
+  
+  return new Promise((resolve) => {
+    const child = spawn(bdPath, ['doctor'], {
+      stdio: 'inherit',
+      shell: true,
+    });
+    
+    child.on('close', (code) => {
+      if (code === 0) {
+        logSuccess('beads doctor passed!');
+        resolve(true);
+      } else {
+        logWarning('beads doctor reported issues. Run "bd doctor" manually to investigate.');
+        resolve(false);
+      }
+    });
+    
+    child.on('error', () => {
+      logWarning('Failed to run beads doctor. Run "bd doctor" manually.');
+      resolve(false);
+    });
+  });
+}
+
 function showHelp() {
   showBethBannerStatic({ showQuickHelp: false });
   console.log(`${COLORS.bright}Beth${COLORS.reset} - AI Orchestrator for GitHub Copilot
@@ -1046,6 +1088,11 @@ ${COLORS.yellow}╔════════════════════�
     }
   } else {
     logWarning('Skipped beads check (--skip-beads). Beth may not function correctly.');
+  }
+
+  // Run bd doctor to verify beads configuration
+  if (!skipBeads && getBeadsPath() && isBeadsInitialized(cwd)) {
+    await runBeadsDoctor();
   }
 
   // Final verification

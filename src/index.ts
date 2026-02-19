@@ -15,3 +15,6 @@ export * from './lib/index.js';
 
 // CLI commands
 export * from './cli/commands/index.js';
+
+// Tool abstraction layer
+export * from './tools/index.js';
