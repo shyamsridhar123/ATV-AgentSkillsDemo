@@ -10,6 +10,7 @@ Last updated: 2026-02-19
 
 | Task | Notes |
 |------|-------|
+| **Phase 3: Tool Abstraction Layer COMPLETE** | Epic beth-qh2 closed. 6/6 subtasks done. `src/tools/` — Tool interface, types, registry (.1), readFile + editFile (.2), search + terminal (.3), beads + subagent (.4), MCP client + bridge (.5), barrel exports + integration tests (.6). 243 tool tests, 728 total (727 pass, 1 skip, 0 fail). `createDefaultRegistry()` convenience factory, OpenAI function calling schema generation, MCP JSON-RPC 2.0 over stdio. |
 | Fix package-lock.json sync + CI guard | Lock file was stale (v1.0.14, missing optionalDependencies). Regenerated with `npm install`. Added `.github/workflows/ci.yml` running on all branches/PRs (`npm ci`, build, test). Local pre-commit hook blocks `package.json` commits without matching lock file. Pushed to `release/v1.0.15`. |
 | Run bd doctor during beth init (beth-mvp) | Added `runBeadsDoctor()` to `bin/cli.js` — after beads is installed and initialized during `npx beth-copilot init`, runs `bd doctor` to verify beads configuration health. Non-blocking (warns on failure, doesn't halt init). Same shell security pattern as `initializeBeads()`. 33/33 tests pass. |
 | Comprehensive README rewrite — MCP/CLI/A2A/architecture (beth-0jf) | Full README.md rewrite with Mermaid architecture diagram (Copilot + CLI → Core Engine → Agents → Skills → MCP → Provider), Tech Stack section (12 technologies), CLI Commands table, A2A orchestration model with delegation diagram + sequence diagram with parallel quality gates, MCP integrations (5 servers), Skills trigger table (8 skills), LLM Provider Layer diagram (config → auth → Azure → streaming → retry), TypeScript Core project structure, test coverage breakdown (485 tests by suite), IDEO design thinking, quality standards with enforcement gates. |
@@ -69,7 +70,7 @@ Last updated: 2026-02-19
 
 | Task | Notes |
 |------|-------|
-| Phase 3: Tool Abstraction Layer | Phases 3.2–3.6 committed (readFile, editFile, search, terminal, beads, subagent, MCP client/bridge, suite integration, default registry). 728 tests pass. Follow-up: remaining beth-b1m beads warnings, Dolt CGO rebuild needed for `bd` on this machine. |
+| *No active work* | Phase 3 complete. Ready for Phase 4 (Orchestration Engine). |
 
 ---
 
