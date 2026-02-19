@@ -2,7 +2,7 @@
 
 > *"I don't have time to explain things twice. Read this."*
 
-Last updated: 2026-02-01
+Last updated: 2026-02-19
 
 ---
 
@@ -10,6 +10,7 @@ Last updated: 2026-02-01
 
 | Task | Notes |
 |------|-------|
+| Fix security-reviewer agent format | Removed obsolete `chatagent` wrapper, now uses standard YAML frontmatter like other agents |
 | Add Work Tracking to all agent files | All 7 agents now reference AGENTS.md and use beads + Backlog.md dual tracking |
 | Add GitHub Actions security workflow | npm audit, gitleaks, CodeQL, SBOM generation |
 | Add pre-commit hooks with gitleaks | Secret scanning before commit |
