@@ -2,7 +2,7 @@
 
 > *"I don't have time to explain things twice. Read this."*
 
-Last updated: 2026-02-18
+Last updated: 2026-02-19
 
 ---
 
@@ -10,6 +10,7 @@ Last updated: 2026-02-18
 
 | Task | Notes |
 |------|-------|
+| Comprehensive README rewrite — MCP/CLI/A2A/architecture (beth-0jf) | Full README.md rewrite with Mermaid architecture diagram (Copilot + CLI → Core Engine → Agents → Skills → MCP → Provider), Tech Stack section (12 technologies), CLI Commands table, A2A orchestration model with delegation diagram + sequence diagram with parallel quality gates, MCP integrations (5 servers), Skills trigger table (8 skills), LLM Provider Layer diagram (config → auth → Azure → streaming → retry), TypeScript Core project structure, test coverage breakdown (485 tests by suite), IDEO design thinking, quality standards with enforcement gates. |
 | Add E2E tests: MCP validation, help command, init-to-doctor pipeline (beth-27j) | 3 new test files: `mcp.e2e.test.ts` (13 tests — template JSON validation, server structure, init copy/skip/force), `help.e2e.test.ts` (25 tests — all invocation methods, every CLI command/option listed, install contents documented, @Beth guidance, unknown command handling), `pipeline.e2e.test.ts` (14 tests — init→doctor compose correctly, agent/skill/beads checks, --force repairs, JSONC settings, A2A delegation enabled). Total: 52 new tests, 485 total (484 pass, 1 skip, 0 fail). |
 | Beads infrastructure cleanup (Dolt migration) | Fixed metadata.json (beads.db → dolt), set beads.role=maintainer, archived SQLite artifact, cleaned worktree cruft, imported JSONL into Dolt, generated repo fingerprint (50139a6c), set sync.mode=dolt-native. 8→4 warnings, 0 errors. Follow-up: beth-b1m for remaining cosmetic warnings. |
 | Update agent models + add DeepWiki MCP | All agents set to Claude Opus 4.6 (security-reviewer → GPT 5.3-codex). Added DeepWiki MCP server (`https://mcp.deepwiki.com/mcp`) to both `mcp.json.example` files. |
