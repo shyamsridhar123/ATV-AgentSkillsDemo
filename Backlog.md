@@ -10,6 +10,7 @@ Last updated: 2026-02-19
 
 | Task | Notes |
 |------|-------|
+| **Phase 4: Orchestration Engine COMPLETE** | Epic beth-y04 closed. 6/6 subtasks done. `src/core/` — ConversationContext (.1), AgentRouter (.2), HandoffManager (.3), Orchestrator agent loop (.4), 86 new tests (.5), barrel exports + wiring (.6). Full agentic loop: user message → route → skill injection → LLM → tool calls → subagent spawning → handoffs → response. Token-estimated context window truncation, tool call/result repair, observer callbacks, parallel subagent execution. 814 total tests (813 pass, 1 skip, 0 fail). |
 | **Phase 3: Tool Abstraction Layer COMPLETE** | Epic beth-qh2 closed. 6/6 subtasks done. `src/tools/` — Tool interface, types, registry (.1), readFile + editFile (.2), search + terminal (.3), beads + subagent (.4), MCP client + bridge (.5), barrel exports + integration tests (.6). 243 tool tests, 728 total (727 pass, 1 skip, 0 fail). `createDefaultRegistry()` convenience factory, OpenAI function calling schema generation, MCP JSON-RPC 2.0 over stdio. |
 | Fix package-lock.json sync + CI guard | Lock file was stale (v1.0.14, missing optionalDependencies). Regenerated with `npm install`. Added `.github/workflows/ci.yml` running on all branches/PRs (`npm ci`, build, test). Local pre-commit hook blocks `package.json` commits without matching lock file. Pushed to `release/v1.0.15`. |
 | Run bd doctor during beth init (beth-mvp) | Added `runBeadsDoctor()` to `bin/cli.js` — after beads is installed and initialized during `npx beth-copilot init`, runs `bd doctor` to verify beads configuration health. Non-blocking (warns on failure, doesn't halt init). Same shell security pattern as `initializeBeads()`. 33/33 tests pass. |
@@ -70,7 +71,7 @@ Last updated: 2026-02-19
 
 | Task | Notes |
 |------|-------|
-| *No active work* | Phase 3 complete. Ready for Phase 4 (Orchestration Engine). |
+| *No active work* | Phase 4 complete. Ready for Phase 5 (CLI Integration + Agent Orchestration wiring). |
 
 ---
 
