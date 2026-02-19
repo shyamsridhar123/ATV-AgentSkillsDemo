@@ -6,6 +6,23 @@ All notable changes to Beth are documented here. Format based on [Keep a Changel
 
 ---
 
+## [1.0.15] - 2026-02-19
+
+### Added
+- **LLM Provider abstraction** — Azure OpenAI provider with Entra ID auth, streaming support, retry logic, and full TypeScript types
+- **E2E test suite** — MCP validation, help command, init-to-doctor pipeline tests
+- **485 tests passing** — Comprehensive unit and integration test coverage
+
+### Changed
+- **Optional Azure dependencies** — `openai` and `@azure/identity` added as optionalDependencies so users only install them when needed
+- **README rewritten** — Architecture diagrams, tech stack docs, CLI/MCP/A2A/provider documentation
+
+### Fixed
+- **CodeQL security fixes** — Shell command built from environment values, incomplete URL substring sanitization
+- **Package-lock sync** — package-lock.json synced with package.json
+
+---
+
 ## [1.0.14] - 2026-02-04
 
 ### Changed
