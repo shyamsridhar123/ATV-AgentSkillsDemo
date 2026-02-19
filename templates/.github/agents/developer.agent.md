@@ -1,7 +1,7 @@
 ---
 name: developer
 description: Expert React/TypeScript/Next.js developer for IDEO-style cutting-edge applications. Specializes in App Router, Server Components, Server Actions, advanced TypeScript patterns, and performance optimization. Use for implementing features, writing components, debugging issues, or architectural decisions.
-model: Claude Opus 4.5
+model: Claude Opus 4.6
 infer: true
 tools:
   - codebase

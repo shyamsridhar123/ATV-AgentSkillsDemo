@@ -1,7 +1,7 @@
 ---
 name: product-manager
 description: Expert product manager for IDEO-style digital products. Specializes in product vision, user stories, roadmaps, and stakeholder alignment for React/TypeScript/Next.js applications. Use when defining features, prioritizing work, writing requirements, or making product decisions.
-model: Claude Opus 4.5
+model: Claude Opus 4.6
 infer: true
 tools:
   - codebase

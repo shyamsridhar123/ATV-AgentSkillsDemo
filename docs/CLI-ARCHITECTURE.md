@@ -37,7 +37,7 @@ Make Beth work identically whether invoked via GitHub Copilot custom agents OR a
                                          │
                     ┌────────────────────▼───────────────┐
                     │           LLM Provider             │
-                    │         (Anthropic Claude)         │
+                    │          (Azure OpenAI)            │
                     └────────────────────────────────────┘
 ```
 
@@ -45,7 +45,7 @@ Make Beth work identically whether invoked via GitHub Copilot custom agents OR a
 
 | Decision | Choice | Rationale |
 |----------|--------|-----------|
-| LLM Provider | Anthropic Claude | Model parity with Copilot, simpler implementation |
+| LLM Provider | **Azure OpenAI** | Enterprise-ready, integrated with Azure ecosystem |
 | Interaction Model | Interactive REPL | Natural UX matching Copilot Chat |
 | Agent Definitions | Single source (`.agent.md`) | Parsed for both interfaces |
 | Tool Architecture | Abstraction layer | Same intent, different implementations per interface |
@@ -78,21 +78,26 @@ Make Beth work identically whether invoked via GitHub Copilot custom agents OR a
    - Extract trigger phrases from description
    - Build trigger → skill content map
 
-### Phase 2: LLM Integration
+### Phase 2: LLM Integration ✅
 
-5. **Create LLM provider interface** in `src/providers/interface.ts`:
-   ```typescript
-   interface LLMProvider {
-     chat(messages: Message[], options?: ChatOptions): AsyncIterableIterator<StreamChunk>;
-     countTokens(text: string): number;
-   }
-   ```
+5. **LLM provider interface** in `src/providers/interface.ts` ✅:
+   - `LLMProviderBase` abstract class with `chat()`, `chatStream()`, `countTokens()`
+   - `ChatRequestOptions` for per-request overrides (tools, temperature, etc.)
+   - `ProviderFactory` and `ProviderRegistry` types for dynamic instantiation
 
-6. **Implement Anthropic provider** in `src/providers/anthropic.ts`:
-   - Use `@anthropic-ai/sdk` for API calls
-   - Handle streaming responses
-   - Map Beth tool calls to Anthropic tool_use format
-   - Implement context window management (100k+ tokens)
+6. **Azure OpenAI provider** in `src/providers/azure.ts` ✅:
+   - Uses `openai` npm package (not `@azure/openai`) with `AzureOpenAI` client
+   - Entra ID auth via `@azure/identity` `TokenCredential` + `getBearerTokenProvider`
+   - Streaming with tool call delta assembly
+   - Error mapping to `LLMError` with retry for transient failures
+
+   Supporting modules:
+   - `src/providers/types.ts` — 17 types, `LLMError` class with error codes
+   - `src/providers/retry.ts` — Exponential backoff with jitter, `RetryError`
+   - `src/providers/config.ts` — `process.env` → `~/.beth/.env` precedence, `ConfigError`
+   - `src/providers/streaming.ts` — `StreamAccumulator`, `collectStream`, `mapStream`
+   - `src/providers/index.ts` — Barrel exports for the provider module
+   - 193 unit tests across 5 test files (359 total TS tests passing)
 
 ### Phase 3: Tool Abstraction
 
@@ -143,7 +148,7 @@ Make Beth work identically whether invoked via GitHub Copilot custom agents OR a
 
 14. **Add CLI entry point** in `bin/cli.js`:
     - Add `chat` command alongside existing `init`
-    - Load API key from environment (`ANTHROPIC_API_KEY`)
+    - Load API key from environment (`AZURE_OPENAI_API_KEY`, `AZURE_OPENAI_ENDPOINT`)
     - Initialize orchestrator and start REPL
     - Handle graceful shutdown
 
@@ -207,7 +212,7 @@ beth/
 │   │       └── loader.ts         # Parse SKILL.md files
 │   ├── providers/
 │   │   ├── interface.ts          # LLM provider contract
-│   │   └── anthropic.ts          # Claude implementation
+│   │   └── azure.ts              # Azure OpenAI implementation
 │   ├── tools/
 │   │   ├── interface.ts          # Abstract tool interface
 │   │   ├── registry.ts           # Tool name → implementation map
@@ -241,7 +246,7 @@ beth/
 
 | Package | Purpose | Size |
 |---------|---------|------|
-| `@anthropic-ai/sdk` | Claude API | ~50KB |
+| `@azure/openai` | Azure OpenAI API | ~100KB |
 | `gray-matter` | YAML frontmatter parsing | ~15KB |
 | `chalk` | Terminal styling | ~20KB |
 | `marked` | Markdown to terminal | ~30KB |
@@ -283,7 +288,7 @@ beth/
 
 ## Future Considerations
 
-- **Multi-provider support**: Add OpenAI, Azure OpenAI, Ollama adapters
+- **Multi-provider support**: Add Anthropic Claude, OpenAI, Ollama adapters
 - **Local model fallback**: For cost-conscious or offline usage
 - **Web interface**: Browser-based REPL using same core
 - **VS Code extension**: Native extension using Beth core (not Copilot)

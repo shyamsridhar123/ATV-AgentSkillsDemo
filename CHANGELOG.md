@@ -6,10 +6,51 @@ All notable changes to Beth are documented here. Format based on [Keep a Changel
 
 ---
 
+## [1.0.14] - 2026-02-04
+
+### Changed
+- **User-friendly error messages** — CLI errors now display formatted boxes with clear problem descriptions, fix instructions, and the exact command to run. No more raw stack traces.
+
+---
+
+## [1.0.13] - 2026-02-04
+
+### Fixed
+- **ENOTDIR crash during init** — Fixed `copyDirRecursive` crashing when destination path exists as a file instead of a directory. Now properly detects the conflict and provides a clear error message (or removes the file with `--force`).
+
+---
+
 ## [Unreleased]
+
+### Added
+- **CLI TypeScript foundation** — Migrated CLI to TypeScript with proper build system
+- **Doctor command** — `beth doctor` validates installation and configuration
+- **Quickstart command** — `beth quickstart` for guided setup
+- **Agent schema types** — TypeScript types for agent definitions
+- **Unit tests** — 86 tests passing for CLI commands and path validation
+- **Architecture diagrams** — Interactive mermaid diagrams with zoom in README
+
+### Changed
+- **DEMO.md** — Rewritten with Beth's personality and beads integration
+- **P2 backlog completed** — Beth orchestrator references added to all agents, MCP skills updated, documentation fixes
 
 ### Fixed
 - Security-reviewer agent format — Removed obsolete `chatagent` wrapper to match standard YAML frontmatter format used by all other agents
+- Removed unnecessary backlog.md CLI dependency
+- Fixed security-reviewer.agent.md syntax errors
+- Corrected agent/skill counts in help output
+- Allowlisted security documentation examples in Gitleaks config
+
+### Documentation
+- CLI Architecture guide (docs/CLI-ARCHITECTURE.md)
+- CLI Implementation Plan (docs/CLI-IMPLEMENTATION-PLAN.md)
+
+---
+
+## [1.0.12] - 2026-02-01
+
+### Changed
+- Added CHANGELOG.md to npm package
 
 ---
 

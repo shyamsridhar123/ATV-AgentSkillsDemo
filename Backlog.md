@@ -10,7 +10,24 @@ Last updated: 2026-02-19
 
 | Task | Notes |
 |------|-------|
+| Comprehensive README rewrite — MCP/CLI/A2A/architecture (beth-0jf) | Full README.md rewrite with Mermaid architecture diagram (Copilot + CLI → Core Engine → Agents → Skills → MCP → Provider), Tech Stack section (12 technologies), CLI Commands table, A2A orchestration model with delegation diagram + sequence diagram with parallel quality gates, MCP integrations (5 servers), Skills trigger table (8 skills), LLM Provider Layer diagram (config → auth → Azure → streaming → retry), TypeScript Core project structure, test coverage breakdown (485 tests by suite), IDEO design thinking, quality standards with enforcement gates. |
+| Add E2E tests: MCP validation, help command, init-to-doctor pipeline (beth-27j) | 3 new test files: `mcp.e2e.test.ts` (13 tests — template JSON validation, server structure, init copy/skip/force), `help.e2e.test.ts` (25 tests — all invocation methods, every CLI command/option listed, install contents documented, @Beth guidance, unknown command handling), `pipeline.e2e.test.ts` (14 tests — init→doctor compose correctly, agent/skill/beads checks, --force repairs, JSONC settings, A2A delegation enabled). Total: 52 new tests, 485 total (484 pass, 1 skip, 0 fail). |
+| Beads infrastructure cleanup (Dolt migration) | Fixed metadata.json (beads.db → dolt), set beads.role=maintainer, archived SQLite artifact, cleaned worktree cruft, imported JSONL into Dolt, generated repo fingerprint (50139a6c), set sync.mode=dolt-native. 8→4 warnings, 0 errors. Follow-up: beth-b1m for remaining cosmetic warnings. |
+| Update agent models + add DeepWiki MCP | All agents set to Claude Opus 4.6 (security-reviewer → GPT 5.3-codex). Added DeepWiki MCP server (`https://mcp.deepwiki.com/mcp`) to both `mcp.json.example` files. |
+| **Phase 2: LLM Provider Integration COMPLETE** | Epic beth-47w closed. 9/9 subtasks done. `src/providers/` — types, retry, config, interface, streaming, azure client, barrel exports, 193 unit tests (359 total TS tests), test scripts updated. |
+| Phase 2 Wave 4-5: tests + exports (.7, .8, .9) | 193 provider tests across 5 files (types, retry, config, streaming, azure). Barrel exports in `src/providers/index.ts`. `test:ts` script updated for providers path. CLI-ARCHITECTURE.md Phase 2 section updated to reflect reality. |
+| Phase 2 Wave 3: Azure OpenAI client (.4) | `src/providers/azure.ts` — `AzureOpenAIProvider` extends `LLMProviderBase`. `AzureOpenAI` + `getBearerTokenProvider` for Entra ID auth (no API keys). Streaming with tool call deltas, error mapping to `LLMError`, retry for transient failures. `openai` v6.22.0 added. |
+| Phase 2 Wave 2: interface + streaming (.1, .5) | `src/providers/interface.ts` (LLMProviderBase abstract class, ChatRequestOptions, ProviderFactory/Registry), `streaming.ts` (StreamAccumulator class, collectStream, mapStream). Parallel implementation, 239 tests pass. |
+| Phase 2 Wave 1: types + retry + config (.3, .2, .6) | `src/providers/types.ts` (17 types, LLMError class), `retry.ts` (exponential backoff + jitter, RetryError), `config.ts` (env → ~/.beth/.env precedence, ConfigError). All compile clean, 239 tests pass. |
+| Restructure Phase 2 dependency tree (beth-47w) | Types (.3) before interface (.1) to avoid contract churn. Streaming (.5) parallel with Azure client (.4). Added .9 for test-runner path. SDK: `openai` not `@azure/openai`. Config (.6): process.env → ~/.beth/.env precedence. |
+| E2E Test Suite Implementation (beth-0nl) | 155 tests across 7 subtasks: CLI E2E (init, doctor, quickstart) + Agent validation (frontmatter, handoffs, tools, suite integration). All passing. |
+| Full security review (beth-svq) | Overall risk: LOW. 0 critical/high findings. 2 medium (both well-mitigated). Clean npm audit, comprehensive path validation, minimal dependencies. |
+| Fix CLI ENOTDIR crash + user-friendly errors (v1.0.13-14) | `copyDirRecursive` now detects file-vs-directory conflicts, UserError class for formatted error boxes with Problem/Fix/Command sections |
+| CLI Phase 1 Complete: Agent & Skill Loaders | `src/core/agents/loader.ts`, `src/core/skills/loader.ts` with trigger extraction, 118 tests passing, updated architecture docs for Azure OpenAI |
+| CLI Polish & Documentation Fixes | Fixed security-reviewer.agent.md syntax, removed unnecessary backlog.md CLI dependency, corrected agent/skill counts in help, all 86 tests passing |
+| CLI TypeScript Foundation + Commands | TypeScript build system, doctor/quickstart commands, agent schema types, pathValidation migration |
 | Fix security-reviewer agent format | Removed obsolete `chatagent` wrapper, now uses standard YAML frontmatter like other agents |
+| Create PR and review process documentation | CONTRIBUTING.md, PR template, issue templates for bug/feature/security |
 | Add Work Tracking to all agent files | All 7 agents now reference AGENTS.md and use beads + Backlog.md dual tracking |
 | Add GitHub Actions security workflow | npm audit, gitleaks, CodeQL, SBOM generation |
 | Add pre-commit hooks with gitleaks | Secret scanning before commit |
@@ -42,13 +59,15 @@ Last updated: 2026-02-19
 | Create azure-operations skill | .github/skills/azure-operations/SKILL.md for Azure MCP |
 | Fix MCP-SETUP.md package names | Corrected Brave/Playwright packages, removed nonexistent MS Learn MCP |
 | Update tester/developer agents for Playwright | MCP integration patterns added |
-| Create PR and review process documentation | CONTRIBUTING.md, PR template, issue templates for bug/feature/security |
+| Update DEMO.md for Beth | Rewritten with Beth's personality, voice, and beads integration |
 
 ---
 
 ## In Progress
 
-*Nothing currently in progress.*
+| Task | Notes |
+|------|-------|
+| *No active work* | Phase 2 complete. Ready for Phase 3. |
 
 ---
 
@@ -56,7 +75,9 @@ Last updated: 2026-02-19
 
 ### High Priority (P1)
 
-*All P1 items completed.*
+| Task | Notes |
+|------|-------|
+| ~~Phase 2~~ | ~~COMPLETE — All 9 subtasks closed, epic closed~~ |
 
 ### Medium Priority (P2)
 
@@ -64,7 +85,6 @@ Last updated: 2026-02-19
 
 ### Low Priority (P3)
 
-- [ ] **Update DEMO.md for Beth** — Create example workflows showcasing Beth's personality
 - [ ] Consider additional skills (API security, performance profiling)
 
 ---

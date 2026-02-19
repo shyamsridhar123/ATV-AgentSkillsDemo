@@ -17,6 +17,10 @@ regexes = [
   '''your-api-key-here''',
   '''sk-xxx''',
   '''AZURE_.*=your-.*''',
+  # Security documentation examples (showing bad patterns on purpose)
+  '''sk_live_abc123''',
+  '''API_KEY = 'sk_live_abc123''',
+  '''NEXT_PUBLIC_API_SECRET=sk_live''',
 ]
 
 # Files to ignore
