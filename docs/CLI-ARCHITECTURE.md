@@ -99,25 +99,27 @@ Make Beth work identically whether invoked via GitHub Copilot custom agents OR a
    - `src/providers/index.ts` — Barrel exports for the provider module
    - 193 unit tests across 5 test files (359 total TS tests passing)
 
-### Phase 3: Tool Abstraction
+### Phase 3: Tool Abstraction ✅
 
-7. **Define abstract tool interface** in `src/tools/interface.ts`:
-   - Standard interface for all tools regardless of runtime
-   - Input/output schemas per tool
-   - Execution context (working directory, permissions)
+7. **Abstract tool interface** in `src/tools/interface.ts` ✅:
+   - `Tool` interface with name, description, inputSchema, execute()
+   - `toToolDefinition()` bridges to OpenAI function calling format
+   - Supporting: `src/tools/types.ts` (ToolError, ToolResult, ToolContext, ToolPermissions)
+   - `src/tools/registry.ts` (ToolRegistry with register/get/list/getDefinitions)
 
-8. **Implement CLI tool implementations** in `src/tools/cli/`:
-   - `readFile.ts` - `fs.readFileSync` wrapper with error handling
-   - `editFile.ts` - Diff-based editing with user confirmation
-   - `search.ts` - `ripgrep` wrapper or `node-glob` fallback
-   - `terminal.ts` - `child_process.spawn` with streaming output
-   - `beads.ts` - Shell out to `bd` CLI
-   - `subagent.ts` - Spawn new agent conversation, return result
+8. **CLI tool implementations** in `src/tools/cli/` ✅:
+   - `readFile.ts` — File reading with line ranges and path validation
+   - `editFile.ts` — Atomic string replacement with single-match enforcement
+   - `search.ts` — Ripgrep with Node.js fallback
+   - `terminal.ts` — Secure command execution via execFile('/bin/sh', ['-c', cmd])
+   - `beads.ts` — Issue tracking via bd CLI wrapper
+   - `subagent.ts` — Agent spawning stub (full implementation in Phase 4)
+   - 108 tests across 6 test files
 
-9. **Implement MCP client** in `src/tools/mcp/`:
-   - Parse `mcp.json` for server configs
-   - Implement MCP protocol client for server communication
-   - Expose MCP server tools through standard tool interface
+9. **MCP client** in `src/tools/mcp/` ✅:
+   - `client.ts` — JSON-RPC 2.0 over stdio, MCP protocol handshake
+   - `bridge.ts` — JSONC config parsing, tool namespacing (mcp_server_tool)
+   - 33 tests across 2 test files
 
 ### Phase 4: Orchestration Engine
 
