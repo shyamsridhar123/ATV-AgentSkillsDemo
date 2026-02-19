@@ -10,6 +10,7 @@ Last updated: 2026-02-18
 
 | Task | Notes |
 |------|-------|
+| Beads infrastructure cleanup (Dolt migration) | Fixed metadata.json (beads.db → dolt), set beads.role=maintainer, archived SQLite artifact, cleaned worktree cruft, imported JSONL into Dolt, generated repo fingerprint (50139a6c), set sync.mode=dolt-native. 8→4 warnings, 0 errors. Follow-up: beth-b1m for remaining cosmetic warnings. |
 | Update agent models + add DeepWiki MCP | All agents set to Claude Opus 4.6 (security-reviewer → GPT 5.3-codex). Added DeepWiki MCP server (`https://mcp.deepwiki.com/mcp`) to both `mcp.json.example` files. |
 | **Phase 2: LLM Provider Integration COMPLETE** | Epic beth-47w closed. 9/9 subtasks done. `src/providers/` — types, retry, config, interface, streaming, azure client, barrel exports, 193 unit tests (359 total TS tests), test scripts updated. |
 | Phase 2 Wave 4-5: tests + exports (.7, .8, .9) | 193 provider tests across 5 files (types, retry, config, streaming, azure). Barrel exports in `src/providers/index.ts`. `test:ts` script updated for providers path. CLI-ARCHITECTURE.md Phase 2 section updated to reflect reality. |
