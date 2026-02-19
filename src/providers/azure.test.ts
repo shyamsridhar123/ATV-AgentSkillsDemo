@@ -133,10 +133,8 @@ describe('AzureOpenAIProvider instantiation and properties', () => {
         assert.strictEqual(summary.provider, 'azure-openai');
         assert.strictEqual(summary.model, 'gpt-4');
         assert.strictEqual(summary.auth, 'Entra ID (TokenCredential)');
-        // Endpoint should be masked
-        assert.ok(summary.endpoint.includes('***'), 'Endpoint should be masked');
-        const parsedEndpoint = new URL(summary.endpoint);
-        assert.strictEqual(parsedEndpoint.host, 'my-resource.openai.azure.com');
+        // Endpoint should be masked with host preserved and path replaced
+        assert.strictEqual(summary.endpoint, 'https://my-resource.openai.azure.com/***');
       } catch {
         // Constructor may fail in some environments
       }
