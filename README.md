@@ -586,6 +586,7 @@ See [MCP Integrations](#mcp-integrations) above or [docs/MCP-SETUP.md](docs/MCP-
 | [MCP Setup](docs/MCP-SETUP.md) | Optional server integrations |
 | [CLI Architecture](docs/CLI-ARCHITECTURE.md) | Dual-interface design, implementation phases |
 | [System Flow](docs/SYSTEM-FLOW.md) | Agent orchestration diagrams |
+| [Contributing Guide](CONTRIBUTING.md) | How to contribute (PR process, review checklist) |
 | [Changelog](CHANGELOG.md) | Version history |
 | [Security Policy](SECURITY.md) | Vulnerability reporting |
 

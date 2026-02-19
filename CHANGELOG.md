@@ -35,6 +35,7 @@ All notable changes to Beth are documented here. Format based on [Keep a Changel
 - **P2 backlog completed** — Beth orchestrator references added to all agents, MCP skills updated, documentation fixes
 
 ### Fixed
+- Security-reviewer agent format — Removed obsolete `chatagent` wrapper to match standard YAML frontmatter format used by all other agents
 - Removed unnecessary backlog.md CLI dependency
 - Fixed security-reviewer.agent.md syntax errors
 - Corrected agent/skill counts in help output

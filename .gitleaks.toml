@@ -31,7 +31,6 @@ paths = [
   '''package-lock\.json''',
   # Documentation examples
   '''docs/.*\.md''',
-  # Agent instruction files (contain security anti-pattern examples)
-  '''\.github/agents/security-reviewer\.agent\.md''',
-  '''templates/\.github/agents/security-reviewer\.agent\.md''',
+  # Security agent documentation contains intentional bad examples
+  '''.*security-reviewer\.agent\.md''',
 ]

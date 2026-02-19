@@ -26,6 +26,8 @@ Last updated: 2026-02-19
 | CLI Phase 1 Complete: Agent & Skill Loaders | `src/core/agents/loader.ts`, `src/core/skills/loader.ts` with trigger extraction, 118 tests passing, updated architecture docs for Azure OpenAI |
 | CLI Polish & Documentation Fixes | Fixed security-reviewer.agent.md syntax, removed unnecessary backlog.md CLI dependency, corrected agent/skill counts in help, all 86 tests passing |
 | CLI TypeScript Foundation + Commands | TypeScript build system, doctor/quickstart commands, agent schema types, pathValidation migration |
+| Fix security-reviewer agent format | Removed obsolete `chatagent` wrapper, now uses standard YAML frontmatter like other agents |
+| Create PR and review process documentation | CONTRIBUTING.md, PR template, issue templates for bug/feature/security |
 | Add Work Tracking to all agent files | All 7 agents now reference AGENTS.md and use beads + Backlog.md dual tracking |
 | Add GitHub Actions security workflow | npm audit, gitleaks, CodeQL, SBOM generation |
 | Add pre-commit hooks with gitleaks | Secret scanning before commit |
