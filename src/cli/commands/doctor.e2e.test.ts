@@ -7,7 +7,7 @@
 
 import { describe, it, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert';
-import { execSync } from 'child_process';
+import { execFileSync } from 'child_process';
 import { existsSync, mkdirSync, writeFileSync, rmSync } from 'fs';
 import { join, dirname } from 'path';
 import { tmpdir } from 'os';
@@ -27,8 +27,8 @@ const CLI_PATH = join(__dirname, '..', '..', '..', 'bin', 'cli.js');
  */
 function runDoctor(cwd: string, args: string[] = []): { stdout: string; stderr: string; code: number } {
   try {
-    const argStr = args.length > 0 ? ` ${args.join(' ')}` : '';
-    const stdout = execSync(`node ${CLI_PATH} doctor${argStr}`, {
+    const cliArgs = [CLI_PATH, 'doctor', ...args];
+    const stdout = execFileSync('node', cliArgs, {
       cwd,
       encoding: 'utf-8',
       stdio: ['pipe', 'pipe', 'pipe'],
