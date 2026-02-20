@@ -34,112 +34,42 @@ She commands seven specialized agents, each with their own expertise, tools, and
 
 ```mermaid
 flowchart TB
-    subgraph UI["User Interfaces"]
-        Copilot["VS Code Copilot Chat<br/><i>Agent Mode</i>"]
-        CLI["Beth CLI<br/><i>init · doctor · quickstart</i>"]
+    subgraph Input["Entry Points"]
+        Copilot["VS Code Copilot Chat"]
+        CLI["Beth CLI"]
     end
 
-    subgraph Orchestration["Orchestration Engine"]
-        Orch["Orchestrator<br/><i>Agentic loop · Fan-out</i>"]
-        Router["AgentRouter<br/><i>@mention · skill match</i>"]
-        Context["ConversationContext<br/><i>Token truncation</i>"]
-        Handoffs["HandoffManager<br/><i>Context transfer</i>"]
+    subgraph Engine["Orchestration Engine"]
+        Orch["Orchestrator<br/><i>Route → LLM → Tools → Response</i>"]
     end
 
-    subgraph Core["Core Loaders"]
-        AgentLoader["Agent Loader<br/><i>Parse .agent.md</i>"]
-        SkillLoader["Skill Loader<br/><i>Parse SKILL.md + triggers</i>"]
-        PathVal["Path Validation<br/><i>Traversal/injection guard</i>"]
-    end
-
-    subgraph ToolLayer["Tool Abstraction Layer"]
-        ToolReg["ToolRegistry<br/><i>register · get · getDefinitions</i>"]
-        ReadFile["readFile"]
-        EditFile["editFile"]
-        Search["search"]
-        Terminal["terminal"]
-        BeadsTool["beads"]
-        Subagent["subagent"]
-        MCPBridge["MCP Bridge<br/><i>JSON-RPC 2.0 · stdio</i>"]
-    end
-
-    subgraph Agents["Specialist Agents (A2A)"]
-        Beth["@Beth<br/><i>Orchestrator</i>"]
+    subgraph Agents["Specialist Agents"]
+        Beth["@Beth"]
         PM["@product-manager"]
-        Researcher["@researcher"]
-        Designer["@ux-designer"]
-        Developer["@developer"]
-        Security["@security-reviewer"]
-        Tester["@tester"]
+        UX["@ux-designer"]
+        Dev["@developer"]
+        Sec["@security-reviewer"]
+        Test["@tester"]
+        Res["@researcher"]
     end
 
-    subgraph Skills["Skills — On-Demand Knowledge"]
-        PRD["PRD Generation"]
-        Framer["Framer Components"]
-        React["React/Next.js<br/>Best Practices"]
-        WebDesign["Web Design<br/>Guidelines"]
-        Shadcn["shadcn/ui"]
-        SecAnalysis["Security Analysis"]
-        AzureOps["Azure Operations"]
-        WebSearch["Web Search"]
+    subgraph Capabilities["Capabilities"]
+        Tools["Tools<br/><i>files · terminal · search · beads</i>"]
+        Skills["Skills<br/><i>PRD · React · shadcn · security</i>"]
+        MCPs["MCP Servers<br/><i>shadcn · Playwright · Azure</i>"]
     end
 
-    subgraph MCP["MCP Servers — Optional"]
-        MCPShadcn["shadcn/ui"]
-        MCPPlaywright["Playwright"]
-        MCPAzure["Azure"]
-        MCPBrave["Brave Search"]
-        MCPDeepWiki["DeepWiki"]
-    end
+    LLM["Azure OpenAI<br/><i>Entra ID · Streaming</i>"]
 
-    subgraph Provider["LLM Provider Layer"]
-        Interface["LLMProviderBase<br/><i>Abstract interface</i>"]
-        Azure["AzureOpenAIProvider<br/><i>Entra ID · Streaming</i>"]
-        Retry["Retry + Backoff<br/><i>Exponential w/ jitter</i>"]
-        Stream["StreamAccumulator<br/><i>Tool call assembly</i>"]
-        Config["Config Loader<br/><i>env → ~/.beth/.env</i>"]
-    end
-
-    subgraph Tracking["Work Tracking"]
-        Beads["beads (bd CLI)<br/><i>Agent coordination</i>"]
-        Backlog["Backlog.md<br/><i>Human changelog</i>"]
-    end
-
-    Copilot --> Beth
-    CLI --> Core
-    UI --> Orchestration
-    Orch --> Router
-    Orch --> Context
-    Orch --> Handoffs
-    Router --> Core
-    Orch -->|"fan-out"| Agents
-    Beth -->|"routes"| PM & Researcher & Designer & Developer & Security & Tester
-
-    Orch -->|"tool calls"| ToolReg
-    ToolReg --> ReadFile & EditFile & Search & Terminal & BeadsTool & Subagent
-    ToolReg --> MCPBridge
-    MCPBridge -->|"JSON-RPC"| MCP
-
-    PM -.->|"loads"| PRD
-    Designer -.->|"loads"| Framer & WebDesign
-    Developer -.->|"loads"| React & Shadcn
-    Security -.->|"loads"| SecAnalysis
-    Researcher -.->|"loads"| WebSearch
-
-    Orch -->|"chat"| Provider
-    Azure --> Interface
-    Retry --> Azure
-    Stream --> Azure
-    Config --> Azure
-
-    Beth -.->|"tracks"| Beads
-    Beth -.->|"updates"| Backlog
+    Copilot & CLI --> Orch
+    Orch --> Beth
+    Beth -->|"delegates"| PM & UX & Dev & Sec & Test & Res
+    Orch <-->|"chat"| LLM
+    Orch --> Tools & Skills & MCPs
 
     style Beth fill:#1e3a5f,color:#fff
-    style Orchestration fill:#fff3e0
-    style ToolLayer fill:#e3f2fd
-    style Core fill:#f0f4f8
-    style Provider fill:#e8f5e9
+    style Engine fill:#fff3e0
+    style Capabilities fill:#e3f2fd
 ```
 
 ---
