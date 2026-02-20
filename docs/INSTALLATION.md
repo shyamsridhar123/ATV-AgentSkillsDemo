@@ -477,7 +477,40 @@ Beth will:
 1. Verify beads is installed: `which bd` or `bd --version`
 2. Initialize beads in project: `bd init`
 3. Run diagnostics: `bd doctor`
-4. Check PATH includes `~/.local/bin`
+4. Check PATH includes `~/.local/bin`: `export PATH="$HOME/.local/bin:$PATH"`
+
+### Beads CGO / Dolt Build Errors (Linux/WSL)
+
+**Symptom:** `bd init` or `bd doctor` fails with errors mentioning CGO, `gcc`, or Dolt compilation
+
+Beads uses Dolt (a Git-for-data database) under the hood, which requires CGO (C bindings for Go) to compile. This is common on fresh Linux/WSL installations that lack a C compiler.
+
+**Solutions:**
+
+```bash
+# 1. Install the C compiler toolchain
+sudo apt-get update && sudo apt-get install -y build-essential gcc
+
+# 2. Ensure CGO is enabled
+export CGO_ENABLED=1
+
+# 3. Re-install beads
+curl -fsSL https://raw.githubusercontent.com/steveyegge/beads/main/scripts/install.sh | bash
+
+# 4. Verify
+bd doctor
+```
+
+**If Dolt migration causes errors after upgrading beads:**
+
+```bash
+# Nuclear option: reinitialize beads (loses local issue history)
+rm -rf .beads
+bd init
+
+# Or try the auto-repair first
+bd doctor --fix
+```
 
 ### Windows Path Issues
 

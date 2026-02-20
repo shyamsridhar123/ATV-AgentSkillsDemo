@@ -14,15 +14,19 @@ They broke her wings once. They forgot she had claws.
 
 Beth is a **multi-agent AI orchestrator** with a TypeScript runtime, CLI toolchain, MCP integrations, and agent-to-agent (A2A) delegation—all driven by a ruthless coordinator who runs your development team the way Beth Dutton runs Schwartz & Meyer.
 
-She commands seven specialized agents, each with their own expertise, tools, and handoff chains. On top of the GitHub Copilot agent layer, Beth now ships a **TypeScript core engine** with parsed agent/skill schemas, an Azure OpenAI LLM provider, streaming tool-call support, and a CLI that validates your entire installation in one command.
+She commands seven specialized agents, each with their own expertise, tools, and handoff chains. On top of the GitHub Copilot agent layer, Beth ships a **TypeScript core engine** with a full agentic loop: agent routing, conversation context management, tool calling, subagent spawning, and agent-to-agent handoffs—all backed by an Azure OpenAI LLM provider with streaming and retry.
 
-**The system has three execution layers:**
+**The system has four execution layers:**
 
 | Layer | What It Does | Status |
 |-------|-------------|--------|
 | **Copilot Agents** | `.agent.md` definitions running in VS Code Agent Mode | Live |
-| **CLI Toolchain** | `beth init`, `beth doctor`, `beth quickstart` — TypeScript commands with 485 tests | Live |
+| **CLI Toolchain** | `beth init`, `beth doctor`, `beth quickstart` — TypeScript commands | Live |
+| **Orchestration Engine** | Fan-out routing, tool calling loop, subagent spawning, handoffs | Live |
+| **Tool Abstraction** | 6 CLI tools + MCP bridge — uniform interface for all agent capabilities | Live |
 | **LLM Provider** | Azure OpenAI with Entra ID auth, streaming, retry, tool calling | Live |
+
+**814 tests.** 813 pass, 1 skip, 0 fail.
 
 ---
 
@@ -35,11 +39,28 @@ flowchart TB
         CLI["Beth CLI<br/><i>init · doctor · quickstart</i>"]
     end
 
-    subgraph Core["Beth Core Engine — TypeScript"]
-        AgentLoader["Agent Loader<br/><i>Parse .agent.md frontmatter</i>"]
+    subgraph Orchestration["Orchestration Engine"]
+        Orch["Orchestrator<br/><i>Agentic loop · Fan-out</i>"]
+        Router["AgentRouter<br/><i>@mention · skill match</i>"]
+        Context["ConversationContext<br/><i>Token truncation</i>"]
+        Handoffs["HandoffManager<br/><i>Context transfer</i>"]
+    end
+
+    subgraph Core["Core Loaders"]
+        AgentLoader["Agent Loader<br/><i>Parse .agent.md</i>"]
         SkillLoader["Skill Loader<br/><i>Parse SKILL.md + triggers</i>"]
-        Types["Agent & Skill Types<br/><i>Typed schemas</i>"]
         PathVal["Path Validation<br/><i>Traversal/injection guard</i>"]
+    end
+
+    subgraph ToolLayer["Tool Abstraction Layer"]
+        ToolReg["ToolRegistry<br/><i>register · get · getDefinitions</i>"]
+        ReadFile["readFile"]
+        EditFile["editFile"]
+        Search["search"]
+        Terminal["terminal"]
+        BeadsTool["beads"]
+        Subagent["subagent"]
+        MCPBridge["MCP Bridge<br/><i>JSON-RPC 2.0 · stdio</i>"]
     end
 
     subgraph Agents["Specialist Agents (A2A)"]
@@ -86,19 +107,26 @@ flowchart TB
 
     Copilot --> Beth
     CLI --> Core
-    Core --> Agents
+    UI --> Orchestration
+    Orch --> Router
+    Orch --> Context
+    Orch --> Handoffs
+    Router --> Core
+    Orch -->|"fan-out"| Agents
     Beth -->|"routes"| PM & Researcher & Designer & Developer & Security & Tester
+
+    Orch -->|"tool calls"| ToolReg
+    ToolReg --> ReadFile & EditFile & Search & Terminal & BeadsTool & Subagent
+    ToolReg --> MCPBridge
+    MCPBridge -->|"JSON-RPC"| MCP
 
     PM -.->|"loads"| PRD
     Designer -.->|"loads"| Framer & WebDesign
     Developer -.->|"loads"| React & Shadcn
     Security -.->|"loads"| SecAnalysis
     Researcher -.->|"loads"| WebSearch
-    Developer -.->|"uses"| MCPShadcn
-    Tester -.->|"uses"| MCPPlaywright
-    Security -.->|"uses"| MCPAzure
-    Researcher -.->|"uses"| MCPBrave
 
+    Orch -->|"chat"| Provider
     Azure --> Interface
     Retry --> Azure
     Stream --> Azure
@@ -108,6 +136,8 @@ flowchart TB
     Beth -.->|"updates"| Backlog
 
     style Beth fill:#1e3a5f,color:#fff
+    style Orchestration fill:#fff3e0
+    style ToolLayer fill:#e3f2fd
     style Core fill:#f0f4f8
     style Provider fill:#e8f5e9
 ```
@@ -126,7 +156,7 @@ flowchart TB
 | **LLM Provider** | Azure OpenAI via `openai` SDK | Entra ID auth (no API keys), streaming + tool calling |
 | **Auth** | `@azure/identity` DefaultAzureCredential | az login, managed identity, VS Code creds |
 | **Frontmatter** | `gray-matter` | Parses `.agent.md` and `SKILL.md` YAML |
-| **Testing** | Node.js built-in test runner | 485 tests — unit, integration, E2E |
+| **Testing** | Node.js built-in test runner | 814 tests — unit, integration, E2E |
 | **Task Tracking** | beads (`bd` CLI) | Dependency-aware issue tracking for agents |
 | **Package Manager** | pnpm | Lockfile committed |
 
@@ -331,6 +361,99 @@ Skills are domain-knowledge modules that agents load automatically when trigger 
 
 ---
 
+## Orchestration Engine (Fan-Out Pattern)
+
+The orchestration engine is Beth's brain — the full agentic loop that processes user messages through routing, skill injection, LLM calls, tool execution, and subagent spawning.
+
+```mermaid
+flowchart TB
+    User["User Message"] --> Route["AgentRouter\n@mention · skill match · default"]
+    Route --> Context["ConversationContext\nBuild system prompt + history"]
+    Context --> Skills{"Skill triggers match?"}
+    Skills -->|yes| Inject["Inject skill into system prompt"]
+    Skills -->|no| LLM
+    Inject --> LLM["LLM Call\nAzure OpenAI"]
+    LLM --> Decision{"Response type?"}
+    Decision -->|text| Done["Return response"]
+    Decision -->|tool calls| ToolExec["Execute tools\nvia ToolRegistry"]
+    ToolExec --> SubCheck{"Subagent request?"}
+    SubCheck -->|yes| SubAgent["Spawn child loop\ndepth-limited"]
+    SubCheck -->|no| ToolResult["Return tool result"]
+    SubAgent --> ToolResult
+    ToolResult --> LLM
+    Decision -->|handoff| Handoff["HandoffManager\nContext transfer"]
+    Handoff --> Route
+
+    style User fill:#1e3a5f,color:#fff
+    style LLM fill:#e8f5e9
+    style ToolExec fill:#e3f2fd
+    style SubAgent fill:#fff3e0
+```
+
+**Key capabilities:**
+- **Agent routing** — `@mention` parsing, skill trigger matching, current-agent stickiness
+- **Fan-out tool calling** — Iterative LLM → tool call → result → LLM loop (up to 25 iterations)
+- **Subagent spawning** — Nested agent loops with depth limiting (default: 3 levels deep)
+- **Handoff management** — Context transfer between agents with conversation summaries, ping-pong loop detection
+- **Context window management** — Token-estimated truncation with tool call/result consistency repair
+- **Observer callbacks** — Hook into routing decisions, LLM calls, tool executions, handoffs for logging/UI
+
+```typescript
+// Full orchestrator usage
+import { Orchestrator, createDefaultRegistry } from 'beth-copilot';
+
+const orchestrator = new Orchestrator({
+  agents: loadAgents('.github/agents'),
+  skills: loadSkills('.github/skills'),
+  provider: new AzureOpenAIProvider(config),
+  toolRegistry: createDefaultRegistry(),
+  toolContext: { workingDir: process.cwd(), permissions: { ... } },
+});
+
+const result = await orchestrator.processMessage('Implement the login page');
+// result.response — final text
+// result.agentId — who handled it
+// result.toolCallsExecuted — what tools ran
+// result.subagentResults — any nested agent work
+// result.injectedSkills — skills loaded for this turn
+```
+
+---
+
+## Tool Abstraction Layer
+
+A uniform interface for all agent capabilities — file I/O, terminal, search, beads, subagent spawning, and MCP server tools. Tools expose OpenAI-compatible function calling schemas so the LLM can invoke them directly.
+
+| Tool | What It Does | Key Features |
+|------|-------------|-------------- |
+| **readFile** | Read file contents | Line ranges, path validation, traversal guards |
+| **editFile** | Atomic string replacement | Single-match enforcement, whitespace-safe |
+| **search** | Ripgrep search | Node.js fallback, regex support, file filtering |
+| **terminal** | Execute shell commands | `execFile('/bin/sh')` — no shell injection, timeouts |
+| **beads** | Issue tracking | `bd create`, `bd close`, `bd list` via CLI wrapper |
+| **subagent** | Spawn nested agents | Returns structured result for orchestrator to process |
+| **MCP Bridge** | External tool servers | JSON-RPC 2.0 over stdio, JSONC config, namespaced tools |
+
+```typescript
+import { createDefaultRegistry, ToolRegistry, loadAllMCPTools } from 'beth-copilot';
+
+// Built-in tools
+const registry = createDefaultRegistry();
+// → readFile, editFile, search, terminal, beads, subagent
+
+// Add MCP server tools
+const { tools: mcpTools } = await loadAllMCPTools('.vscode/mcp.json');
+for (const tool of mcpTools) {
+  registry.register(tool); // e.g., mcp_shadcn_listComponents
+}
+
+// Get OpenAI function calling definitions
+const definitions = registry.getDefinitions();
+// Pass to LLM as tools parameter
+```
+
+---
+
 ## LLM Provider Layer
 
 The TypeScript core includes a production-ready provider abstraction for running Beth outside VS Code.
@@ -383,7 +506,7 @@ flowchart LR
 
 ## TypeScript Core
 
-The engine that powers everything. Parses agent and skill definitions, validates configuration, and provides typed APIs.
+The engine that powers everything. Parses agent and skill definitions, manages conversations, routes requests, executes tools, and provides typed APIs for the full agentic loop.
 
 ### Project Structure
 
@@ -392,11 +515,15 @@ beth/
 ├── bin/
 │   └── cli.js                      # CLI entry point (init, doctor, quickstart, help)
 ├── src/
-│   ├── index.ts                    # Barrel exports
+│   ├── index.ts                    # Barrel exports (all public API)
 │   ├── cli/commands/
 │   │   ├── doctor.ts               # System health validation
 │   │   └── quickstart.ts           # Guided setup flow
 │   ├── core/
+│   │   ├── orchestrator.ts         # Agentic loop: route → LLM → tools → response
+│   │   ├── router.ts               # @mention routing, skill matching, agent lookup
+│   │   ├── context.ts              # Conversation state, token truncation, skill injection
+│   │   ├── handoffs.ts             # Agent-to-agent transfers, loop detection
 │   │   ├── agents/
 │   │   │   ├── types.ts            # AgentDefinition, AgentFrontmatter, AgentHandoff
 │   │   │   └── loader.ts           # Parse .agent.md → typed definitions
@@ -405,6 +532,20 @@ beth/
 │   │       └── loader.ts           # Parse SKILL.md, extract triggers, match queries
 │   ├── lib/
 │   │   └── pathValidation.ts       # Traversal/injection guards
+│   ├── tools/
+│   │   ├── interface.ts            # Tool interface + toToolDefinition()
+│   │   ├── types.ts                # ToolError, ToolResult, ToolContext, ToolPermissions
+│   │   ├── registry.ts             # ToolRegistry: register, get, list, getDefinitions
+│   │   ├── cli/
+│   │   │   ├── readFile.ts         # File reading with line ranges
+│   │   │   ├── editFile.ts         # Atomic string replacement
+│   │   │   ├── search.ts           # Ripgrep with Node.js fallback
+│   │   │   ├── terminal.ts         # Secure command execution
+│   │   │   ├── beads.ts            # Issue tracking via bd CLI
+│   │   │   └── subagent.ts         # Agent spawning interface
+│   │   └── mcp/
+│   │       ├── client.ts           # JSON-RPC 2.0 over stdio
+│   │       └── bridge.ts           # JSONC config, tool namespacing
 │   └── providers/
 │       ├── interface.ts            # LLMProviderBase abstract class
 │       ├── azure.ts                # AzureOpenAIProvider (Entra ID, streaming, tools)
@@ -425,17 +566,36 @@ beth/
 
 ### Test Coverage
 
-**485 tests** (484 pass, 1 skip, 0 fail):
+**814 tests** (813 pass, 1 skip, 0 fail):
 
 | Suite | Tests | What It Covers |
 |-------|-------|---------------|
-| Agent loader | 30+ | Frontmatter parsing, validation, code fence stripping, handoffs |
-| Skill loader | 30+ | Trigger extraction, query matching, trigger map building |
+| **Orchestration** | | |
+| Orchestrator | 30+ | Agentic loop, tool calling, subagent spawning, iteration limits |
+| AgentRouter | 30+ | @mention routing, skill matching, agent resolution |
+| ConversationContext | 30+ | Token truncation, skill injection, tool call repair |
+| HandoffManager | 30+ | Context transfer, depth limits, ping-pong detection |
+| **Tools** | | |
+| Tool interface | 20+ | Tool → ToolDefinition conversion, schema validation |
+| ToolRegistry | 20+ | Register, get, list, definitions, duplicate detection |
+| readFile | 30+ | Line ranges, path validation, encoding |
+| editFile | 30+ | String replacement, single-match enforcement |
+| search | 30+ | Ripgrep, Node.js fallback, regex, file filtering |
+| terminal | 30+ | Command execution, timeouts, output capture |
+| beads | 30+ | bd CLI wrapper, create/close/list/ready |
+| subagent | 30+ | Spawn interface, result marking, agent validation |
+| MCP client | 30+ | JSON-RPC 2.0, protocol handshake, tool listing |
+| MCP bridge | 30+ | JSONC parsing, tool namespacing, error handling |
+| Tool suite | 10+ | createDefaultRegistry, integration tests |
+| **Providers** | | |
 | Provider types | 40+ | LLMError codes, ChatMessage shapes, ToolDefinition schemas |
 | Provider retry | 40+ | Exponential backoff, jitter, transient error detection |
 | Provider config | 30+ | Env precedence, dotenv parsing, URL validation |
 | Provider streaming | 40+ | Chunk accumulation, tool call delta assembly |
 | Provider Azure | 30+ | Message mapping, response mapping, error wrapping |
+| **Core & CLI** | | |
+| Agent loader | 30+ | Frontmatter parsing, validation, code fence stripping, handoffs |
+| Skill loader | 30+ | Trigger extraction, query matching, trigger map building |
 | CLI E2E | 52 | Init/doctor pipeline, MCP template validation, help output |
 | Path validation | 33 | Traversal detection, injection prevention, allowlists |
 
@@ -571,6 +731,36 @@ Is it magic? No. It's just competence with very good hair.
 - **VS Code** with GitHub Copilot extension
 - **GitHub Copilot Chat** in Agent mode
 - [**beads**](https://github.com/steveyegge/beads) for task tracking (`bd` CLI)
+
+### Installing Beads
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/steveyegge/beads/main/scripts/install.sh | bash
+```
+
+**CGO Troubleshooting (Linux/WSL):** Beads uses Dolt (a Git-for-data database) which requires CGO. If `bd init` or `bd doctor` fails with CGO-related errors:
+
+```bash
+# Install C compiler toolchain (required for CGO)
+sudo apt-get update && sudo apt-get install -y build-essential gcc
+
+# Verify CGO is available
+export CGO_ENABLED=1
+go env CGO_ENABLED  # should print 1
+
+# Re-install beads
+curl -fsSL https://raw.githubusercontent.com/steveyegge/beads/main/scripts/install.sh | bash
+```
+
+**Common beads issues:**
+- `bd: command not found` — Add `~/.local/bin` to your PATH: `export PATH="$HOME/.local/bin:$PATH"`
+- `bd doctor` warnings about metadata — Run `bd doctor --fix` to auto-repair
+- Dolt migration errors — Delete `.beads/` and re-initialize with `bd init`
+
+```bash
+# Verify beads is working
+bd doctor
+```
 
 ### Optional: MCP Servers
 
