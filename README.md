@@ -252,23 +252,18 @@ flowchart LR
 - **Task tracking** — beads (`bd`) for epics, subtasks, dependencies
 - **MCP integration** — Optional external tool servers (shadcn, Playwright, Azure)
 
-```typescript
-// Beth spawns a specialist
-runSubagent({
-  agents: loadAgents('.github/agents'),
-  skills: loadSkills('.github/skills'),
-  provider: new AzureOpenAIProvider(config),
-  toolRegistry: createDefaultRegistry(),
-  toolContext: { workingDir: process.cwd(), permissions: { ... } },
-});
-
-const result = await orchestrator.processMessage('Implement the login page');
-// result.response — final text
-// result.agentId — who handled it
-// result.toolCallsExecuted — what tools ran
-// result.subagentResults — any nested agent work
-// result.injectedSkills — skills loaded for this turn
 ```
+@Beth implement the login page
+→ Beth routes to @developer, tracks work in beads
+
+@Beth review this PR for security vulnerabilities
+→ Beth routes to @security-reviewer, injects security-analysis skill
+
+@Beth plan the dashboard feature
+→ Beth routes to @product-manager for requirements, then @ux-designer for specs
+```
+
+> Invoke Beth by selecting `@Beth` in VS Code Copilot Chat (Agent Mode).
 
 ---
 
@@ -287,21 +282,20 @@ A uniform interface for all agent capabilities — file I/O, terminal, search, b
 | **MCP Bridge** | External tool servers | JSON-RPC 2.0 over stdio, JSONC config, namespaced tools |
 
 ```typescript
-import { createDefaultRegistry, ToolRegistry, loadAllMCPTools } from 'beth-copilot';
+import { loadAgents, loadSkills, getInferableAgents, buildTriggerMap } from 'beth-copilot';
 
-// Built-in tools
-const registry = createDefaultRegistry();
-// → readFile, editFile, search, terminal, beads, subagent
+// Inspect loaded agent definitions
+const { agents, errors: agentErrors } = loadAgents('.github/agents');
+// → each AgentDefinition has: id, frontmatter (name, tools, handoffs), body
 
-// Add MCP server tools
-const { tools: mcpTools } = await loadAllMCPTools('.vscode/mcp.json');
-for (const tool of mcpTools) {
-  registry.register(tool); // e.g., mcp_shadcn_listComponents
-}
+// Find agents available for subagent spawning
+const subagents = getInferableAgents({ agents, errors: agentErrors });
+// → agents with infer: true in frontmatter
 
-// Get OpenAI function calling definitions
-const definitions = registry.getDefinitions();
-// Pass to LLM as tools parameter
+// Inspect loaded skill modules and their trigger phrases
+const { skills, errors: skillErrors } = loadSkills('.github/skills');
+const triggerMap = buildTriggerMap({ skills, errors: skillErrors });
+// → Map of trigger phrase → SkillDefinition for runtime injection
 ```
 
 ---
