@@ -34,10 +34,9 @@ She commands seven specialized agents, each with their own expertise, tools, and
 
 ```mermaid
 flowchart LR
-    Input["Copilot Chat / CLI"] --> Beth["@Beth<br/>Orchestrator"]
-    Beth --> Agents["Specialists<br/><i>PM · UX · Dev · Sec · Test · Research</i>"]
-    Beth <--> LLM["Azure OpenAI"]
-    Beth --> Capabilities["Tools · Skills · MCP"]
+    Input["Copilot Chat / CLI"] --> Beth["@Beth"]
+    Beth --> Agents["PM · UX · Dev · Sec · Test · Research"]
+    Beth --> Skills["Skills · MCP"]
 
     style Beth fill:#1e3a5f,color:#fff
 ```
@@ -123,10 +122,9 @@ Beth doesn't micromanage. She delegates to specialists over **subagent** and **h
 
 ```mermaid
 flowchart LR
-    Beth["@Beth"] -->|delegates| PM["PM"] & UX["UX"] & Dev["Dev"] & Sec["Sec"] & Test["Test"] & Res["Research"]
-    PM -.->|subagent| UX
-    UX -.->|subagent| Dev
-    Dev -.->|subagent| Test
+    Beth["@Beth"] -->|subagent| PM["PM"] & UX["UX"] & Dev["Dev"] & Sec["Sec"] & Test["Test"] & Res["Research"]
+    PM -.->|handoff| UX & Dev
+    Dev -.->|handoff| Test & UX
 
     style Beth fill:#1e3a5f,color:#fff
 ```
@@ -153,33 +151,27 @@ runSubagent({
 sequenceDiagram
     participant U as User
     participant B as Beth
-    participant PM as Product Manager
-    participant UX as UX Designer
-    participant D as Developer
-    participant S as Security
-    participant T as Tester
+    participant PM as PM
+    participant UX as UX
+    participant D as Dev
+    participant S as Sec
+    participant T as Test
 
-    U->>B: "Build me a feature"
-    B->>B: Assess & Plan
-
-    B->>PM: Define requirements
-    PM-->>B: PRD + user stories
-
-    B->>UX: Design the experience
-    UX-->>B: Component specs + tokens
-
-    B->>D: Implement feature
-    D-->>B: Implementation complete
-
-    par Parallel quality gates
-        B->>S: Security review
-        S-->>B: OWASP approved
+    U->>B: Request
+    B->>PM: Requirements
+    PM-->>B: PRD
+    B->>UX: Design
+    UX-->>B: Specs
+    B->>D: Build
+    D-->>B: Done
+    par Quality gates
+        B->>S: Security
+        S-->>B: Approved
     and
-        B->>T: Test & verify
-        T-->>B: a11y + regression pass
+        B->>T: Verify
+        T-->>B: Pass
     end
-
-    B->>U: Feature complete ✅
+    B->>U: Ship ✅
 ```
 
 **Bug Hunt?** Tester → Developer → Security → Tester
@@ -239,35 +231,30 @@ Skills are domain-knowledge modules that agents load automatically when trigger 
 
 ---
 
-## Orchestration Engine (Fan-Out Pattern)
+## How It Works
 
-The orchestration engine is Beth's brain — the full agentic loop that processes user messages through routing, skill injection, LLM calls, tool execution, and subagent spawning.
+Beth runs inside VS Code Copilot Agent Mode. The `@Beth` agent parses requests, delegates to specialist agents via subagent spawning, and tracks work through beads.
 
 ```mermaid
 flowchart LR
-    Msg["User Message"] --> Route["Router"] --> LLM["LLM"]
-    LLM -->|text| Done["Response"]
-    LLM -->|tool calls| Tools["Tool Registry"]
-    Tools --> LLM
-    LLM -->|handoff| Route
+    Msg["@Beth message"] --> Route["Agent Router"]
+    Route -->|subagent| Agent["Specialist"]
+    Agent -->|tools| Work["Code · Test · Review"]
+    Agent -->|done| Route
+    Route --> Done["Response"]
 
-    style LLM fill:#e8f5e9
-    style Tools fill:#e3f2fd
+    style Route fill:#1e3a5f,color:#fff
 ```
 
 **Key capabilities:**
-- **Agent routing** — `@mention` parsing, skill trigger matching, current-agent stickiness
-- **Fan-out tool calling** — Iterative LLM → tool call → result → LLM loop (up to 25 iterations)
-- **Subagent spawning** — Nested agent loops with depth limiting (default: 3 levels deep)
-- **Handoff management** — Context transfer between agents with conversation summaries, ping-pong loop detection
-- **Context window management** — Token-estimated truncation with tool call/result consistency repair
-- **Observer callbacks** — Hook into routing decisions, LLM calls, tool executions, handoffs for logging/UI
+- **Agent routing** — `@mention` parsing, subagent spawning, handoff chains
+- **Skill injection** — Domain knowledge loaded on trigger phrases
+- **Task tracking** — beads (`bd`) for epics, subtasks, dependencies
+- **MCP integration** — Optional external tool servers (shadcn, Playwright, Azure)
 
 ```typescript
-// Full orchestrator usage
-import { Orchestrator, createDefaultRegistry } from 'beth-copilot';
-
-const orchestrator = new Orchestrator({
+// Beth spawns a specialist
+runSubagent({
   agents: loadAgents('.github/agents'),
   skills: loadSkills('.github/skills'),
   provider: new AzureOpenAIProvider(config),
@@ -319,25 +306,24 @@ const definitions = registry.getDefinitions();
 
 ---
 
-## LLM Provider Layer
+## CLI Toolchain
 
-The TypeScript core includes a production-ready provider abstraction for running Beth outside VS Code.
+The CLI handles scaffolding and health checks — distributing agent and skill files to target projects.
 
 ```mermaid
 flowchart LR
-    Config["Config<br/><i>env + dotfile</i>"] --> Azure["AzureOpenAIProvider"]
-    Entra["Entra ID Auth"] --> Azure
-    Azure --> Stream["Streaming + Retry"]
-
-    style Azure fill:#e8f5e9
+    CLI["beth"] --> Init["init"]
+    CLI --> Doctor["doctor"]
+    CLI --> QS["quickstart"]
+    Init --> Templates[".agent.md · SKILL.md · settings"]
+    Doctor --> Checks["Node ≥18 · beads · agents · skills"]
+    QS --> Init & Doctor
 ```
 
-**Key capabilities:**
-- **Entra ID auth** — No API keys. Uses `DefaultAzureCredential` (az login, managed identity, VS Code creds)
-- **Streaming** — `chatStream()` yields `ChatChunk` objects with incremental tool call delta assembly
-- **Retry** — Exponential backoff with jitter for 429/5xx/network errors. Non-transient errors fail fast
-- **Config** — `process.env` → `~/.beth/.env` precedence chain
-- **193 provider tests** covering types, retry, config, streaming, and Azure client
+**Commands:**
+- `beth init` — Scaffold agents, skills, VS Code settings, beads tracking
+- `beth doctor` — Validate Node.js, beads CLI, agent frontmatter, skill directories
+- `beth quickstart` — Run init + doctor + beads init in one shot
 
 ---
 
@@ -444,29 +430,8 @@ Beth follows human-centered design methodology across agent workflows:
 
 ```mermaid
 flowchart LR
-    subgraph Empathize["1. Empathize"]
-        E["@researcher<br/>User interviews<br/>Pain points"]
-    end
-
-    subgraph Define["2. Define"]
-        D["@product-manager<br/>Problem framing<br/>Requirements"]
-    end
-
-    subgraph Ideate["3. Ideate"]
-        I["@ux-designer<br/>Component specs<br/>Patterns"]
-    end
-
-    subgraph Prototype["4. Prototype"]
-        P["@developer<br/>Build to learn<br/>Feature spikes"]
-    end
-
-    subgraph Test["5. Test"]
-        T["@tester<br/>Validate<br/>Accessibility"]
-    end
-
-    E --> D --> I --> P --> T
+    E["1. Empathize<br/>@researcher"] --> D["2. Define<br/>@product-manager"] --> I["3. Ideate<br/>@ux-designer"] --> P["4. Prototype<br/>@developer"] --> T["5. Test<br/>@tester"]
     T -.->|iterate| E
-    T -.->|iterate| I
 ```
 
 ---
@@ -485,11 +450,9 @@ Beth doesn't ship garbage:
 
 ```mermaid
 flowchart LR
-    Standards["WCAG 2.1 AA · Core Web Vitals<br/>OWASP · TypeScript Strict · Tests"] --> Gates["UX · Dev · Sec · QA"]
-    Gates --> Ship{"Ship?"}
-    Ship -->|Pass| Deploy["🚀 Deploy"]
-    Ship -->|Fail| Fix["🔧 Fix"]
-    Fix --> Gates
+    Code["Code"] --> Gates["a11y · Perf · OWASP · Types · Tests"]
+    Gates -->|Pass| Ship["🚀 Ship"]
+    Gates -->|Fail| Fix["🔧 Fix"] --> Code
 ```
 
 ---

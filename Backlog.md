@@ -2,7 +2,7 @@
 
 > *"I don't have time to explain things twice. Read this."*
 
-Last updated: 2026-02-19
+Last updated: 2026-02-27
 
 ---
 
@@ -10,6 +10,7 @@ Last updated: 2026-02-19
 
 | Task | Notes |
 |------|-------|
+| **Simplify all architecture mermaid diagrams (beth-7bo)** | Rewrote all mermaid diagrams in README.md (7 diagrams) and docs/SYSTEM-FLOW.md (gutted from 449→170 lines). Removed bloated subgraph-heavy charts, fake "Live" component references (orchestrator, tool abstraction, LLM provider that don't exist in src/), and overly detailed sequence diagrams. All diagrams now tight, simple, and accurate to actual codebase: CLI toolchain, Copilot agent definitions, core parsers (agents/skills), and templates. |
 | **Simplify README architecture diagram** | Replaced the 90-line, 9-subgraph, 40+ node architecture diagram with a clean 30-line overview: 4 groups (Entry Points → Orchestration Engine → Specialist Agents → Capabilities) plus LLM connection. Old diagram was trying to be architecture docs AND overview simultaneously. Deep internals (Router, Context, HandoffManager, StreamAccumulator) remain in detailed README sections and docs/SYSTEM-FLOW.md where they belong. |
 | **README update for Phases 2-4 (beth-h7i)** | Updated README.md and INSTALLATION.md to document Phase 3 (Tool Abstraction) and Phase 4 (Orchestration Engine). New architecture diagram with Orchestration Engine, Tool Abstraction Layer, and fan-out flow. New sections: Orchestration Engine (fan-out pattern with Mermaid flowchart, capabilities list, TypeScript usage), Tool Abstraction Layer (7-tool table, createDefaultRegistry/loadAllMCPTools examples). Updated: execution layers (3→5), test count (485→814), project structure (added orchestrator/router/context/handoffs/tools tree), test coverage table (9→24 rows by category). Added beads CGO troubleshooting for Linux/WSL (build-essential, CGO_ENABLED, Dolt migration recovery) to both README and INSTALLATION.md. |
 | **Phase 4: Orchestration Engine COMPLETE** | Epic beth-y04 closed. 6/6 subtasks done. `src/core/` — ConversationContext (.1), AgentRouter (.2), HandoffManager (.3), Orchestrator agent loop (.4), 86 new tests (.5), barrel exports + wiring (.6). Full agentic loop: user message → route → skill injection → LLM → tool calls → subagent spawning → handoffs → response. Token-estimated context window truncation, tool call/result repair, observer callbacks, parallel subagent execution. 814 total tests (813 pass, 1 skip, 0 fail). |
