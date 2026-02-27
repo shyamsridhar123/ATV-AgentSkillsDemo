@@ -195,6 +195,19 @@ export async function deleteUser(userId: string) {
 @tester Write tests for [component]
 ```
 
+## Branch Discipline
+
+All non-trivial work happens on **epic branches** (`epic/<epic-id>`). See `AGENTS.md` for the full Branch Discipline rules.
+
+Key points:
+- **Every new chat session creates a fresh epic branch from `main`** — Beth does this automatically before any work begins
+- Beth correlates every request to an epic and ensures the correct branch is checked out before work begins
+- Epic branches are named `epic/<epic-id>` (e.g., `epic/beth-abc123`)
+- All commits use the prefix `<epic-id>: description`
+- Subagents inherit the epic branch and must verify before making changes
+- Multiple Beth instances work on different epic branches to avoid conflicts
+- **When landing the plane, Beth pushes the branch and creates a PR to `main`** via GitHub MCP
+
 ## File Naming Conventions
 
 - Agents: `.github/agents/<name>.agent.md`
