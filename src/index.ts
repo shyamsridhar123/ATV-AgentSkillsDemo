@@ -1,44 +1,19 @@
 /**
  * Beth CLI - TypeScript Core
  *
- * Main exports for the Beth CLI runtime.
+ * Exports for the Beth CLI: agent/skill loaders, CLI commands, and utilities.
+ * Beth runs on GitHub Copilot's runtime — this package is the installer and
+ * validation tooling, not a standalone agent platform.
  */
 
-// Core exports - Agents
+// Core exports - Agent loading and types
 export * from './core/agents/index.js';
 
-// Core exports - Skills
+// Core exports - Skill loading and types
 export * from './core/skills/index.js';
-
-// Core exports - Orchestration
-export { Orchestrator } from './core/orchestrator.js';
-export type {
-  OrchestratorConfig,
-  TurnResult,
-  ToolCallRecord,
-  SubagentResult,
-  OrchestratorObserver,
-} from './core/orchestrator.js';
-export { ConversationContext } from './core/context.js';
-export type {
-  ConversationContextOptions,
-  ConversationSummary,
-} from './core/context.js';
-export { AgentRouter } from './core/router.js';
-export type { RouteResult, RouteReason } from './core/router.js';
-export { HandoffManager } from './core/handoffs.js';
-export type {
-  HandoffRequest,
-  HandoffResult,
-  HandoffRecord,
-  HandoffMode,
-} from './core/handoffs.js';
 
 // Library utilities
 export * from './lib/index.js';
 
 // CLI commands
 export * from './cli/commands/index.js';
-
-// Tool abstraction layer
-export * from './tools/index.js';
