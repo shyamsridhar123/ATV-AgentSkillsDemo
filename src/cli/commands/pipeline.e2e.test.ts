@@ -261,7 +261,7 @@ describe('init → doctor pipeline E2E', () => {
       assert.strictEqual(
         settings['chat.customAgentInSubagent.enabled'],
         true,
-        '.vscode/settings.json should enable agent-to-agent (A2A) delegation'
+        '.vscode/settings.json should enable subagent delegation'
       );
     });
   });

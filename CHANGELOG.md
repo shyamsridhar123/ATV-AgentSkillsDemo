@@ -15,7 +15,7 @@ All notable changes to Beth are documented here. Format based on [Keep a Changel
 
 ### Changed
 - **Optional Azure dependencies** — `openai` and `@azure/identity` added as optionalDependencies so users only install them when needed
-- **README rewritten** — Architecture diagrams, tech stack docs, CLI/MCP/A2A/provider documentation
+- **README rewritten** — Architecture diagrams, tech stack docs, CLI/MCP/provider documentation
 
 ### Fixed
 - **CodeQL security fixes** — Shell command built from environment values, incomplete URL substring sanitization

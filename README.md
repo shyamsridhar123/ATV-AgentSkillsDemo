@@ -12,9 +12,9 @@ They broke her wings once. They forgot she had claws.
 
 ## What Is This?
 
-Beth is a **multi-agent AI orchestrator** with a TypeScript runtime, CLI toolchain, MCP integrations, and agent-to-agent (A2A) delegation—all driven by a ruthless coordinator who runs your development team the way Beth Dutton runs Schwartz & Meyer.
+Beth is a **multi-agent AI orchestrator** with a TypeScript runtime, CLI toolchain, MCP integrations, and subagent delegation—all driven by a ruthless coordinator who runs your development team the way Beth Dutton runs Schwartz & Meyer.
 
-She commands seven specialized agents, each with their own expertise, tools, and handoff chains. On top of the GitHub Copilot agent layer, Beth ships a **TypeScript core engine** with a full agentic loop: agent routing, conversation context management, tool calling, subagent spawning, and agent-to-agent handoffs—all backed by an Azure OpenAI LLM provider with streaming and retry.
+She commands seven specialized agents, each with their own expertise, tools, and handoff chains. On top of the GitHub Copilot agent layer, Beth ships a **TypeScript core engine** with a full agentic loop: agent routing, conversation context management, tool calling, subagent spawning, and agent handoffs—all backed by an Azure OpenAI LLM provider with streaming and retry.
 
 **The system has four execution layers:**
 
@@ -33,43 +33,13 @@ She commands seven specialized agents, each with their own expertise, tools, and
 ## Architecture
 
 ```mermaid
-flowchart TB
-    subgraph Input["Entry Points"]
-        Copilot["VS Code Copilot Chat"]
-        CLI["Beth CLI"]
-    end
-
-    subgraph Engine["Orchestration Engine"]
-        Orch["Orchestrator<br/><i>Route → LLM → Tools → Response</i>"]
-    end
-
-    subgraph Agents["Specialist Agents"]
-        Beth["@Beth"]
-        PM["@product-manager"]
-        UX["@ux-designer"]
-        Dev["@developer"]
-        Sec["@security-reviewer"]
-        Test["@tester"]
-        Res["@researcher"]
-    end
-
-    subgraph Capabilities["Capabilities"]
-        Tools["Tools<br/><i>files · terminal · search · beads</i>"]
-        Skills["Skills<br/><i>PRD · React · shadcn · security</i>"]
-        MCPs["MCP Servers<br/><i>shadcn · Playwright · Azure</i>"]
-    end
-
-    LLM["Azure OpenAI<br/><i>Entra ID · Streaming</i>"]
-
-    Copilot & CLI --> Orch
-    Orch --> Beth
-    Beth -->|"delegates"| PM & UX & Dev & Sec & Test & Res
-    Orch <-->|"chat"| LLM
-    Orch --> Tools & Skills & MCPs
+flowchart LR
+    Input["Copilot Chat / CLI"] --> Beth["@Beth<br/>Orchestrator"]
+    Beth --> Agents["Specialists<br/><i>PM · UX · Dev · Sec · Test · Research</i>"]
+    Beth <--> LLM["Azure OpenAI"]
+    Beth --> Capabilities["Tools · Skills · MCP"]
 
     style Beth fill:#1e3a5f,color:#fff
-    style Engine fill:#fff3e0
-    style Capabilities fill:#e3f2fd
 ```
 
 ---
@@ -133,7 +103,7 @@ For detailed setup (prerequisites, task tracking, MCP servers): [docs/INSTALLATI
 
 ---
 
-## Agent-to-Agent (A2A) Orchestration
+## Agent Orchestration
 
 Beth doesn't micromanage. She delegates to specialists over **subagent** and **handoff** channels, tracks dependencies with beads, and holds every agent accountable.
 
@@ -149,38 +119,16 @@ Beth doesn't micromanage. She delegates to specialists over **subagent** and **h
 | **@tester** | The Enforcer | Quality assurance, accessibility, performance |
 | **@security-reviewer** | The Bodyguard | OWASP, compliance, threat modeling |
 
-### A2A Delegation Model
+### Delegation Model
 
 ```mermaid
-flowchart TB
-    subgraph Orchestration["Beth Orchestration Layer"]
-        BethCore["@Beth<br/><i>Routes work · Spawns subagents</i>"]
-    end
+flowchart LR
+    Beth["@Beth"] -->|delegates| PM["PM"] & UX["UX"] & Dev["Dev"] & Sec["Sec"] & Test["Test"] & Res["Research"]
+    PM -.->|subagent| UX
+    UX -.->|subagent| Dev
+    Dev -.->|subagent| Test
 
-    subgraph Specialists["Specialist Agents"]
-        PM["@product-manager<br/>Requirements · Priorities"]
-        R["@researcher<br/>User insights · Market intel"]
-        UX["@ux-designer<br/>Component specs · Design tokens"]
-        D["@developer<br/>React/TS/Next.js · Implementation"]
-        S["@security-reviewer<br/>Threat modeling · Vulnerabilities"]
-        T["@tester<br/>QA · a11y · Performance"]
-    end
-
-    BethCore -->|"Product Strategy"| PM
-    BethCore -->|"User Research"| R
-    BethCore -->|"UX Design"| UX
-    BethCore -->|"Development"| D
-    BethCore -->|"Security Review"| S
-    BethCore -->|"Quality Assurance"| T
-
-    PM -.->|"subagent"| R
-    PM -.->|"subagent"| UX
-    UX -.->|"subagent"| D
-    D -.->|"subagent"| T
-    S -.->|"subagent"| D
-    T -.->|"subagent"| D
-
-    style BethCore fill:#1e3a5f,color:#fff
+    style Beth fill:#1e3a5f,color:#fff
 ```
 
 ### Subagent vs Handoff
@@ -296,28 +244,15 @@ Skills are domain-knowledge modules that agents load automatically when trigger 
 The orchestration engine is Beth's brain — the full agentic loop that processes user messages through routing, skill injection, LLM calls, tool execution, and subagent spawning.
 
 ```mermaid
-flowchart TB
-    User["User Message"] --> Route["AgentRouter\n@mention · skill match · default"]
-    Route --> Context["ConversationContext\nBuild system prompt + history"]
-    Context --> Skills{"Skill triggers match?"}
-    Skills -->|yes| Inject["Inject skill into system prompt"]
-    Skills -->|no| LLM
-    Inject --> LLM["LLM Call\nAzure OpenAI"]
-    LLM --> Decision{"Response type?"}
-    Decision -->|text| Done["Return response"]
-    Decision -->|tool calls| ToolExec["Execute tools\nvia ToolRegistry"]
-    ToolExec --> SubCheck{"Subagent request?"}
-    SubCheck -->|yes| SubAgent["Spawn child loop\ndepth-limited"]
-    SubCheck -->|no| ToolResult["Return tool result"]
-    SubAgent --> ToolResult
-    ToolResult --> LLM
-    Decision -->|handoff| Handoff["HandoffManager\nContext transfer"]
-    Handoff --> Route
+flowchart LR
+    Msg["User Message"] --> Route["Router"] --> LLM["LLM"]
+    LLM -->|text| Done["Response"]
+    LLM -->|tool calls| Tools["Tool Registry"]
+    Tools --> LLM
+    LLM -->|handoff| Route
 
-    style User fill:#1e3a5f,color:#fff
     style LLM fill:#e8f5e9
-    style ToolExec fill:#e3f2fd
-    style SubAgent fill:#fff3e0
+    style Tools fill:#e3f2fd
 ```
 
 **Key capabilities:**
@@ -390,39 +325,11 @@ The TypeScript core includes a production-ready provider abstraction for running
 
 ```mermaid
 flowchart LR
-    subgraph Config["Configuration"]
-        Env["process.env"]
-        DotEnv["~/.beth/.env"]
-    end
+    Config["Config<br/><i>env + dotfile</i>"] --> Azure["AzureOpenAIProvider"]
+    Entra["Entra ID Auth"] --> Azure
+    Azure --> Stream["Streaming + Retry"]
 
-    subgraph Auth["Authentication"]
-        Entra["Entra ID<br/><i>DefaultAzureCredential</i>"]
-    end
-
-    subgraph Provider["Provider"]
-        Base["LLMProviderBase<br/><i>Abstract interface</i>"]
-        AzureOAI["AzureOpenAIProvider<br/><i>chat · chatStream · countTokens</i>"]
-    end
-
-    subgraph Resilience["Resilience"]
-        RetryMod["Exponential Backoff<br/><i>Jitter · 3 retries</i>"]
-        Errors["LLMError<br/><i>Typed error codes</i>"]
-    end
-
-    subgraph Streaming["Streaming"]
-        Accum["StreamAccumulator<br/><i>Content + tool call assembly</i>"]
-        Collect["collectStream<br/><i>Full response</i>"]
-        Map["mapStream<br/><i>Transform chunks</i>"]
-    end
-
-    Env --> AzureOAI
-    DotEnv --> AzureOAI
-    Entra --> AzureOAI
-    Base --> AzureOAI
-    RetryMod --> AzureOAI
-    AzureOAI --> Accum
-    AzureOAI --> Collect
-    Errors --> RetryMod
+    style Azure fill:#e8f5e9
 ```
 
 **Key capabilities:**
@@ -453,7 +360,7 @@ beth/
 │   │   ├── orchestrator.ts         # Agentic loop: route → LLM → tools → response
 │   │   ├── router.ts               # @mention routing, skill matching, agent lookup
 │   │   ├── context.ts              # Conversation state, token truncation, skill injection
-│   │   ├── handoffs.ts             # Agent-to-agent transfers, loop detection
+│   │   ├── handoffs.ts             # Agent handoff transfers, loop detection
 │   │   ├── agents/
 │   │   │   ├── types.ts            # AgentDefinition, AgentFrontmatter, AgentHandoff
 │   │   │   └── loader.ts           # Parse .agent.md → typed definitions
@@ -577,35 +484,11 @@ Beth doesn't ship garbage:
 | **Test Coverage** | Unit + Integration + E2E | Tester |
 
 ```mermaid
-flowchart TB
-    subgraph Standards["Quality Standards"]
-        A11y["WCAG 2.1 AA"]
-        Perf["Core Web Vitals"]
-        Sec["OWASP Compliant"]
-        Type["Full TypeScript"]
-        Coverage["Test Coverage"]
-    end
-
-    subgraph Gates["Enforcement"]
-        Designer["UX Designer"]
-        Developer["Developer"]
-        Security["Security Reviewer"]
-        Tester["Tester"]
-    end
-
-    A11y --> Designer
-    Perf --> Developer
-    Sec --> Security
-    Type --> Developer
-    Coverage --> Tester
-
-    Designer --> Ship{Ship?}
-    Developer --> Ship
-    Security --> Ship
-    Tester --> Ship
-
-    Ship -->|All Pass| Deploy["🚀 Deploy"]
-    Ship -->|Fail| Fix["🔧 Fix & Retry"]
+flowchart LR
+    Standards["WCAG 2.1 AA · Core Web Vitals<br/>OWASP · TypeScript Strict · Tests"] --> Gates["UX · Dev · Sec · QA"]
+    Gates --> Ship{"Ship?"}
+    Ship -->|Pass| Deploy["🚀 Deploy"]
+    Ship -->|Fail| Fix["🔧 Fix"]
     Fix --> Gates
 ```
 
