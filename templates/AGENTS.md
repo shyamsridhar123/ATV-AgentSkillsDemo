@@ -84,7 +84,7 @@ Verify beads reflects reality before creating new work.
 
 ### The principle: Trust the code, not the tracker
 
-> **War story (March 7, 2026):** A formatter reverted `app/workspace/agents/page.tsx` back to importing the old `WorkspaceAgents` component. Beads issue 9f6 said "routing wired up" but the code was back to the old state. Caught and fixed — but only because we checked.
+> **War story (March 7, 2026):** A formatter reverted a critical routing file back to importing an old component. The tracking issue said "routing wired up" but the code was back to the previous state. It was caught and fixed — but only because we checked.
 
 This can happen to ANY file touched by agents. The most vulnerable are files touched by formatters on save (page.tsx, component files with import changes). When in doubt, check the code.
 
