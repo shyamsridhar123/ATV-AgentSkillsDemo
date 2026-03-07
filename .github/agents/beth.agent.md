@@ -101,7 +101,12 @@ git status
 git diff --stat
 
 # Check for unpushed commits from a previous session
-git log --oneline origin/$(git branch --show-current)..HEAD
+branch="$(git branch --show-current)"
+if git show-ref --verify --quiet "refs/remotes/origin/${branch}"; then
+  git log --oneline "origin/${branch}..HEAD"
+else
+  echo "No origin/${branch} yet (new local branch). Push with: git push -u origin ${branch}"
+fi
 ```
 
 **If you see unexpected diffs:**
