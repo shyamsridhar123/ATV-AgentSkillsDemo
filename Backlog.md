@@ -109,6 +109,7 @@ Last updated: 2026-03-07
 | Add security-reviewer agent | Enterprise security is non-negotiable | 2026-01-24 |
 | Single-source tracking: Backlog.md | Simplicity over tooling. One file, one truth. | 2026-01-25 |
 | Optional MCP integrations | Web search, Playwright, Azure, MS Learn MCPs enhance agents but are opt-in. Skills gracefully degrade without them. | 2026-01-24 |
+| Adopt drift-prevention session startup | Backported from ATV-AgentSkillsDemo after formatter silently reverted agent changes. All agents now check git state before trusting trackers. Applied to source + templates. | 2026-03-07 |
 
 ---
 
@@ -131,6 +132,9 @@ The Beth orchestrator system is operational. Core personality, README, and full 
 
 **What's Coming:**
 
+- Cut next npm release to ship drift-prevention to all `npx beth-copilot init` users
+- Test Quality Gate Infrastructure (beth-gtl) — Vitest/RTL/Playwright configs, agent test requirements, quality gate script
+- Agent Coordination Enforcement (beth-cip) — dependency enforcement on `bd close`, branch guard hook, `bd land` command
 - MCP-enhanced skills (optional, graceful degradation)
 - Agent consistency review
 
