@@ -2,7 +2,7 @@
 
 > *"I don't have time to explain things twice. Read this."*
 
-Last updated: 2026-02-27
+Last updated: 2026-03-07
 
 ---
 
@@ -74,7 +74,8 @@ Last updated: 2026-02-27
 
 | Task | Notes |
 |------|-------|
-| *No active work* | Phase 4 complete. Ready for Phase 5 (CLI Integration + Agent Orchestration wiring). |
+| **Test Quality Gate Infrastructure (beth-gtl)** | Epic with 10 subtasks: install test deps (Vitest/RTL/Playwright), create configs, test dir structure + smoke test, update 5 agent files with test requirements, create test report template, build quality gate script. See `docs/quality-gate-plan.md`. |
+| **Agent Coordination Enforcement (beth-cip)** | Epic with 3 subtasks: dependency enforcement on `bd close`, branch guard pre-push hook, landing gate command (`bd land`). Replaces convention-based multi-agent safety with hard gates. |
 
 ---
 
@@ -84,6 +85,8 @@ Last updated: 2026-02-27
 
 | Task | Notes |
 |------|-------|
+| **Test Quality Gate Infrastructure (beth-gtl)** | Phase 1: install test infra (Vitest, RTL, Playwright), configs, smoke test. Phase 2: update all agent files with test requirements. Phase 4-5: test report template + quality gate script. 10 subtasks, sequential + parallel deps. |
+| **Agent Coordination Enforcement (beth-cip)** | Dep enforcement on close → branch guard hook → landing gate command. 3 subtasks, sequential chain. |
 | ~~Phase 2~~ | ~~COMPLETE — All 9 subtasks closed, epic closed~~ |
 
 ### Medium Priority (P2)
