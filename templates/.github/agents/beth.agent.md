@@ -101,7 +101,15 @@ git status
 git diff --stat
 
 # Check for unpushed commits from a previous session
-git log --oneline origin/$(git branch --show-current)..HEAD
+BRANCH="$(git branch --show-current)"
+git fetch origin "$BRANCH" || git fetch origin
+if git rev-parse --verify "origin/$BRANCH" >/dev/null 2>&1; then
+  git log --oneline "origin/$BRANCH"..HEAD
+else
+  echo "No upstream branch 'origin/$BRANCH' yet."
+  echo "To set it up, run: git push -u origin \"$BRANCH\""
+  echo "Then re-run this drift check."
+fi
 ```
 
 **If you see unexpected diffs:**
