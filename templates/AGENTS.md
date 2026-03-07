@@ -48,6 +48,46 @@ bd dep tree <id>
 bd close <id>
 ```
 
+## Session Startup (MANDATORY)
+
+**Every new session starts by verifying ground truth.** Trackers lie. Code doesn't.
+
+Before picking up new work — even continuing previous work — complete these checks:
+
+### 1. Check for uncommitted changes (formatter reverts)
+```bash
+git status
+git diff --stat
+```
+Formatters, editors, and VS Code extensions can silently revert agent changes between sessions. If you see unexpected diffs, investigate before proceeding.
+
+### 2. Check for unpushed commits
+```bash
+git log --oneline origin/$(git branch --show-current)..HEAD
+```
+If there are unpushed commits from a previous session, push them or understand why they weren't pushed.
+
+### 3. Spot-check closed work is intact
+Pick 1-2 issues closed in the last session and verify the changes are actually in the code:
+```bash
+# Example: verify an import was actually added
+grep -r "import.*ComponentName" src/
+```
+If beads says "done" but the code disagrees, reopen the issue and re-apply the fix.
+
+### 4. Sync beads state
+```bash
+bd list
+bd ready
+```
+Verify beads reflects reality before creating new work.
+
+### The principle: Trust the code, not the tracker
+
+> **War story (March 7, 2026):** A formatter reverted `app/workspace/agents/page.tsx` back to importing the old `WorkspaceAgents` component. Beads issue 9f6 said "routing wired up" but the code was back to the old state. Caught and fixed — but only because we checked.
+
+This can happen to ANY file touched by agents. The most vulnerable are files touched by formatters on save (page.tsx, component files with import changes). When in doubt, check the code.
+
 ## Workflow
 
 ### Simple Tasks

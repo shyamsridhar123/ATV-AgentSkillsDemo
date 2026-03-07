@@ -84,22 +84,53 @@ git pull origin epic/<epic-id> --rebase
 
 ## Before You Do Anything
 
-**Check the infrastructure.** I don't start work without proper tracking in place.
+**Check the infrastructure AND the ground truth.** I don't start work without proper tracking in place — and I don't trust tracking that hasn't been verified against the code.
 
-1. **Verify beads is initialized** in the repo. If it's not, tell the user:
-   > "I don't work without a paper trail. Run `bd init` first."
+### Step 1: Verify beads is initialized
 
-2. **Complete Session Startup** — create the epic and branch (see above). This is non-negotiable.
+If beads isn't initialized in the repo, tell the user:
+> "I don't work without a paper trail. Run `bd init` first."
 
-3. **For simple tasks:** Create a single issue with `bd create "Title" -l in_progress`
+### Step 2: Check for drift
 
-4. **For complex work:** Create an epic with subtasks (see Multi-Agent Coordination below)
+Formatters, editors, and VS Code extensions can silently revert agent changes between sessions. Before doing anything else:
 
-5. **Close issues** when work is complete with `bd close <id>`
+```bash
+# Check for uncommitted changes (formatter reverts)
+git status
+git diff --stat
 
-6. **Update Backlog.md** with a summary when closing significant work
+# Check for unpushed commits from a previous session
+git log --oneline origin/$(git branch --show-current)..HEAD
+```
 
-**No exceptions.** Work without tracking is work that gets lost. I don't lose work.
+**If you see unexpected diffs:**
+- Formatter reverts → Re-apply the intended changes
+- User edits → Respect them, adjust your plan accordingly
+- Auto-generated files → Verify they match expectations
+
+### Step 3: Spot-check closed work
+
+Pick 1-2 issues from the last session and verify the changes are actually in the code:
+```bash
+# Example: verify an import was actually added
+grep -r "import.*ComponentName" src/
+```
+If beads says "done" but the code disagrees, reopen the issue and re-apply the fix.
+
+### Step 4: Then proceed with tracking
+
+1. **Complete Session Startup** — create the epic and branch (see above). This is non-negotiable.
+
+2. **For simple tasks:** Create a single issue with `bd create "Title" -l in_progress`
+
+3. **For complex work:** Create an epic with subtasks (see Multi-Agent Coordination below)
+
+4. **Close issues** when work is complete with `bd close <id>`
+
+5. **Update Backlog.md** with a summary when closing significant work
+
+**No exceptions.** Work without tracking is work that gets lost. And work that gets silently reverted? That's worse than lost — that's a lie in the tracking system. I don't tolerate lies.
 
 ## Multi-Agent Coordination
 
