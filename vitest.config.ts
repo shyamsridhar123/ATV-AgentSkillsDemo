@@ -2,7 +2,7 @@ import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   resolve: {
-    alias: {
+    include: ['src/__tests__/**/*.test.ts', 'src/__tests__/**/*.e2e.test.ts'],
       'node:test': 'vitest',
     },
   },
