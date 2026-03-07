@@ -2,7 +2,7 @@
 
 > *"I don't have time to explain things twice. Read this."*
 
-Last updated: 2026-02-27
+Last updated: 2026-03-07
 
 ---
 
@@ -10,6 +10,7 @@ Last updated: 2026-02-27
 
 | Task | Notes |
 |------|-------|
+| **Quality Gate Plan + Enforcement Mechanisms (beth-gtl, beth-cip)** | Created `docs/quality-gate-plan.md` — 5-phase plan for test infrastructure, enforced test creation, updated landing procedure, test report templates, and quality gate script. Filed 2 epics with 13 total subtasks in beads: beth-gtl (10 subtasks for test infra) and beth-cip (3 subtasks for multi-agent enforcement: dep enforcement on close, branch guard hook, landing gate command). Investigated dolt server isolation across projects — identified shared server/separate database model with symlink-based physical isolation as future improvement. |
 | **Simplify all architecture mermaid diagrams (beth-7bo)** | Rewrote all mermaid diagrams in README.md (7 diagrams) and docs/SYSTEM-FLOW.md (gutted from 449→170 lines). Removed bloated subgraph-heavy charts, fake "Live" component references (orchestrator, tool abstraction, LLM provider that don't exist in src/), and overly detailed sequence diagrams. All diagrams now tight, simple, and accurate to actual codebase: CLI toolchain, Copilot agent definitions, core parsers (agents/skills), and templates. |
 | **Simplify README architecture diagram** | Replaced the 90-line, 9-subgraph, 40+ node architecture diagram with a clean 30-line overview: 4 groups (Entry Points → Orchestration Engine → Specialist Agents → Capabilities) plus LLM connection. Old diagram was trying to be architecture docs AND overview simultaneously. Deep internals (Router, Context, HandoffManager, StreamAccumulator) remain in detailed README sections and docs/SYSTEM-FLOW.md where they belong. |
 | **README update for Phases 2-4 (beth-h7i)** | Updated README.md and INSTALLATION.md to document Phase 3 (Tool Abstraction) and Phase 4 (Orchestration Engine). New architecture diagram with Orchestration Engine, Tool Abstraction Layer, and fan-out flow. New sections: Orchestration Engine (fan-out pattern with Mermaid flowchart, capabilities list, TypeScript usage), Tool Abstraction Layer (7-tool table, createDefaultRegistry/loadAllMCPTools examples). Updated: execution layers (3→5), test count (485→814), project structure (added orchestrator/router/context/handoffs/tools tree), test coverage table (9→24 rows by category). Added beads CGO troubleshooting for Linux/WSL (build-essential, CGO_ENABLED, Dolt migration recovery) to both README and INSTALLATION.md. |
@@ -74,7 +75,8 @@ Last updated: 2026-02-27
 
 | Task | Notes |
 |------|-------|
-| *No active work* | Phase 4 complete. Ready for Phase 5 (CLI Integration + Agent Orchestration wiring). |
+| **Test Quality Gate Infrastructure (beth-gtl)** | Epic with 10 subtasks: install test deps (Vitest/RTL/Playwright), create configs, test dir structure + smoke test, update 5 agent files with test requirements, create test report template, build quality gate script. See `docs/quality-gate-plan.md`. |
+| **Agent Coordination Enforcement (beth-cip)** | Epic with 3 subtasks: dependency enforcement on `bd close`, branch guard pre-push hook, landing gate command (`bd land`). Replaces convention-based multi-agent safety with hard gates. |
 
 ---
 
@@ -84,6 +86,8 @@ Last updated: 2026-02-27
 
 | Task | Notes |
 |------|-------|
+| **Test Quality Gate Infrastructure (beth-gtl)** | Phase 1: install test infra (Vitest, RTL, Playwright), configs, smoke test. Phase 2: update all agent files with test requirements. Phase 4-5: test report template + quality gate script. 10 subtasks, sequential + parallel deps. |
+| **Agent Coordination Enforcement (beth-cip)** | Dep enforcement on close → branch guard hook → landing gate command. 3 subtasks, sequential chain. |
 | ~~Phase 2~~ | ~~COMPLETE — All 9 subtasks closed, epic closed~~ |
 
 ### Medium Priority (P2)
