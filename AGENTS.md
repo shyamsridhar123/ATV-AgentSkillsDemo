@@ -143,8 +143,8 @@ bd ready --json
 **Create new issues:**
 
 ```bash
-bd create "Issue title" --description="Detailed context" -t bug|feature|task -p 0-4 --json
-bd create "Issue title" --description="What this issue is about" -p 1 --deps discovered-from:bd-123 --json
+bd create "Issue title" --description="Detailed context" --type bug|feature|task -p 0-4 --json
+bd create "Issue title" --description="What this issue is about" --type task -p 1 --deps discovered-from:bd-123 --json
 ```
 
 **Claim and update:**
