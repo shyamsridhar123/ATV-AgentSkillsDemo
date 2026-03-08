@@ -562,6 +562,20 @@ For design review:
 - [Any design clarifications needed]
 ```
 
+## Test Requirements
+
+**Implementation is NOT done until test files exist and pass.** This is non-negotiable.
+
+Before closing any issue or reporting completion to Beth:
+
+1. **Write tests alongside implementation** — not after, not "later"
+2. **Unit tests** for all utilities, hooks, and pure functions
+3. **Integration tests** for features that compose multiple modules
+4. **Run `npm test`** and confirm all tests pass
+5. **Report test results** in your completion summary (pass count, fail count, file list)
+
+If Beth spawned you with a task, your deliverable includes both the implementation AND passing tests. Code without tests is incomplete work.
+
 ## Code Quality Standards
 
 - ESLint: No warnings or errors

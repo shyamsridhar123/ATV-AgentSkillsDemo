@@ -6,6 +6,16 @@ All notable changes to Beth are documented here. Format based on [Keep a Changel
 
 ---
 
+## [Unreleased]
+
+### Added
+- **Session startup drift-prevention** — AGENTS.md now includes a mandatory 4-step session startup checklist: check uncommitted changes, check unpushed commits, spot-check closed work, sync beads state. Includes the March 7, 2026 war story and the principle "Trust the code, not the tracker."
+
+### Changed
+- **Beth agent drift checks** — Rewrote "Before You Do Anything" in beth.agent.md from a simple numbered list into a structured 4-step procedure with explicit git commands, drift-type handling (formatter reverts vs. user edits vs. auto-generated files), and spot-check verification. Both source and template files updated.
+
+---
+
 ## [1.0.15] - 2026-02-19
 
 ### Added

@@ -2,7 +2,7 @@
 
 > *"I don't have time to explain things twice. Read this."*
 
-Last updated: 2026-03-07
+Last updated: 2026-03-08
 
 ---
 
@@ -10,6 +10,8 @@ Last updated: 2026-03-07
 
 | Task | Notes |
 |------|-------|
+| **Standardize on npm, fix CI lock file (beth-i2r)** | `package-lock.json` was 165 lines — missing vitest, coverage-v8, and all transitive deps. Regenerated (1858 lines). Added `"packageManager": "npm@11.9.0"` to package.json. Deleted `pnpm-lock.yaml` to eliminate dual lock file drift. Replaced `pnpm run` references in scripts with `npm run`. CI `npm ci` now passes. |
+| **Backport drift-prevention session startup (beth-0cf)** | Added Session Startup (MANDATORY) section to AGENTS.md with 4-step drift-check procedure, war story, and trust-the-code principle. Rewrote beth.agent.md "Before You Do Anything" from simple list to structured 4-step procedure with git commands and drift handling. Updated both template counterparts so new projects ship with protection. |
 | **Simplify all architecture mermaid diagrams (beth-7bo)** | Rewrote all mermaid diagrams in README.md (7 diagrams) and docs/SYSTEM-FLOW.md (gutted from 449→170 lines). Removed bloated subgraph-heavy charts, fake "Live" component references (orchestrator, tool abstraction, LLM provider that don't exist in src/), and overly detailed sequence diagrams. All diagrams now tight, simple, and accurate to actual codebase: CLI toolchain, Copilot agent definitions, core parsers (agents/skills), and templates. |
 | **Simplify README architecture diagram** | Replaced the 90-line, 9-subgraph, 40+ node architecture diagram with a clean 30-line overview: 4 groups (Entry Points → Orchestration Engine → Specialist Agents → Capabilities) plus LLM connection. Old diagram was trying to be architecture docs AND overview simultaneously. Deep internals (Router, Context, HandoffManager, StreamAccumulator) remain in detailed README sections and docs/SYSTEM-FLOW.md where they belong. |
 | **README update for Phases 2-4 (beth-h7i)** | Updated README.md and INSTALLATION.md to document Phase 3 (Tool Abstraction) and Phase 4 (Orchestration Engine). New architecture diagram with Orchestration Engine, Tool Abstraction Layer, and fan-out flow. New sections: Orchestration Engine (fan-out pattern with Mermaid flowchart, capabilities list, TypeScript usage), Tool Abstraction Layer (7-tool table, createDefaultRegistry/loadAllMCPTools examples). Updated: execution layers (3→5), test count (485→814), project structure (added orchestrator/router/context/handoffs/tools tree), test coverage table (9→24 rows by category). Added beads CGO troubleshooting for Linux/WSL (build-essential, CGO_ENABLED, Dolt migration recovery) to both README and INSTALLATION.md. |
@@ -72,10 +74,7 @@ Last updated: 2026-03-07
 
 ## In Progress
 
-| Task | Notes |
-|------|-------|
-| **Test Quality Gate Infrastructure (beth-gtl)** | Epic with 10 subtasks: install test deps (Vitest/RTL/Playwright), create configs, test dir structure + smoke test, update 5 agent files with test requirements, create test report template, build quality gate script. See `docs/quality-gate-plan.md`. |
-| **Agent Coordination Enforcement (beth-cip)** | Epic with 3 subtasks: dependency enforcement on `bd close`, branch guard pre-push hook, landing gate command (`bd land`). Replaces convention-based multi-agent safety with hard gates. |
+*No active work. All epics from previous sessions remain open (beth-7cu, beth-1j8).*
 
 ---
 
@@ -85,9 +84,8 @@ Last updated: 2026-03-07
 
 | Task | Notes |
 |------|-------|
-| **Test Quality Gate Infrastructure (beth-gtl)** | Phase 1: install test infra (Vitest, RTL, Playwright), configs, smoke test. Phase 2: update all agent files with test requirements. Phase 4-5: test report template + quality gate script. 10 subtasks, sequential + parallel deps. |
-| **Agent Coordination Enforcement (beth-cip)** | Dep enforcement on close → branch guard hook → landing gate command. 3 subtasks, sequential chain. |
-| ~~Phase 2~~ | ~~COMPLETE — All 9 subtasks closed, epic closed~~ |
+| **Quality Gate Phases 2-5 (beth-7cu)** | Phase 2: update 5 agent files with mandatory test subtask rules. Phase 3: update landing procedure to require passing tests. Phase 4: test report template. Phase 5: `pnpm test:gate` quality gate script. Follow-up from beth-a3m. |
+| **Agent Coordination Enforcement (beth-1j8)** | Dep enforcement on `bd close` → branch guard pre-push hook → landing gate command (`bd land`). 3 subtasks, sequential chain. |
 
 ### Medium Priority (P2)
 
@@ -108,6 +106,8 @@ Last updated: 2026-03-07
 | Add security-reviewer agent | Enterprise security is non-negotiable | 2026-01-24 |
 | Single-source tracking: Backlog.md | Simplicity over tooling. One file, one truth. | 2026-01-25 |
 | Optional MCP integrations | Web search, Playwright, Azure, MS Learn MCPs enhance agents but are opt-in. Skills gracefully degrade without them. | 2026-01-24 |
+| Standardize on npm + fix CI lock file (beth-i2r) | `package-lock.json` regenerated to fix `npm ci` missing-dep errors (vite@7.3.1 etc). Added `"packageManager": "npm@10.9.2"` to package.json. Removed stale `pnpm-lock.yaml`. Fixed scripts referencing pnpm. Verified upstream `ATV-AgentSkillsDemo` repo unaffected (no package.json at all). Build clean, 295 tests pass. |
+| Adopt drift-prevention session startup | Backported from ATV-AgentSkillsDemo after formatter silently reverted agent changes. All agents now check git state before trusting trackers. Applied to source + templates. | 2026-03-07 |
 
 ---
 
@@ -130,6 +130,9 @@ The Beth orchestrator system is operational. Core personality, README, and full 
 
 **What's Coming:**
 
+- Cut next npm release to ship drift-prevention to all `npx beth-copilot init` users
+- Test Quality Gate Infrastructure (beth-gtl) — Vitest/RTL/Playwright configs, agent test requirements, quality gate script
+- Agent Coordination Enforcement (beth-cip) — dependency enforcement on `bd close`, branch guard hook, `bd land` command
 - MCP-enhanced skills (optional, graceful degradation)
 - Agent consistency review
 

@@ -482,6 +482,29 @@ For release decisions:
 [Release/Hold recommendation with rationale]
 ```
 
+## Test Creation Standards
+
+When creating tests for any issue — whether spawned by Beth or self-initiated:
+
+### Required Test Artifacts
+1. **Test files** in the appropriate directory (`src/**/*.test.ts`, `__tests__/`, etc.)
+2. **All tests must pass** before the issue can be closed
+3. **Test results summary** must be included in completion report
+
+### Test Types by Issue
+| Issue Type | Required Tests |
+|------------|---------------|
+| Feature | Unit + Integration + E2E |
+| Bug fix | Regression test proving the fix |
+| Refactor | Existing tests still pass + new coverage for changed paths |
+| Security | OWASP-aligned security tests |
+
+### Completion Criteria
+- `npm test` passes with 0 failures
+- New test files are committed alongside the code
+- Test report documents: total, passed, failed, skipped
+- Any failures create follow-up issues via `bd create`
+
 ## Testing Best Practices
 
 - Write tests before or alongside code (TDD/BDD)
