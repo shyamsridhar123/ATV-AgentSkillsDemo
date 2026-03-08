@@ -44,6 +44,7 @@
     "test:legacy": "node --test bin/lib/*.test.js",
     "test:legacy:ts": "npm run build && node --test dist/lib/*.test.js dist/cli/commands/*.test.js dist/core/agents/*.test.js dist/core/skills/*.test.js",
     "test:all": "npm run test && npm run test:legacy",
+    "test:gate": "node scripts/quality-gate.mjs",
     "sbom:generate": "npx @cyclonedx/cyclonedx-npm --output-file sbom.json --output-format JSON",
     "prepublishOnly": "npm run build && npm run sbom:generate"
   },
