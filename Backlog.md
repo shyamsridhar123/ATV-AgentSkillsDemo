@@ -10,6 +10,7 @@ Last updated: 2026-03-08
 
 | Task | Notes |
 |------|-------|
+| **Quality Gate Phases 2-5 COMPLETE (beth-7cu)** | Phase 2: Added mandatory test subtask rules to 10 files (beth/developer/tester/security-reviewer agent + AGENTS.md, source + templates). Epic creation patterns now require unit/E2E/security test subtasks. Phase 3: Updated Landing the Plane in AGENTS.md (both occurrences) and beth.agent.md to require `npm test` + `npm run test:gate` before closing. Phase 4: Created `docs/test-reports/TEMPLATE.md`. Phase 5: Created `scripts/quality-gate.mjs` — runs vitest + legacy tests, parses results, generates markdown report, exits non-zero on failure. Added `test:gate` to package.json. 296 tests, 295 pass, 1 skip, 0 fail. |
 | **Standardize on npm, fix CI lock file (beth-i2r)** | `package-lock.json` was 165 lines — missing vitest, coverage-v8, and all transitive deps. Regenerated (1858 lines). Added `"packageManager": "npm@11.9.0"` to package.json. Deleted `pnpm-lock.yaml` to eliminate dual lock file drift. Replaced `pnpm run` references in scripts with `npm run`. CI `npm ci` now passes. |
 | **Backport drift-prevention session startup (beth-0cf)** | Added Session Startup (MANDATORY) section to AGENTS.md with 4-step drift-check procedure, war story, and trust-the-code principle. Rewrote beth.agent.md "Before You Do Anything" from simple list to structured 4-step procedure with git commands and drift handling. Updated both template counterparts so new projects ship with protection. |
 | **Simplify all architecture mermaid diagrams (beth-7bo)** | Rewrote all mermaid diagrams in README.md (7 diagrams) and docs/SYSTEM-FLOW.md (gutted from 449→170 lines). Removed bloated subgraph-heavy charts, fake "Live" component references (orchestrator, tool abstraction, LLM provider that don't exist in src/), and overly detailed sequence diagrams. All diagrams now tight, simple, and accurate to actual codebase: CLI toolchain, Copilot agent definitions, core parsers (agents/skills), and templates. |
@@ -84,7 +85,6 @@ Last updated: 2026-03-08
 
 | Task | Notes |
 |------|-------|
-| **Quality Gate Phases 2-5 (beth-7cu)** | Phase 2: update 5 agent files with mandatory test subtask rules. Phase 3: update landing procedure to require passing tests. Phase 4: test report template. Phase 5: `pnpm test:gate` quality gate script. Follow-up from beth-a3m. |
 | **Agent Coordination Enforcement (beth-1j8)** | Dep enforcement on `bd close` → branch guard pre-push hook → landing gate command (`bd land`). 3 subtasks, sequential chain. |
 
 ### Medium Priority (P2)
