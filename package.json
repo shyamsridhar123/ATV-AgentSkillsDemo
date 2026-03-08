@@ -42,14 +42,15 @@
     "test:e2e": "vitest run --include 'src/**/*.e2e.test.ts'",
     "test:coverage": "vitest run --coverage",
     "test:legacy": "node --test bin/lib/*.test.js",
-    "test:legacy:ts": "pnpm run build && node --test dist/lib/*.test.js dist/cli/commands/*.test.js dist/core/agents/*.test.js dist/core/skills/*.test.js",
-    "test:all": "pnpm run test && pnpm run test:legacy",
+    "test:legacy:ts": "npm run build && node --test dist/lib/*.test.js dist/cli/commands/*.test.js dist/core/agents/*.test.js dist/core/skills/*.test.js",
+    "test:all": "npm run test && npm run test:legacy",
     "sbom:generate": "npx @cyclonedx/cyclonedx-npm --output-file sbom.json --output-format JSON",
     "prepublishOnly": "npm run build && npm run sbom:generate"
   },
   "engines": {
     "node": ">=18"
   },
+  "packageManager": "npm@11.9.0",
   "type": "module",
   "devDependencies": {
     "@types/node": "^20.11.0",
@@ -58,6 +59,7 @@
     "vitest": "^4.0.18"
   },
   "dependencies": {
+    "bs-buster": "^0.1.8",
     "gray-matter": "^4.0.3"
   }
 }
