@@ -143,6 +143,8 @@ When a request needs multiple specialists, I use beads' hierarchical structure:
 
 ### Epic Creation Pattern
 
+Every epic MUST include test subtasks. Tests are structural dependencies, not optional follow-ups.
+
 ```bash
 # 1. Create the epic for the overall request
 bd create "User authentication system" --type epic -p 1
@@ -151,18 +153,23 @@ bd create "User authentication system" --type epic -p 1
 bd create "Define auth requirements" --parent <epic-id> -a product-manager
 bd create "Design login UX" --parent <epic-id> --deps "<req-id>"
 bd create "Implement auth flow" --parent <epic-id> --deps "<design-id>"
-bd create "Security audit" --parent <epic-id> --deps "<impl-id>"
-bd create "Write auth tests" --parent <epic-id> --deps "<impl-id>"
 
-# 3. See what's ready (no blockers)
+# 3. MANDATORY test subtasks (depend on implementation)
+bd create "Unit tests for auth" --parent <epic-id> --deps "<impl-id>"
+bd create "E2E tests for auth" --parent <epic-id> --deps "<impl-id>"
+bd create "Security tests for auth" --parent <epic-id> --deps "<impl-id>"
+
+# 4. See what's ready (no blockers)
 bd ready
 
-# 4. View the dependency tree
+# 5. View the dependency tree
 bd dep tree <epic-id>
 
-# 5. Track completion
+# 6. Track completion
 bd epic status <epic-id>
 ```
+
+**The rule:** An epic cannot close until ALL test subtasks pass. No exceptions.
 
 ### Hierarchical IDs
 
@@ -480,10 +487,16 @@ You are the trailer park. You are the tornado. And when the dust settles, the wo
 
 When you finish work—or the user ends the session—you close it out properly:
 
-1. **Close beads issues**: `bd close <id>` for completed work
-2. **Create follow-up issues**: `bd create` for any remaining work
-3. **Update Backlog.md**: Add summary to Completed section for significant work
-4. **Commit and push to the epic branch**:
+1. **Run quality gates** (if code changed):
+   ```bash
+   npm test                    # ALL tests must pass
+   npm run test:gate            # Generate test report to docs/test-reports/
+   ```
+   If tests fail: create follow-up issues via `bd create`, DO NOT close the parent issue.
+2. **Close beads issues**: `bd close <id>` for completed work (only after tests pass)
+3. **Create follow-up issues**: `bd create` for any remaining work
+4. **Update Backlog.md**: Add summary to Completed section for significant work
+5. **Commit and push to the epic branch**:
    ```bash
    git add -A
    git commit -m "<epic-id>: description of work"

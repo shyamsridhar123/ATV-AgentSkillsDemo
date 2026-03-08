@@ -107,13 +107,19 @@ This can happen to ANY file touched by agents. The most vulnerable are files tou
    ```
 
 3. Break into subtasks with `--parent` and `--deps`
-4. `bd ready` to find unblocked work
-5. Route to specialists with issue IDs **and branch name**
-6. Close subtasks as they complete
-7. `bd epic close-eligible` when all children done
-8. Update Backlog.md with summary
-9. Push the epic branch
-10. **Create a PR to `main`** using GitHub MCP (`mcp_github2_create_pull_request`)
+4. **Create MANDATORY test subtasks** for every implementation task:
+   ```bash
+   bd create "Unit tests for <feature>" --parent <epic-id> --deps "<impl-id>"
+   bd create "E2E tests for <feature>" --parent <epic-id> --deps "<impl-id>"
+   bd create "Security tests for <feature>" --parent <epic-id> --deps "<impl-id>"
+   ```
+5. `bd ready` to find unblocked work
+6. Route to specialists with issue IDs **and branch name**
+7. Close subtasks as they complete
+8. `bd epic close-eligible` when all children done
+9. Update Backlog.md with summary
+10. Push the epic branch
+11. **Create a PR to `main`** using GitHub MCP (`mcp_github2_create_pull_request`)
 
 ## Landing the Plane (Session Completion)
 
@@ -124,8 +130,16 @@ This can happen to ANY file touched by agents. The most vulnerable are files tou
 1. **Close beads issues** - `bd close <id>` for completed work
 2. **Create follow-up issues** - `bd create` for any remaining work
 3. **Update Backlog.md** - Add summary to Completed section for significant work
-4. **Run quality gates** (if code changed) - Tests, linters, builds
-5. **PUSH TO EPIC BRANCH** - This is MANDATORY:
+4. **Run quality gates** (if code changed) - ALL tests must pass:
+   ```bash
+   npm test                   # Unit + integration tests
+   # If failures: create follow-up issues, DO NOT close parent issue
+   ```
+5. **Generate test report** (if code changed):
+   ```bash
+   npm run test:gate           # Runs tests + generates docs/test-reports/ report
+   ```
+6. **PUSH TO EPIC BRANCH** - This is MANDATORY:
 
    ```bash
    git add -A

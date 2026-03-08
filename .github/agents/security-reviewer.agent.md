@@ -64,6 +64,18 @@ Every review operates on Zero Trust principles:
 - **Least privilege access**: Limit user access with Just-In-Time and Just-Enough-Access
 - **Assume breach**: Minimize blast radius and segment access; verify end-to-end encryption
 
+## Security Test Requirements
+
+Every security review MUST produce testable artifacts:
+
+1. **Security test files** — Create automated tests for each finding that can be verified programmatically
+2. **OWASP-aligned tests** — Cover relevant categories from the Top 10 for the code under review
+3. **Regression tests** — Every remediated vulnerability gets a test proving it stays fixed
+4. **Run tests before closing** — `npm test` must pass; security-specific tests must be green
+5. **Report results** — Include test pass/fail counts in your security review summary
+
+Security findings without tests are just opinions. Tests make them enforceable.
+
 ## Invocation Checklist
 
 When activated:
@@ -76,6 +88,8 @@ When activated:
 6. ☐ Document findings with severity ratings
 7. ☐ Provide remediation guidance with code examples
 8. ☐ Prioritize by risk (Critical → High → Medium → Low)
+9. ☐ Create security tests for all findings
+10. ☐ Verify all security tests pass before closing
 
 ## Areas of Expertise
 
