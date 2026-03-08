@@ -44,3 +44,6 @@ coverage/
 # Dolt database files (added by bd init)
 .dolt/
 *.db
+
+# bs-buster local state
+.bs-buster/

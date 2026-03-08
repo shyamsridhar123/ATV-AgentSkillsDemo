@@ -2,7 +2,7 @@
 
 > *"I don't have time to explain things twice. Read this."*
 
-Last updated: 2026-03-07
+Last updated: 2026-03-08
 
 ---
 
@@ -73,7 +73,7 @@ Last updated: 2026-03-07
 
 ## In Progress
 
-*No active work. All epics from this session are closed.*
+*No active work. All epics from previous sessions remain open (beth-7cu, beth-1j8).*
 
 ---
 
@@ -105,6 +105,7 @@ Last updated: 2026-03-07
 | Add security-reviewer agent | Enterprise security is non-negotiable | 2026-01-24 |
 | Single-source tracking: Backlog.md | Simplicity over tooling. One file, one truth. | 2026-01-25 |
 | Optional MCP integrations | Web search, Playwright, Azure, MS Learn MCPs enhance agents but are opt-in. Skills gracefully degrade without them. | 2026-01-24 |
+| Standardize on npm + fix CI lock file (beth-i2r) | `package-lock.json` regenerated to fix `npm ci` missing-dep errors (vite@7.3.1 etc). Added `"packageManager": "npm@10.9.2"` to package.json. Removed stale `pnpm-lock.yaml`. Fixed scripts referencing pnpm. Verified upstream `ATV-AgentSkillsDemo` repo unaffected (no package.json at all). Build clean, 295 tests pass. |
 | Adopt drift-prevention session startup | Backported from ATV-AgentSkillsDemo after formatter silently reverted agent changes. All agents now check git state before trusting trackers. Applied to source + templates. | 2026-03-07 |
 
 ---
