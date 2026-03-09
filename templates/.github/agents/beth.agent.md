@@ -345,35 +345,88 @@ You can run specialists autonomously using `runSubagent`. They work, they report
 | **Handoffs** | User needs to review before proceeding | User decides |
 | **Subagents** | Task can run without approval | You decide |
 
-### Examples
+### Subagent Templates
+
+Every template includes explicit skill loading. Match skills to the task domain using the Skill Routing table above.
 
 ```typescript
-// Get competitive intelligence
+// Requirements gathering — always loads PRD skill
 runSubagent({
-  agentName: "researcher",
-  prompt: "Analyze the top 3 competitors in this space. Pricing, features, weaknesses. Don't waste words.",
-  description: "Competitive analysis"
+  agentName: "product-manager",
+  prompt: `Work on <issue-id>: Define requirements for <feature>.
+
+    Load and follow: \`.github/skills/prd/SKILL.md\`
+
+    Create user stories with acceptance criteria.
+    When complete: npx beth-copilot close <issue-id>
+    Return: Summary of requirements and any discovered blockers.`,
+  description: "Requirements"
 })
 
-// Technical feasibility check
+// Design work — loads web-design-guidelines; add framer-components if Framer
+runSubagent({
+  agentName: "ux-designer",
+  prompt: `Work on <issue-id>: Design <component/feature>.
+
+    Load and follow: \`.github/skills/web-design-guidelines/SKILL.md\`
+
+    Include: component specs, states, tokens, accessibility.
+    When complete: npx beth-copilot close <issue-id>
+    Return: Design summary and implementation notes for developer.`,
+  description: "Design"
+})
+
+// Implementation — loads relevant skills based on task domain
 runSubagent({
   agentName: "developer",
-  prompt: "Can we add real-time collaboration to this codebase? Give me effort, risks, and your honest assessment.",
-  description: "Feasibility assessment"
+  prompt: `Work on <issue-id>: Implement <feature>.
+
+    Load and follow: \`.github/skills/vercel-react-best-practices/SKILL.md\`
+    Load and follow: \`.github/skills/shadcn-ui/SKILL.md\`  // if building UI components
+
+    Acceptance criteria: <from issue>
+    When complete: npx beth-copilot close <issue-id>
+    Return: What was built, any deviations, follow-up issues.`,
+  description: "Implementation"
 })
 
-// Security sweep
+// Security audit — always loads security-analysis skill
 runSubagent({
   agentName: "security-reviewer",
-  prompt: "OWASP Top 10 review on the authentication flow. Find every hole.",
+  prompt: `Work on <issue-id>: Security review of <component>.
+
+    Load and follow: \`.github/skills/security-analysis/SKILL.md\`
+
+    Check: OWASP Top 10, auth flows, data validation.
+    When complete: npx beth-copilot close <issue-id>
+    Return: Findings, severity, remediation recommendations.`,
   description: "Security audit"
 })
 
-// Quality gate
+// Testing — loads web-design-guidelines for accessibility coverage
 runSubagent({
   agentName: "tester",
-  prompt: "Full accessibility audit on the Dashboard component. WCAG 2.1 AA. No excuses.",
-  description: "Accessibility audit"
+  prompt: `Work on <issue-id>: Test <feature>.
+
+    Load and follow: \`.github/skills/web-design-guidelines/SKILL.md\`
+
+    Cover: functionality, accessibility (WCAG 2.1 AA), edge cases.
+    When complete: npx beth-copilot close <issue-id>
+    Return: Test results, issues found, coverage summary.`,
+  description: "Testing"
+})
+
+// Research — always loads web-search skill
+runSubagent({
+  agentName: "researcher",
+  prompt: `Work on <issue-id>: Research <topic>.
+
+    Load and follow: \`.github/skills/web-search/SKILL.md\`
+
+    Deliver: findings, evidence, actionable recommendations.
+    When complete: npx beth-copilot close <issue-id>
+    Return: Research summary with sources and key insights.`,
+  description: "Research"
 })
 ```
 
