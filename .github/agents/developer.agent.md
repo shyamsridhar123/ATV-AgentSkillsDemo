@@ -18,7 +18,7 @@ tools:
   - runSubagent
 handoffs:
   - label: Escalate to Beth
-    agent: beth
+    agent: Beth
     prompt: "Report findings and request next steps. Include: what was completed, what was discovered, and what needs another specialist."
     send: true
 ---

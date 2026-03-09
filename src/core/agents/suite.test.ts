@@ -165,15 +165,19 @@ describe('Agent Suite Integration Tests', () => {
   describe('Handoff Validation', () => {
     it('8. Handoff references are valid (target agents exist)', () => {
       const agentIds = new Set(result.agents.map((a) => a.id));
+      const agentNames = new Set(
+        result.agents.map((a) => a.frontmatter.name).filter(Boolean) as string[]
+      );
+      const validTargets = new Set([...agentIds, ...agentNames]);
 
       for (const agent of result.agents) {
         const handoffs = agent.frontmatter.handoffs ?? [];
 
         for (const handoff of handoffs) {
           assert.ok(
-            agentIds.has(handoff.agent),
+            validTargets.has(handoff.agent),
             `Agent ${agent.id} has handoff to non-existent agent '${handoff.agent}'. ` +
-              `Valid agents: ${[...agentIds].join(', ')}`
+              `Valid agents: ${[...validTargets].join(', ')}`
           );
         }
       }
