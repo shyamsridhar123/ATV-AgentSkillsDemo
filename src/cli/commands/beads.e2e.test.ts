@@ -7,7 +7,7 @@
  * These tests run against the REAL beads database. All test issues are
  * cleaned up in afterAll. Uses --json for deterministic assertions.
  *
- * Run with: npx vitest run src/cli/commands/beads.e2e.test.ts
+ * Run with: npx tsx --test src/cli/commands/beads.e2e.test.ts
  */
 
 import { describe, it, beforeAll, afterAll } from 'node:test';
