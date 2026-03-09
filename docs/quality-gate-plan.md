@@ -313,9 +313,9 @@ Steps 3–7 can be done in parallel. Steps 1–2 are the foundation everything e
 
 ## Success Criteria
 
-- [ ] `pnpm test:unit` runs and passes
-- [ ] `pnpm test:e2e` runs and passes
-- [ ] `pnpm test:security` runs and passes
+- [ ] `npm test:unit` runs and passes
+- [ ] `npm test:e2e` runs and passes
+- [ ] `npm test:security` runs and passes
 - [ ] Every new issue has test subtasks in beads
 - [ ] Landing the plane generates a test report
 - [ ] Test reports are committed to git
