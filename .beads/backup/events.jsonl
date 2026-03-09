@@ -69,3 +69,6 @@
 {"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T13:25:18Z","event_type":"closed","id":1581,"issue_id":"beth-bdh.2","new_value":"Done","old_value":""}
 {"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T13:25:20Z","event_type":"closed","id":1582,"issue_id":"beth-bdh.3","new_value":"Done","old_value":""}
 {"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T13:25:20Z","event_type":"closed","id":1583,"issue_id":"beth-bdh","new_value":"all steps complete","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T15:52:00Z","event_type":"created","id":1584,"issue_id":"beth-fl3","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":"Added label: in_progress","created_at":"2026-03-09T15:52:00Z","event_type":"label_added","id":1585,"issue_id":"beth-fl3","new_value":null,"old_value":null}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T15:53:37Z","event_type":"closed","id":1586,"issue_id":"beth-fl3","new_value":"Completed","old_value":""}
