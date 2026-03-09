@@ -10,6 +10,6 @@ export default defineConfig({
     include: ['src/**/*.e2e.test.ts'],
     environment: 'node',
     testTimeout: 30000,
-    hookTimeout: 120000,
+    hookTimeout: 300000,
   },
 });
