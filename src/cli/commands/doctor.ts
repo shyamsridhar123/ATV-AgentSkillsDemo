@@ -233,6 +233,37 @@ function checkBeadsInit(cwd: string): CheckResult {
   };
 }
 
+/** System databases that should be excluded from user database counts */
+export const SYSTEM_DBS = new Set(['information_schema', 'mysql', 'dolt']);
+
+/** Maximum number of user databases before we warn */
+export const DB_COUNT_THRESHOLD = 5;
+
+/**
+ * Parse user database names from Dolt SHOW DATABASES output.
+ *
+ * Dolt outputs a table like:
+ * ```
+ * +--------------------+
+ * | Database           |
+ * +--------------------+
+ * | information_schema |
+ * | mysql              |
+ * | beth               |
+ * +--------------------+
+ * ```
+ *
+ * This function strips separator lines (`+---+`), the header row (`Database`),
+ * pipe characters, and system database names — returning only user databases.
+ */
+export function parseDoltDatabases(output: string): string[] {
+  return output
+    .split('\n')
+    .map(line => line.replace(/^\|\s*|\s*\|$/g, '').trim())
+    .filter(line => line && !line.startsWith('+') && !line.startsWith('-') && line !== 'Database')
+    .filter(name => !SYSTEM_DBS.has(name));
+}
+
 /**
  * Check Dolt for orphaned test databases and excessive database count.
  * E2E tests can leave behind *_test_* databases if cleanup doesn't run.
@@ -253,13 +284,7 @@ function checkDoltDatabases(cwd: string): CheckResult[] {
       stdio: ['pipe', 'pipe', 'pipe'],
     });
     
-    // Parse database names from Dolt table output
-    const systemDbs = new Set(['information_schema', 'mysql', 'dolt']);
-    const databases = output
-      .split('\n')
-      .map(line => line.replace(/^\|\s*|\s*\|$/g, '').trim())
-      .filter(line => line && !line.startsWith('+') && !line.startsWith('-') && line !== 'Database')
-      .filter(name => !systemDbs.has(name));
+    const databases = parseDoltDatabases(output);
     
     // Check for orphaned test databases
     const testDbs = databases.filter(name => /test/i.test(name));
@@ -279,7 +304,6 @@ function checkDoltDatabases(cwd: string): CheckResult[] {
     }
     
     // Check total database count (user databases only)
-    const DB_COUNT_THRESHOLD = 5;
     if (databases.length > DB_COUNT_THRESHOLD) {
       results.push({
         name: 'Dolt DB Count',

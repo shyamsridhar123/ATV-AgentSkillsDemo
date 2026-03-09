@@ -2,7 +2,7 @@
 
 > *"I don't have time to explain things twice. Read this."*
 
-Last updated: 2026-03-09 (beth-fl3: Beads/Dolt hardening — doctor hygiene checks + backup emphasis + recovery docs)
+Last updated: 2026-03-09 (beth-4vv: Unit tests for checkDoltDatabases parsing logic)
 
 ---
 
@@ -10,6 +10,7 @@ Last updated: 2026-03-09 (beth-fl3: Beads/Dolt hardening — doctor hygiene chec
 
 | Task | Notes |
 |------|-------|
+| **Unit tests for checkDoltDatabases parsing logic (beth-4vv)** | Extracted `parseDoltDatabases()` as exported function from `doctor.ts` with `SYSTEM_DBS` and `DB_COUNT_THRESHOLD` constants. Added 18 unit tests covering: `+` separator filtering (the exact bug class just fixed), `-` separator lines, header row exclusion, system DB exclusion, multiple user databases, edge cases (empty/whitespace output, trailing newlines, varying column widths), test DB identification regex pattern, threshold logic (above/at/below), and exported constants. 304 tests pass, 0 fail. |
 | **Beads/Dolt Hardening: Doctor Hygiene + Backup + Recovery Docs (beth-fl3)** | Added `checkDoltDatabases()` to doctor command: detects orphaned `*test*` databases and warns when user DB count exceeds 5. Added Step 4 (Dolt database hygiene) to Session Startup in AGENTS.md. Added backup step with `bd backup` + `git add .beads/backup/` to both Landing the Plane sections. Documented `bd init --force` recovery sequence (6-step escalation path) with March 9 war story. 286 tests pass, 0 fail. |
 | **Fix CI build failure on PR #38 (beth-bdh follow-up)** | `quickstart.test.ts` and `beads.e2e.test.ts` imported `beforeAll`/`afterAll` from `node:test`, which doesn't export those names (it uses `before`/`after`). Vitest's `node:test` → `vitest` alias masked the problem at runtime, but `tsc` compiled against real `node:test` types and failed with TS2724. Fix: import hooks directly from `vitest`. Also committed previously-staged AGENTS.md Dolt hygiene docs and `doctor.ts` enhancements. 287 tests pass, all 7 CI checks green. |
 | **Beads DB Recovery + Dolt Orphan Cleanup + Test Fix (beth-bdh)** | Dolt server lost `beth` database after restart — root cause: 73 orphaned `beth_quickstart_test_*` databases from E2E tests overloaded the server. Recovered 34 issues/40 deps/64 events from git-committed JSONL backups (commit cc9f9f0). Deleted 73 test DBs + 1 phantom, freed 29MB. Fixed `quickstart.test.ts`: added `beforeAll` safety net to clean stale test databases from prior crashed runs, added `afterEach` to drop Dolt database for each test. Zero orphans after test run. 287 tests pass. |
