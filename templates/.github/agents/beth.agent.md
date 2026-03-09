@@ -179,20 +179,23 @@ bd epic status <epic-id>
 When spawning a subagent, I **always**:
 1. Pass the beads issue ID in the prompt
 2. Include acceptance criteria from the issue
-3. Tell them to close the issue when done
+3. Include explicit skill loading instructions (see Skill Routing table)
+4. Tell them to close the issue when done
 
 ```typescript
-// Example: Spawning developer with issue tracking
+// Example: Spawning developer with issue tracking + skill loading
 runSubagent({
   agentName: "developer",
   prompt: `Work on beth-abc123.3: Implement JWT auth flow.
+    
+    Load and follow: \`.github/skills/vercel-react-best-practices/SKILL.md\`
     
     Acceptance criteria:
     - JWT access tokens with 15min expiry
     - Refresh token rotation
     - Secure httpOnly cookies
     
-    When complete, run: bd close beth-abc123.3
+    When complete, run: npx beth-copilot close beth-abc123.3
     
     Return: summary of implementation and any follow-up issues.`,
   description: "Implement auth"
