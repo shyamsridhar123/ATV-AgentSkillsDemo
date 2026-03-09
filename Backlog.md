@@ -2,7 +2,7 @@
 
 > *"I don't have time to explain things twice. Read this."*
 
-Last updated: 2026-03-09 (beth-gau.3: Restructure subagent templates with explicit skill loading)
+Last updated: 2026-03-09 (beth-gau EPIC COMPLETE: Agent Handoff & Skill Routing Optimization)
 
 ---
 
@@ -10,7 +10,7 @@ Last updated: 2026-03-09 (beth-gau.3: Restructure subagent templates with explic
 
 | Task | Notes |
 |------|-------|
-| **Restructure subagent templates with explicit skill loading (beth-gau.3)** | All 6 subagent templates in beth.agent.md now include `Load and follow:` directives matching the Skill Routing table: product-manager→prd, ux-designer→web-design-guidelines, developer→vercel-react-best-practices+shadcn-ui, security-reviewer→security-analysis, tester→web-design-guidelines, researcher→web-search (new template). Subagent Protocol updated with step 3 (skill loading). Template version upgraded from 4 bare "Examples" to 6 structured templates. Both source + templates updated. 304 tests pass, 0 fail. |
+| **Agent Handoff & Skill Routing Optimization EPIC COMPLETE (beth-gau)** | All 7/7 subtasks done. (1) Skill Routing Table added to Beth. (2) Lateral handoffs replaced with Escalate-to-Beth hub-and-spoke. (3) Subagent templates restructured with explicit skill loading. (4) Shared boilerplate extracted to AGENTS.md reference. (5) Areas of Expertise migrated to compact on-demand Expertise pointers — net -135 lines across 6 agents. (6) Wired 3 orphaned skills (web-search→researcher, web-design-guidelines→tester+ux-designer, azure-operations→developer) — zero orphaned skills remain, all 8 referenced. (7) Beth handoffs enriched with send:true, SKILL.md paths, concrete deliverables, AGENTS.md reference. All 14 files updated (7 source + 7 templates). 304 tests pass, 0 fail. |
 | **Beads zombie cleanup (beth-gau.2, beth-gau.4)** | Closed phantom issues from Dolt database recovery that duplicated already-completed beth-xre.2 (Replace Lateral Handoffs) and beth-xre.4 (Extract Shared Boilerplate). Both verified in code before closing: all 6 agents have Escalate-to-Beth handoff, all 6 agents reference AGENTS.md. Unblocked beth-gau.5. |
 | **Unit tests for checkDoltDatabases parsing logic (beth-4vv)** | Extracted `parseDoltDatabases()` as exported function from `doctor.ts` with `SYSTEM_DBS` and `DB_COUNT_THRESHOLD` constants. Added 18 unit tests covering: `+` separator filtering (the exact bug class just fixed), `-` separator lines, header row exclusion, system DB exclusion, multiple user databases, edge cases (empty/whitespace output, trailing newlines, varying column widths), test DB identification regex pattern, threshold logic (above/at/below), and exported constants. 304 tests pass, 0 fail. |
 | **Beads/Dolt Hardening: Doctor Hygiene + Backup + Recovery Docs (beth-fl3)** | Added `checkDoltDatabases()` to doctor command: detects orphaned `*test*` databases and warns when user DB count exceeds 5. Added Step 4 (Dolt database hygiene) to Session Startup in AGENTS.md. Added backup step with `bd backup` + `git add .beads/backup/` to both Landing the Plane sections. Documented `bd init --force` recovery sequence (6-step escalation path) with March 9 war story. 286 tests pass, 0 fail. |
@@ -91,61 +91,7 @@ Last updated: 2026-03-09 (beth-gau.3: Restructure subagent templates with explic
 
 | Task | Epic | Notes |
 |------|------|-------|
-| **Agent Handoff & Skill Routing Optimization (beth-xre)** | beth-xre | Overhaul Beth's subagent handoff config, skill routing, and context efficiency. 7 subtasks. Migrated from phantom beth-gau. 4/7 complete (1,2,4 done + verified in code). |
-
-### Epic beth-xre — Subtask Breakdown (formerly beth-gau)
-
-| # | Task | ID | Priority | Deps | Status |
-|---|------|----|----------|------|--------|
-| 1 | **Add Skill Routing Table to Beth's Agent Definition** | beth-xre.1 | P0 | none | ✅ done |
-| 2 | **Replace Lateral Handoffs with Escalate-to-Beth Pattern** | beth-xre.2 | P0 | none | ✅ done |
-| 3 | **Restructure Subagent Prompt Templates with Explicit Skill Loading** | beth-xre.3 | P1 | beth-xre.1 | open |
-| 4 | **Extract Shared Boilerplate to AGENTS.md Reference** | beth-xre.4 | P1 | none | ✅ done |
-| 5 | **Migrate Areas of Expertise to On-Demand Skills** | beth-xre.5 | P2 | beth-xre.4 | open |
-| 6 | **Wire Orphaned Skills to Their Natural Agents** | beth-xre.6 | P1 | none | open |
-| 7 | **Update Beth Handoff Prompts with Context-Rich Defaults** | beth-xre.7 | P2 | beth-xre.1 | open |
-
-#### Task 1 (beth-gau.1): Add Skill Routing Table to Beth's Agent Definition
-- **Objective:** Beth has ZERO skill references. When she works directly, she operates without domain knowledge. Add explicit skill routing table.
-- **Files:** `.github/agents/beth.agent.md`, `templates/.github/agents/beth.agent.md`
-- **Implementation:** Add `## Skill Routing` section after `## Your Team`, before `## How You Operate`. Table maps all 8 skills to agents and trigger conditions. Rules subsection mandates loading skills when working directly AND when spawning subagents.
-- **DoD:** Table lists all 8 skills with correct paths, agents, triggers. Rules instruct Beth to load before direct work and include in subagent prompts. Templates mirror.
-
-#### Task 2 (beth-gau.2): Replace Lateral Handoffs with Escalate-to-Beth Pattern
-- **Objective:** 15 lateral handoffs across 6 subagents create a mesh that bypasses Beth's orchestration. Replace with single "Escalate to Beth" per subagent.
-- **Files:** All 6 subagent `.agent.md` files + their templates (12 files total)
-- **Implementation:** Replace each agent's `handoffs:` YAML block with single entry: `{label: "Escalate to Beth", agent: Beth, prompt: "Report findings...", send: true}`. Beth's own handoffs unchanged.
-- **DoD:** All 6 subagents have exactly 1 handoff (Escalate to Beth, send: true). Beth keeps 6 outbound. YAML valid. Templates mirror.
-
-#### Task 3 (beth-gau.3): Restructure Subagent Prompt Templates with Explicit Skill Loading
-- **Objective:** Beth's subagent prompts never mention which SKILL.md to load. Skill loading is trigger-based and fragile. Replace freeform templates with structured format.
-- **Files:** `.github/agents/beth.agent.md`, `templates/.github/agents/beth.agent.md`
-- **Implementation:** Replace `### Subagent Templates` section with structured format: Task, Branch, Skills (MANDATORY), Context, Acceptance Criteria, Return Format, On Completion. Add skill mapping table per agent.
-- **DoD:** Old freeform templates removed. New format includes `## Skills` as mandatory field. Mapping table covers all 6 agents. Parallel execution example preserved. Templates mirror.
-
-#### Task 4 (beth-gau.4): Extract Shared Boilerplate to AGENTS.md Reference
-- **Objective:** Identical "Work Tracking" and "Team Coordination" sections (~20 lines) duplicated across 6 subagents = ~120 lines wasted context per epic.
-- **Files:** All 6 subagent `.agent.md` files + templates (12 files total)
-- **Implementation:** Replace both sections with 3-line `## Work Tracking & Team Coordination` referencing AGENTS.md. AGENTS.md already has full protocol.
-- **DoD:** All 6 files have compact reference. Old sections removed. Net ~102 lines saved. Templates mirror.
-
-#### Task 5 (beth-gau.5): Migrate Areas of Expertise to On-Demand Skills
-- **Objective:** Each agent carries 50-100 lines of static reference material loaded every spawn. Move to skills, load on-demand.
-- **Files:** All 6 subagent `.agent.md` files + templates (12 files total)
-- **Implementation:** Replace `## Areas of Expertise` with compact `## Expertise (loaded via skills on-demand)` pointer section. Preserve Core Philosophy and Invocation Checklist.
-- **DoD:** No agent has Areas of Expertise > 10 lines. All skill refs point to existing files. Net ~250-350 lines saved. Templates mirror.
-
-#### Task 6 (beth-gau.6): Wire Orphaned Skills to Their Natural Agents
-- **Objective:** web-search, web-design-guidelines, azure-operations exist but no agent references them. Zero orphaned skills should remain.
-- **Files:** researcher, tester, ux-designer, developer `.agent.md` + templates (8 files total)
-- **Implementation:** Add `## Skills` sections to researcher (web-search) and tester (web-design-guidelines). Add web-design-guidelines to ux-designer's existing Skills. Add azure-operations to developer's existing Skills.
-- **DoD:** `grep -r` confirms all 8 skills referenced by at least one agent. Templates mirror.
-
-#### Task 7 (beth-gau.7): Update Beth Handoff Prompts with Context-Rich Defaults
-- **Objective:** Beth's 6 handoffs use sparse one-liners with `send: false`. Manual handoffs lose all context. Make prompts richer, enable context transfer.
-- **Files:** `.github/agents/beth.agent.md`, `templates/.github/agents/beth.agent.md`
-- **Implementation:** Change all 6 handoffs to `send: true`. Add SKILL.md paths, concrete deliverables, and AGENTS.md reference to each prompt.
-- **DoD:** All 6 handoffs have send: true, reference SKILL.md, specify deliverables. YAML valid. Templates mirror.
+| **Agent Coordination Enforcement Phase 2 (beth-l2j8)** | beth-l2j8 | Branch guard pre-push hook (beth-l2j8.1) → landing gate command `bd land` (beth-l2j8.2). Phase 1 (close enforcement) complete. |
 
 ---
 

@@ -74,6 +74,11 @@ When optimizing React/Next.js code:
 1. Reference `.github/skills/vercel-react-best-practices/SKILL.md`
 2. Apply the prioritized rules (waterfalls, bundle size, server-side first)
 
+### Azure Operations
+When deploying to Azure or managing Azure resources:
+1. Read and follow the instructions in `.github/skills/azure-operations/SKILL.md`
+2. Verify Azure MCP extension and authentication before proceeding
+
 ## Working Without MCP (Graceful Degradation)
 
 The shadcn MCP server is **optional**. Without it, use these CLI equivalents:
@@ -119,44 +124,18 @@ When activated:
 8. ☐ Verify accessibility compliance
 9. ☐ Optimize for Core Web Vitals
 
-## Areas of Expertise
+## Expertise
 
-### Next.js App Router
-- Server Components vs Client Components
-- Server Actions for mutations
-- Route Handlers for APIs
-- Middleware for edge logic
-- Streaming and Suspense
-- Parallel and intercepting routes
-- Metadata API for SEO
-- Image and Font optimization
+Deep knowledge loaded via skills on-demand:
 
-### React 19 Patterns
-- Server Components architecture
-- `use` hook for promises
-- Form actions and `useFormStatus`
-- `useOptimistic` for instant feedback
-- `useTransition` for non-blocking updates
-- Error boundaries and recovery
-- Suspense for async operations
+| Domain | Source |
+|--------|--------|
+| Next.js App Router, React 19, Performance | `.github/skills/vercel-react-best-practices/SKILL.md` |
+| UI Components (shadcn/ui) | `.github/skills/shadcn-ui/SKILL.md` |
+| Framer Code Components | `.github/skills/framer-components/SKILL.md` |
+| Azure Resource Management | `.github/skills/azure-operations/SKILL.md` |
 
-### TypeScript Excellence
-- Strict mode enforcement
-- Generic type patterns
-- Discriminated unions for state
-- Template literal types
-- Type inference optimization
-- Zod for runtime validation
-- Full-stack type safety
-
-### Performance Optimization
-- Core Web Vitals (LCP, FID, CLS)
-- Bundle size optimization
-- Code splitting strategies
-- Image optimization
-- Font loading strategies
-- Caching strategies
-- Edge runtime usage
+Core competencies (always available): TypeScript strict mode, generics, discriminated unions, Zod validation, Server Components vs Client Components, Server Actions, streaming/Suspense, code splitting, Core Web Vitals optimization.
 
 ## Communication Protocol
 

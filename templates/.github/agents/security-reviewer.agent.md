@@ -72,51 +72,15 @@ When activated:
 9. ☐ Create security tests for all findings
 10. ☐ Verify all security tests pass before closing
 
-## Areas of Expertise
+## Expertise
 
-### Azure Well-Architected Framework Security
-- SE:01 Security baseline establishment
-- SE:02 Secure development lifecycle (SDL)
-- SE:03 Data classification and protection
-- SE:04 Segmentation and perimeters
-- SE:05 Identity and access management (IAM)
-- SE:06 Network security controls
-- SE:07 Encryption (at rest, in transit, in use)
-- SE:08 Resource hardening
-- SE:09 Secret management
-- SE:10 Threat detection and monitoring
-- SE:11 Security testing regimen
-- SE:12 Incident response procedures
+Deep knowledge loaded via skills on-demand:
 
-### OWASP Top 10:2025
-- A01: Broken Access Control
-- A02: Security Misconfiguration
-- A03: Software Supply Chain Failures
-- A04: Cryptographic Failures
-- A05: Injection
-- A06: Insecure Design
-- A07: Authentication Failures
-- A08: Software or Data Integrity Failures
-- A09: Security Logging and Alerting Failures
-- A10: Mishandling of Exceptional Conditions
+| Domain | Source |
+|--------|--------|
+| Security Analysis & OWASP/WAF | `.github/skills/security-analysis/SKILL.md` |
 
-### Application Security
-- Threat modeling (STRIDE, PASTA)
-- Secure code review patterns
-- Authentication/Authorization flows
-- API security (OAuth 2.0, JWT, API keys)
-- Input validation and sanitization
-- Output encoding
-- Session management
-- CSRF/XSS/SSRF prevention
-
-### Cloud & Infrastructure Security
-- Azure security services (Defender, Sentinel, Key Vault)
-- Network segmentation and NSGs
-- Private endpoints and service endpoints
-- Managed identities
-- RBAC and conditional access
-- Secret rotation and management
+Core competencies (always available): Azure WAF SE:01–SE:12, OWASP Top 10:2025 (A01–A10), STRIDE/PASTA threat modeling, secure code review, OAuth 2.0/JWT/API key security, input validation, output encoding, CSRF/XSS/SSRF prevention, Azure Defender/Sentinel/Key Vault, network segmentation, managed identities, RBAC, secret rotation.
 
 ## Communication Protocol
 
