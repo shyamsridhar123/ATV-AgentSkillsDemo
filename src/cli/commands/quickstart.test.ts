@@ -3,11 +3,11 @@
  * Run with: node --test dist/cli/commands/quickstart.test.js
  */
 
-import { describe, it, beforeEach, afterEach } from 'node:test';
+import { describe, it, beforeAll, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert';
 import { execSync, spawnSync } from 'child_process';
-import { existsSync, mkdirSync, writeFileSync, rmSync } from 'fs';
-import { join, resolve } from 'path';
+import { existsSync, mkdirSync, writeFileSync, rmSync, readdirSync } from 'fs';
+import { join, resolve, basename } from 'path';
 import { tmpdir } from 'os';
 
 // Path to CLI
@@ -89,6 +89,27 @@ function simulateBeadsInit(dir: string): void {
 describe('quickstart command E2E', () => {
   let testDir: string;
 
+  /**
+   * Clean up orphaned Dolt databases from previous test runs.
+   * When quickstart runs `bd init` in a temp directory, it creates a Dolt database
+   * on the shared server (127.0.0.1:3307). If the test crashes or afterEach doesn't
+   * run, these databases accumulate and can destabilize the server.
+   */
+  beforeAll(() => {
+    if (!BEADS_AVAILABLE) return;
+    try {
+      const doltDir = join(process.cwd(), '.beads', 'dolt');
+      if (!existsSync(doltDir)) return;
+      const orphans = readdirSync(doltDir).filter(d => d.startsWith('beth_quickstart_test_'));
+      if (orphans.length === 0) return;
+      for (const db of orphans) {
+        try {
+          rmSync(join(doltDir, db), { recursive: true, force: true });
+        } catch { /* best effort */ }
+      }
+    } catch { /* not critical */ }
+  });
+
   beforeEach(() => {
     // Create a temp directory for testing
     testDir = join(tmpdir(), `beth-quickstart-test-${Date.now()}-${Math.random().toString(36).slice(2)}`);
@@ -96,6 +117,17 @@ describe('quickstart command E2E', () => {
   });
 
   afterEach(() => {
+    // Clean up Dolt database created by `bd init` during the test.
+    // The database name is derived from the temp dir name (hyphens → underscores).
+    if (BEADS_AVAILABLE && testDir) {
+      try {
+        const dbName = basename(testDir).replace(/-/g, '_');
+        const dbPath = join(process.cwd(), '.beads', 'dolt', dbName);
+        if (existsSync(dbPath)) {
+          rmSync(dbPath, { recursive: true, force: true });
+        }
+      } catch { /* best effort cleanup */ }
+    }
     // Clean up temp directory
     if (existsSync(testDir)) {
       rmSync(testDir, { recursive: true, force: true });
