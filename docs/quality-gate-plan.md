@@ -141,9 +141,9 @@ The current landing procedure gains enforced quality gates.
 
 ```
 1. Run ALL test suites
-   - pnpm test:unit
-   - pnpm test:e2e
-   - pnpm test:security
+   - npm run test:unit
+   - npm run test:e2e
+   - npm run test:security
 
 2. Capture results
    - Pass/fail per test
