@@ -2,7 +2,7 @@
 
 > *"I don't have time to explain things twice. Read this."*
 
-Last updated: 2026-03-09 (Beads cleanup: E2E test pollution fix, tracking drift documentation, beth-gau.1 closed)
+Last updated: 2026-03-09 (beth-xre.1 + beth-xre.2 closed: Skill routing table + Escalate-to-Beth handoff pattern)
 
 ---
 
@@ -10,6 +10,8 @@ Last updated: 2026-03-09 (Beads cleanup: E2E test pollution fix, tracking drift 
 
 | Task | Notes |
 |------|-------|
+| **Replace Lateral Handoffs with Escalate-to-Beth Pattern (beth-xre.2)** | Replaced 15 lateral handoffs across 6 subagents with single "Escalate to Beth" handoff per agent (`send: true`). Updated all 12 agent files (6 source + 6 templates). Fixed 2 handoff validation tests to accept agent `name:` refs (VS Code resolves by name, not filename ID). Before: 15-edge mesh where agents bypassed orchestration. After: hub-and-spoke — all agents report to Beth. 286 tests pass, 0 fail. |
+| **Beads tracking migration: beth-gau → beth-xre** | beth-gau epic was a phantom from a Dolt transaction that didn't persist (see March 9 war story). Recreated as beth-xre with same 7 subtasks. Closed beth-xre.1 (Skill Routing Table — already completed as beth-gau.1 in previous session, verified in code). |
 | **Beads housekeeping: E2E test pollution fix + tracking drift documentation (beth-0cf)** | Fixed `beads.e2e.test.ts` cleanup: added `beforeAll` safety net that batch-deletes stale "E2E test:" issues from previous failed runs via `bd delete --from-file`. Replaced per-issue `execSync` cleanup loop in `afterAll` with batch deletion. Documented both test pollution and tracking drift war stories in AGENTS.md + templates. Closed beth-gau.1 (was done in code but still in-progress in beads). Verified beth-gau epic fully intact with 7 subtasks. |
 | **Fix merge conflict on PR #33 (stale label cleanup)** | PR #33 (`copilot/sub-pr-31-again` → `epic/beth-0cf`) had a merge conflict in `.beads/backup/labels.jsonl`. Base branch added `beth-qz7` closed label while PR removed stale `in_progress` labels. Resolved: kept both changes (removals + new entry). Also expanded `beth.agent.md` tools from shorthand to explicit tool names (uncommitted from prior session). 286 tests pass. |
 | **PR cleanup & beads backup hygiene** | Resolved merge conflicts on PR #29 (gitignore beads backup) and PR #30 (remove bash-isms from E2E test cleanup). Both were draft sub-PRs from Copilot coding agent that had recurring merge conflicts because `bd` auto-re-adds backup files. Applied both changes directly to `epic/beth-0cf`: added `.beads/backup/` to `.gitignore`, removed 7 tracked backup files via `git rm --cached`, removed `shell: '/bin/bash'` and `2>/dev/null \|\| true` from `afterAll` cleanup in `beads.e2e.test.ts`. Closed both PRs. 286 tests pass, 0 fail. |
@@ -82,19 +84,19 @@ Last updated: 2026-03-09 (Beads cleanup: E2E test pollution fix, tracking drift 
 
 | Task | Epic | Notes |
 |------|------|-------|
-| **Agent Handoff & Skill Routing Optimization (beth-gau)** | beth-gau | Overhaul Beth's subagent handoff config, skill routing, and context efficiency. 7 subtasks below. |
+| **Agent Handoff & Skill Routing Optimization (beth-xre)** | beth-xre | Overhaul Beth's subagent handoff config, skill routing, and context efficiency. 7 subtasks. Migrated from phantom beth-gau. 2/7 complete. |
 
-### Epic beth-gau — Subtask Breakdown
+### Epic beth-xre — Subtask Breakdown (formerly beth-gau)
 
 | # | Task | ID | Priority | Deps | Status |
 |---|------|----|----------|------|--------|
-| 1 | **Add Skill Routing Table to Beth's Agent Definition** | beth-gau.1 | P0 | none | ✅ done |
-| 2 | **Replace Lateral Handoffs with Escalate-to-Beth Pattern** | beth-gau.2 | P0 | none | open |
-| 3 | **Restructure Subagent Prompt Templates with Explicit Skill Loading** | beth-gau.3 | P1 | beth-gau.1 | open |
-| 4 | **Extract Shared Boilerplate to AGENTS.md Reference** | beth-gau.4 | P1 | none | open |
-| 5 | **Migrate Areas of Expertise to On-Demand Skills** | beth-gau.5 | P2 | beth-gau.4 | open |
-| 6 | **Wire Orphaned Skills to Their Natural Agents** | beth-gau.6 | P1 | none | open |
-| 7 | **Update Beth Handoff Prompts with Context-Rich Defaults** | beth-gau.7 | P2 | beth-gau.1 | open |
+| 1 | **Add Skill Routing Table to Beth's Agent Definition** | beth-xre.1 | P0 | none | ✅ done |
+| 2 | **Replace Lateral Handoffs with Escalate-to-Beth Pattern** | beth-xre.2 | P0 | none | ✅ done |
+| 3 | **Restructure Subagent Prompt Templates with Explicit Skill Loading** | beth-xre.3 | P1 | beth-xre.1 | open |
+| 4 | **Extract Shared Boilerplate to AGENTS.md Reference** | beth-xre.4 | P1 | none | open |
+| 5 | **Migrate Areas of Expertise to On-Demand Skills** | beth-xre.5 | P2 | beth-xre.4 | open |
+| 6 | **Wire Orphaned Skills to Their Natural Agents** | beth-xre.6 | P1 | none | open |
+| 7 | **Update Beth Handoff Prompts with Context-Rich Defaults** | beth-xre.7 | P2 | beth-xre.1 | open |
 
 #### Task 1 (beth-gau.1): Add Skill Routing Table to Beth's Agent Definition
 - **Objective:** Beth has ZERO skill references. When she works directly, she operates without domain knowledge. Add explicit skill routing table.
