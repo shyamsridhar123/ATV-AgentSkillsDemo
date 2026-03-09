@@ -277,7 +277,7 @@ A uniform interface for all agent capabilities — file I/O, terminal, search, b
 | **editFile** | Atomic string replacement | Single-match enforcement, whitespace-safe |
 | **search** | Ripgrep search | Node.js fallback, regex support, file filtering |
 | **terminal** | Execute shell commands | `execFile('/bin/sh')` — no shell injection, timeouts |
-| **beads** | Issue tracking | `bd create`, `bd close`, `bd list` via CLI wrapper |
+| **beads** | Issue tracking | `bd create`, `npx beth-copilot close`, `bd list` via CLI wrapper |
 | **subagent** | Spawn nested agents | Returns structured result for orchestrator to process |
 | **MCP Bridge** | External tool servers | JSON-RPC 2.0 over stdio, JSONC config, namespaced tools |
 

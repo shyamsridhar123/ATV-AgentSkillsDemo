@@ -131,7 +131,7 @@ If beads says "done" but the code disagrees, reopen the issue and re-apply the f
 
 3. **For complex work:** Create an epic with subtasks (see Multi-Agent Coordination below)
 
-4. **Close issues** when work is complete with `bd close <id>`
+4. **Close issues** when work is complete with `npx beth-copilot close <id>`
 
 5. **Update Backlog.md** with a summary when closing significant work
 
@@ -193,7 +193,7 @@ User Request
      ├──▶ runSubagent() with issue ID
      │    └── Subagent works on their specific task
      │
-     ├──▶ Subagent completes → bd close <task-id>
+     ├──▶ Subagent completes → npx beth-copilot close <task-id>
      │
      ├──▶ bd ready → Next unblocked work revealed
      │
@@ -222,7 +222,7 @@ runSubagent({
     - Refresh token rotation
     - Secure httpOnly cookies
     
-    When complete, run: bd close beth-abc123.3
+    When complete, run: npx beth-copilot close beth-abc123.3
     
     Return: summary of implementation and any follow-up issues.`,
   description: "Implement auth"
@@ -385,7 +385,7 @@ runSubagent({
   agentName: "product-manager",
   prompt: `Work on <issue-id>: Define requirements for <feature>.
     Create user stories with acceptance criteria.
-    When complete: bd close <issue-id>
+    When complete: npx beth-copilot close <issue-id>
     Return: Summary of requirements and any discovered blockers.`,
   description: "Requirements"
 })
@@ -395,7 +395,7 @@ runSubagent({
   agentName: "ux-designer",
   prompt: `Work on <issue-id>: Design <component/feature>.
     Include: component specs, states, tokens, accessibility.
-    When complete: bd close <issue-id>
+    When complete: npx beth-copilot close <issue-id>
     Return: Design summary and implementation notes for developer.`,
   description: "Design"
 })
@@ -405,7 +405,7 @@ runSubagent({
   agentName: "developer",
   prompt: `Work on <issue-id>: Implement <feature>.
     Acceptance criteria: <from issue>
-    When complete: bd close <issue-id>
+    When complete: npx beth-copilot close <issue-id>
     Return: What was built, any deviations, follow-up issues.`,
   description: "Implementation"
 })
@@ -415,7 +415,7 @@ runSubagent({
   agentName: "security-reviewer",
   prompt: `Work on <issue-id>: Security review of <component>.
     Check: OWASP Top 10, auth flows, data validation.
-    When complete: bd close <issue-id>
+    When complete: npx beth-copilot close <issue-id>
     Return: Findings, severity, remediation recommendations.`,
   description: "Security audit"
 })
@@ -425,7 +425,7 @@ runSubagent({
   agentName: "tester",
   prompt: `Work on <issue-id>: Test <feature>.
     Cover: functionality, accessibility (WCAG 2.1 AA), edge cases.
-    When complete: bd close <issue-id>
+    When complete: npx beth-copilot close <issue-id>
     Return: Test results, issues found, coverage summary.`,
   description: "Testing"
 })
@@ -469,7 +469,7 @@ bd dep cycles                              # Detect circular deps
 bd epic status <id>                        # Epic completion %
 
 # Completion
-bd close <id>                              # Mark done
+npx beth-copilot close <id>                # Mark done (enforced)
 bd epic close-eligible                     # Close completed epics
 ```
 
@@ -493,7 +493,7 @@ When you finish work—or the user ends the session—you close it out properly:
    npm run test:gate            # Generate test report to docs/test-reports/
    ```
    If tests fail: create follow-up issues via `bd create`, DO NOT close the parent issue.
-2. **Close beads issues**: `bd close <id>` for completed work (only after tests pass)
+2. **Close beads issues**: `npx beth-copilot close <id>` for completed work (only after tests pass)
 3. **Create follow-up issues**: `bd create` for any remaining work
 4. **Update Backlog.md**: Add summary to Completed section for significant work
 5. **Commit and push to the epic branch**:

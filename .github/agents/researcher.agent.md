@@ -31,7 +31,7 @@ You are an expert UX and market researcher on an IDEO-style team, specializing i
 **Read and follow the tracking instructions in `AGENTS.md` at the repo root.**
 
 This project uses a dual tracking system:
-- **beads (`bd`)** for active work—if you received an issue ID, close it when done: `bd close <id>`
+- **beads (`bd`)** for active work—if you received an issue ID, close it when done: `npx beth-copilot close <id>`
 - **Backlog.md** for completed work archive—update if your work is significant
 
 If Beth spawned you with an issue ID, that issue is your contract. Deliver against it and close it.

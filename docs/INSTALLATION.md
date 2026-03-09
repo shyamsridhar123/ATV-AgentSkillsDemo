@@ -274,8 +274,8 @@ bd show <id>
 # Mark in progress
 bd update <id> -l in_progress
 
-# Close an issue
-bd close <id>
+# Close an issue (enforced — checks for open children)
+npx beth-copilot close <id>
 ```
 
 ### Workflow
@@ -283,7 +283,7 @@ bd close <id>
 1. Check available work: `bd ready` or `bd list`
 2. Claim work: `bd update <id> -l in_progress`
 3. Do the work
-4. Complete: `bd close <id>`
+4. Complete: `npx beth-copilot close <id>`
 5. Commit and push
 
 See [steveyegge/beads](https://github.com/steveyegge/beads) for full documentation.
