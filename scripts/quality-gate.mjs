@@ -52,14 +52,20 @@ function runTests(label, command) {
 }
 
 function parseVitestOutput(output) {
-  // Parse vitest summary line: "Tests  X passed | Y failed | Z skipped (W)"
-  // or: "Tests  X passed (Y)"
+  // Parse vitest summary line format:
+  //       Tests  295 passed | 1 skipped (296)
+  // or:   Tests  16 passed (16)
   const counts = { total: 0, passed: 0, failed: 0, skipped: 0 };
 
-  const passedMatch = output.match(/(\d+)\s+passed/);
-  const failedMatch = output.match(/(\d+)\s+failed/);
-  const skippedMatch = output.match(/(\d+)\s+skipped/);
-  const totalMatch = output.match(/Tests\s+.*\((\d+)\)/);
+  // Match the "Tests" summary line (with variable leading whitespace)
+  const testsLine = output.match(/Tests\s+(.+)/);
+  if (!testsLine) return counts;
+
+  const line = testsLine[1];
+  const passedMatch = line.match(/(\d+)\s+passed/);
+  const failedMatch = line.match(/(\d+)\s+failed/);
+  const skippedMatch = line.match(/(\d+)\s+skipped/);
+  const totalMatch = line.match(/\((\d+)\)/);
 
   if (passedMatch) counts.passed = parseInt(passedMatch[1], 10);
   if (failedMatch) counts.failed = parseInt(failedMatch[1], 10);

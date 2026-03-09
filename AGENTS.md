@@ -44,8 +44,8 @@ bd ready
 # View dependencies
 bd dep tree <id>
 
-# Close an issue
-bd close <id>
+# Close an issue (enforced — checks for open children)
+npx beth-copilot close <id>
 ```
 
 ## Session Startup (MANDATORY)
@@ -93,7 +93,7 @@ This can happen to ANY file touched by agents. The most vulnerable are files tou
 ### Simple Tasks
 1. `bd create "Task" -l in_progress`
 2. Do the work
-3. `bd close <id>`
+3. `npx beth-copilot close <id>`
 4. Update Backlog.md if significant
 5. Commit and push
 
@@ -127,7 +127,7 @@ This can happen to ANY file touched by agents. The most vulnerable are files tou
 
 **MANDATORY WORKFLOW:**
 
-1. **Close beads issues** - `bd close <id>` for completed work
+1. **Close beads issues** - `npx beth-copilot close <id>` for completed work
 2. **Create follow-up issues** - `bd create` for any remaining work
 3. **Update Backlog.md** - Add summary to Completed section for significant work
 4. **Run quality gates** (if code changed) - ALL tests must pass:
@@ -211,7 +211,7 @@ bd update bd-42 --priority 1 --json
 **Complete work:**
 
 ```bash
-bd close bd-42 --reason "Completed" --json
+npx beth-copilot close bd-42 --reason "Completed"
 ```
 
 ### Issue Types
@@ -237,7 +237,7 @@ bd close bd-42 --reason "Completed" --json
 3. **Work on it**: Implement, test, document
 4. **Discover new work?** Create linked issue:
    - `bd create "Found bug" --description="Details about what was found" -p 1 --deps discovered-from:<parent-id>`
-5. **Complete**: `bd close <id> --reason "Done"`
+5. **Complete**: `npx beth-copilot close <id> --reason "Done"`
 
 ### Auto-Sync
 
