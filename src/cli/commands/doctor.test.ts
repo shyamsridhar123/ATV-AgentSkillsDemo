@@ -9,6 +9,7 @@ import { execSync } from 'child_process';
 import { existsSync, mkdirSync, writeFileSync, rmSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
+import { parseDoltDatabases, SYSTEM_DBS, DB_COUNT_THRESHOLD } from './doctor.js';
 
 // Test utilities - we can't import the private functions from doctor.ts
 // but we can test the overall behavior
@@ -154,5 +155,238 @@ describe('CLI availability checks', () => {
     } catch (error) {
       assert.ok(true, 'Correctly threw for missing CLI');
     }
+  });
+});
+
+describe('parseDoltDatabases', () => {
+  // Realistic Dolt SHOW DATABASES output with + separators
+  const TYPICAL_OUTPUT = [
+    '+--------------------+',
+    '| Database           |',
+    '+--------------------+',
+    '| information_schema |',
+    '| mysql              |',
+    '| dolt               |',
+    '| beth               |',
+    '+--------------------+',
+    '',
+  ].join('\n');
+
+  it('should extract user databases from typical Dolt output', () => {
+    const dbs = parseDoltDatabases(TYPICAL_OUTPUT);
+    assert.deepStrictEqual(dbs, ['beth']);
+  });
+
+  it('should filter out all system databases', () => {
+    const dbs = parseDoltDatabases(TYPICAL_OUTPUT);
+    for (const sysDb of SYSTEM_DBS) {
+      assert.ok(!dbs.includes(sysDb), `should not include system db '${sysDb}'`);
+    }
+  });
+
+  it('should filter out + separator lines', () => {
+    const output = [
+      '+----------+',
+      '| Database |',
+      '+----------+',
+      '| mydb     |',
+      '+----------+',
+    ].join('\n');
+    const dbs = parseDoltDatabases(output);
+    assert.deepStrictEqual(dbs, ['mydb']);
+  });
+
+  it('should filter out - separator lines', () => {
+    // Some Dolt versions or configurations may use dashes
+    const output = [
+      '+-----------+',
+      '| Database  |',
+      '+-----------+',
+      '| mydb      |',
+      '- note line -',
+      '+-----------+',
+    ].join('\n');
+    const dbs = parseDoltDatabases(output);
+    assert.deepStrictEqual(dbs, ['mydb']);
+  });
+
+  it('should filter out the header row', () => {
+    const output = [
+      '+----------+',
+      '| Database |',
+      '+----------+',
+      '| app      |',
+      '+----------+',
+    ].join('\n');
+    const dbs = parseDoltDatabases(output);
+    assert.ok(!dbs.includes('Database'), "should not include the header 'Database'");
+    assert.deepStrictEqual(dbs, ['app']);
+  });
+
+  it('should handle multiple user databases', () => {
+    const output = [
+      '+--------------------+',
+      '| Database           |',
+      '+--------------------+',
+      '| information_schema |',
+      '| mysql              |',
+      '| dolt               |',
+      '| beth               |',
+      '| staging            |',
+      '| experiment         |',
+      '+--------------------+',
+    ].join('\n');
+    const dbs = parseDoltDatabases(output);
+    assert.deepStrictEqual(dbs, ['beth', 'staging', 'experiment']);
+  });
+
+  it('should return empty array when only system databases exist', () => {
+    const output = [
+      '+--------------------+',
+      '| Database           |',
+      '+--------------------+',
+      '| information_schema |',
+      '| mysql              |',
+      '| dolt               |',
+      '+--------------------+',
+    ].join('\n');
+    const dbs = parseDoltDatabases(output);
+    assert.deepStrictEqual(dbs, []);
+  });
+
+  it('should return empty array for empty output', () => {
+    const dbs = parseDoltDatabases('');
+    assert.deepStrictEqual(dbs, []);
+  });
+
+  it('should return empty array for whitespace-only output', () => {
+    const dbs = parseDoltDatabases('  \n  \n  ');
+    assert.deepStrictEqual(dbs, []);
+  });
+
+  it('should handle trailing newlines', () => {
+    const output = [
+      '+----------+',
+      '| Database |',
+      '+----------+',
+      '| mydb     |',
+      '+----------+',
+      '',
+      '',
+    ].join('\n');
+    const dbs = parseDoltDatabases(output);
+    assert.deepStrictEqual(dbs, ['mydb']);
+  });
+
+  it('should handle database names with test in them', () => {
+    const output = [
+      '+--------------------+',
+      '| Database           |',
+      '+--------------------+',
+      '| information_schema |',
+      '| beth               |',
+      '| beth_test_abc      |',
+      '| test_pollution     |',
+      '| my_Testing_db      |',
+      '+--------------------+',
+    ].join('\n');
+    const dbs = parseDoltDatabases(output);
+    // parseDoltDatabases just parses — it doesn't classify test DBs.
+    // That's the caller's job. All non-system DBs should be returned.
+    assert.deepStrictEqual(dbs, ['beth', 'beth_test_abc', 'test_pollution', 'my_Testing_db']);
+  });
+
+  it('should strip pipe characters and whitespace from database names', () => {
+    const output = [
+      '+--------------------+',
+      '| Database           |',
+      '+--------------------+',
+      '|   spacey_db        |',
+      '| beth               |',
+      '+--------------------+',
+    ].join('\n');
+    const dbs = parseDoltDatabases(output);
+    assert.deepStrictEqual(dbs, ['spacey_db', 'beth']);
+  });
+
+  it('should handle + separators with varying column widths', () => {
+    const output = [
+      '+------+',
+      '| Database |',
+      '+------+',
+      '| a    |',
+      '| bb   |',
+      '+------+',
+    ].join('\n');
+    const dbs = parseDoltDatabases(output);
+    assert.deepStrictEqual(dbs, ['a', 'bb']);
+  });
+});
+
+describe('parseDoltDatabases integration with checkDoltDatabases logic', () => {
+  it('should correctly identify orphaned test databases', () => {
+    const output = [
+      '+--------------------+',
+      '| Database           |',
+      '+--------------------+',
+      '| information_schema |',
+      '| beth               |',
+      '| e2e_test_run1      |',
+      '| TEST_LEFTOVERS     |',
+      '| production         |',
+      '+--------------------+',
+    ].join('\n');
+    const databases = parseDoltDatabases(output);
+    const testDbs = databases.filter(name => /test/i.test(name));
+    assert.deepStrictEqual(testDbs, ['e2e_test_run1', 'TEST_LEFTOVERS']);
+  });
+
+  it('should trigger DB count warning when threshold exceeded', () => {
+    const userDbs = Array.from({ length: DB_COUNT_THRESHOLD + 2 }, (_, i) => `db_${i}`);
+    const lines = [
+      '+----------+',
+      '| Database |',
+      '+----------+',
+      '| information_schema |',
+      '| mysql    |',
+      '| dolt     |',
+      ...userDbs.map(db => `| ${db}     |`),
+      '+----------+',
+    ];
+    const databases = parseDoltDatabases(lines.join('\n'));
+    assert.ok(
+      databases.length > DB_COUNT_THRESHOLD,
+      `${databases.length} databases should exceed threshold of ${DB_COUNT_THRESHOLD}`,
+    );
+  });
+
+  it('should not trigger DB count warning at or below threshold', () => {
+    const userDbs = Array.from({ length: DB_COUNT_THRESHOLD }, (_, i) => `db_${i}`);
+    const lines = [
+      '+----------+',
+      '| Database |',
+      '+----------+',
+      '| information_schema |',
+      ...userDbs.map(db => `| ${db}     |`),
+      '+----------+',
+    ];
+    const databases = parseDoltDatabases(lines.join('\n'));
+    assert.ok(
+      databases.length <= DB_COUNT_THRESHOLD,
+      `${databases.length} databases should not exceed threshold of ${DB_COUNT_THRESHOLD}`,
+    );
+  });
+});
+
+describe('exported constants', () => {
+  it('SYSTEM_DBS should contain expected system databases', () => {
+    assert.ok(SYSTEM_DBS.has('information_schema'));
+    assert.ok(SYSTEM_DBS.has('mysql'));
+    assert.ok(SYSTEM_DBS.has('dolt'));
+    assert.strictEqual(SYSTEM_DBS.size, 3);
+  });
+
+  it('DB_COUNT_THRESHOLD should be 5', () => {
+    assert.strictEqual(DB_COUNT_THRESHOLD, 5);
   });
 });
