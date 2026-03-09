@@ -47,3 +47,6 @@ coverage/
 
 # bs-buster local state
 .bs-buster/
+
+# Beads backup state (runtime, not source)
+.beads/backup/
