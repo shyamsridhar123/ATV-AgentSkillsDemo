@@ -3,7 +3,8 @@
  * Run with: node --test dist/cli/commands/quickstart.test.js
  */
 
-import { describe, it, beforeAll, beforeEach, afterEach } from 'node:test';
+import { describe, it, beforeEach, afterEach } from 'node:test';
+import { beforeAll } from 'vitest';
 import assert from 'node:assert';
 import { execSync, spawnSync } from 'child_process';
 import { existsSync, mkdirSync, writeFileSync, rmSync, readdirSync } from 'fs';

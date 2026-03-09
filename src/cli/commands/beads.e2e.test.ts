@@ -12,7 +12,8 @@
  * Run with: npx tsx --test src/cli/commands/beads.e2e.test.ts
  */
 
-import { describe, it, beforeAll, afterAll } from 'node:test';
+import { describe, it } from 'node:test';
+import { beforeAll, afterAll } from 'vitest';
 import assert from 'node:assert';
 import { execSync } from 'child_process';
 import { writeFileSync, unlinkSync } from 'fs';
