@@ -2,7 +2,7 @@
 
 > *"I don't have time to explain things twice. Read this."*
 
-Last updated: 2026-03-09 (beth-xre.1 + beth-xre.2 closed: Skill routing table + Escalate-to-Beth handoff pattern)
+Last updated: 2026-03-09 (beth-xre.4 closed: Extract shared boilerplate to AGENTS.md reference)
 
 ---
 
@@ -10,6 +10,7 @@ Last updated: 2026-03-09 (beth-xre.1 + beth-xre.2 closed: Skill routing table + 
 
 | Task | Notes |
 |------|-------|
+| **Extract Shared Boilerplate to AGENTS.md Reference (beth-xre.4)** | Replaced ~120 lines of duplicated Work Tracking + Team Coordination sections across 12 files (6 subagents + 6 templates) with a compact 3-line AGENTS.md reference. Fixed inconsistent `bd close` vs `npx beth-copilot close` in template security-reviewer. Net -260 lines. 286 tests pass, 0 fail. |
 | **Replace Lateral Handoffs with Escalate-to-Beth Pattern (beth-xre.2)** | Replaced 15 lateral handoffs across 6 subagents with single "Escalate to Beth" handoff per agent (`send: true`). Updated all 12 agent files (6 source + 6 templates). Fixed 2 handoff validation tests to accept agent `name:` refs (VS Code resolves by name, not filename ID). Before: 15-edge mesh where agents bypassed orchestration. After: hub-and-spoke — all agents report to Beth. 286 tests pass, 0 fail. |
 | **Beads tracking migration: beth-gau → beth-xre** | beth-gau epic was a phantom from a Dolt transaction that didn't persist (see March 9 war story). Recreated as beth-xre with same 7 subtasks. Closed beth-xre.1 (Skill Routing Table — already completed as beth-gau.1 in previous session, verified in code). |
 | **Beads housekeeping: E2E test pollution fix + tracking drift documentation (beth-0cf)** | Fixed `beads.e2e.test.ts` cleanup: added `beforeAll` safety net that batch-deletes stale "E2E test:" issues from previous failed runs via `bd delete --from-file`. Replaced per-issue `execSync` cleanup loop in `afterAll` with batch deletion. Documented both test pollution and tracking drift war stories in AGENTS.md + templates. Closed beth-gau.1 (was done in code but still in-progress in beads). Verified beth-gau epic fully intact with 7 subtasks. |
