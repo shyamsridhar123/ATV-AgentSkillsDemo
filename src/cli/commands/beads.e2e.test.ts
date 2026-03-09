@@ -347,7 +347,7 @@ describe('beads CLI E2E tests', () => {
     it('excludes blocked issues', () => {
       const blockerId = createTestIssue('"E2E test: ready-blocker"');
       const blockedId = createTestIssue(`"E2E test: ready-blocked" --deps "${blockerId}"`);
-      const readyIssues = bdJson('ready --limit 50') as Array<{ id: string }>;
+      const readyIssues = bdJson('ready --limit 500') as Array<{ id: string }>;
       const readyIds = readyIssues.map(i => i.id);
       assert.ok(!readyIds.includes(blockedId), `Blocked issue ${blockedId} should not be ready`);
       assert.ok(readyIds.includes(blockerId), `Blocker ${blockerId} should be ready`);
@@ -358,21 +358,21 @@ describe('beads CLI E2E tests', () => {
       const blockedId = createTestIssue(`"E2E test: unblock-blocked" --deps "${blockerId}"`);
 
       // Before: blocked issue NOT ready
-      let readyIssues = bdJson('ready --limit 50') as Array<{ id: string }>;
+      let readyIssues = bdJson('ready --limit 500') as Array<{ id: string }>;
       assert.ok(!readyIssues.map(i => i.id).includes(blockedId), 'Should be blocked initially');
 
       // Close the blocker
       bd(`close ${blockerId}`);
 
       // After: previously blocked issue IS now ready
-      readyIssues = bdJson('ready --limit 50') as Array<{ id: string }>;
+      readyIssues = bdJson('ready --limit 500') as Array<{ id: string }>;
       assert.ok(readyIssues.map(i => i.id).includes(blockedId), 'Should become ready after blocker closes');
     });
 
     it('excludes in_progress issues', () => {
       const id = createTestIssue('"E2E test: ready-in-progress"');
       bd(`update ${id} --claim`);
-      const readyIssues = bdJson('ready --limit 50') as Array<{ id: string }>;
+      const readyIssues = bdJson('ready --limit 500') as Array<{ id: string }>;
       const readyIds = readyIssues.map(i => i.id);
       assert.ok(!readyIds.includes(id), 'In-progress issue should not appear in ready');
     });
@@ -468,7 +468,7 @@ describe('beads CLI E2E tests', () => {
       const task3 = createTestIssue(`"E2E test: lifecycle implement" --parent ${epicId} --deps "${task2}"`);
 
       // 3. Verify dependency chain — only task1 should be ready
-      let ready = bdJson('ready --limit 50') as Array<{ id: string }>;
+      let ready = bdJson('ready --limit 500') as Array<{ id: string }>;
       let readyIds = ready.map(r => r.id);
       assert.ok(readyIds.includes(task1), 'Task 1 should be ready (no blockers)');
       assert.ok(!readyIds.includes(task2), 'Task 2 should be blocked by task 1');
@@ -476,14 +476,14 @@ describe('beads CLI E2E tests', () => {
 
       // 4. Close task1 → task2 becomes ready
       bd(`close ${task1} --reason "Requirements done"`);
-      ready = bdJson('ready --limit 50') as Array<{ id: string }>;
+      ready = bdJson('ready --limit 500') as Array<{ id: string }>;
       readyIds = ready.map(r => r.id);
       assert.ok(readyIds.includes(task2), 'Task 2 should be ready after task 1 closed');
       assert.ok(!readyIds.includes(task3), 'Task 3 should still be blocked');
 
       // 5. Close task2 → task3 becomes ready
       bd(`close ${task2} --reason "Design done"`);
-      ready = bdJson('ready --limit 50') as Array<{ id: string }>;
+      ready = bdJson('ready --limit 500') as Array<{ id: string }>;
       readyIds = ready.map(r => r.id);
       assert.ok(readyIds.includes(task3), 'Task 3 should be ready after task 2 closed');
 
@@ -511,7 +511,7 @@ describe('beads CLI E2E tests', () => {
       const testTask = createTestIssue(`"E2E test: parallel testing" --parent ${epicId} --deps "${implTask}"`);
 
       // Only impl should be ready
-      let ready = bdJson('ready --limit 50') as Array<{ id: string }>;
+      let ready = bdJson('ready --limit 500') as Array<{ id: string }>;
       let readyIds = ready.map(r => r.id);
       assert.ok(readyIds.includes(implTask), 'Impl should be ready');
       assert.ok(!readyIds.includes(secTask), 'Security should be blocked');
@@ -519,7 +519,7 @@ describe('beads CLI E2E tests', () => {
 
       // Close impl → BOTH security and testing become ready (parallel)
       bd(`close ${implTask}`);
-      ready = bdJson('ready --limit 50') as Array<{ id: string }>;
+      ready = bdJson('ready --limit 500') as Array<{ id: string }>;
       readyIds = ready.map(r => r.id);
       assert.ok(readyIds.includes(secTask), 'Security should be ready after impl closes');
       assert.ok(readyIds.includes(testTask), 'Testing should be ready after impl closes (parallel)');
