@@ -332,7 +332,13 @@ export function closeIssue(
     // 3. For epics: verify mandatory test subtasks exist
     const issueInfo = getIssueInfo(issueId);
     if (issueInfo && issueInfo.issue_type === 'epic') {
-      const allChildren = getAllChildren(issueId);
+      // Prefer children/dependents from the existing bd show response for this epic,
+      // falling back to getAllChildren(issueId) only if necessary.
+      const allChildren =
+        (Array.isArray((issueInfo as any).dependents) &&
+          (issueInfo as any).dependents.length > 0
+          ? (issueInfo as any).dependents
+          : getAllChildren(issueId));
       const missingTests = getMissingTestSubtasks(allChildren);
       if (missingTests.length > 0) {
         console.error(
