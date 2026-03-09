@@ -258,7 +258,7 @@ function checkDoltDatabases(cwd: string): CheckResult[] {
     const databases = output
       .split('\n')
       .map(line => line.replace(/^\|\s*|\s*\|$/g, '').trim())
-      .filter(line => line && !line.startsWith('-') && line !== 'Database')
+      .filter(line => line && !line.startsWith('+') && !line.startsWith('-') && line !== 'Database')
       .filter(name => !systemDbs.has(name));
     
     // Check for orphaned test databases

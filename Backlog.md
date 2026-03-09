@@ -2,7 +2,7 @@
 
 > *"I don't have time to explain things twice. Read this."*
 
-Last updated: 2026-03-09 (beth-bdh closed: Beads DB recovery + Dolt orphan cleanup + test fix)
+Last updated: 2026-03-09 (beth-fl3: Beads/Dolt hardening — doctor hygiene checks + backup emphasis + recovery docs)
 
 ---
 
@@ -10,6 +10,8 @@ Last updated: 2026-03-09 (beth-bdh closed: Beads DB recovery + Dolt orphan clean
 
 | Task | Notes |
 |------|-------|
+| **Beads/Dolt Hardening: Doctor Hygiene + Backup + Recovery Docs (beth-fl3)** | Added `checkDoltDatabases()` to doctor command: detects orphaned `*test*` databases and warns when user DB count exceeds 5. Added Step 4 (Dolt database hygiene) to Session Startup in AGENTS.md. Added backup step with `bd backup` + `git add .beads/backup/` to both Landing the Plane sections. Documented `bd init --force` recovery sequence (6-step escalation path) with March 9 war story. 286 tests pass, 0 fail. |
+| **Fix CI build failure on PR #38 (beth-bdh follow-up)** | `quickstart.test.ts` and `beads.e2e.test.ts` imported `beforeAll`/`afterAll` from `node:test`, which doesn't export those names (it uses `before`/`after`). Vitest's `node:test` → `vitest` alias masked the problem at runtime, but `tsc` compiled against real `node:test` types and failed with TS2724. Fix: import hooks directly from `vitest`. Also committed previously-staged AGENTS.md Dolt hygiene docs and `doctor.ts` enhancements. 287 tests pass, all 7 CI checks green. |
 | **Beads DB Recovery + Dolt Orphan Cleanup + Test Fix (beth-bdh)** | Dolt server lost `beth` database after restart — root cause: 73 orphaned `beth_quickstart_test_*` databases from E2E tests overloaded the server. Recovered 34 issues/40 deps/64 events from git-committed JSONL backups (commit cc9f9f0). Deleted 73 test DBs + 1 phantom, freed 29MB. Fixed `quickstart.test.ts`: added `beforeAll` safety net to clean stale test databases from prior crashed runs, added `afterEach` to drop Dolt database for each test. Zero orphans after test run. 287 tests pass. |
 | **Extract Shared Boilerplate to AGENTS.md Reference (beth-xre.4)** | Replaced ~120 lines of duplicated Work Tracking + Team Coordination sections across 12 files (6 subagents + 6 templates) with a compact 3-line AGENTS.md reference. Fixed inconsistent `bd close` vs `npx beth-copilot close` in template security-reviewer. Net -260 lines. 286 tests pass, 0 fail. |
 | **Replace Lateral Handoffs with Escalate-to-Beth Pattern (beth-xre.2)** | Replaced 15 lateral handoffs across 6 subagents with single "Escalate to Beth" handoff per agent (`send: true`). Updated all 12 agent files (6 source + 6 templates). Fixed 2 handoff validation tests to accept agent `name:` refs (VS Code resolves by name, not filename ID). Before: 15-edge mesh where agents bypassed orchestration. After: hub-and-spoke — all agents report to Beth. 286 tests pass, 0 fail. |
