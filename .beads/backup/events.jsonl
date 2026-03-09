@@ -34,3 +34,432 @@
 {"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T15:06:06Z","event_type":"closed","id":34,"issue_id":"beth-7cu.4","new_value":"Created scripts/quality-gate.mjs — runs vitest + legacy tests, parses results, generates markdown report. Added test:gate script to package.json. 296 tests pass.","old_value":""}
 {"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T15:06:06Z","event_type":"closed","id":35,"issue_id":"beth-7cu","new_value":"all steps complete","old_value":""}
 {"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:46:51Z","event_type":"created","id":86,"issue_id":"beth-8r1","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:47:02Z","event_type":"created","id":88,"issue_id":"beth-3cw","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:47:06Z","event_type":"created","id":89,"issue_id":"beth-9s0","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:47:14Z","event_type":"created","id":91,"issue_id":"beth-49f","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:47:17Z","event_type":"created","id":92,"issue_id":"beth-49f.1","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:47:19Z","event_type":"created","id":93,"issue_id":"beth-bv0","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":"Added label: test-label","created_at":"2026-03-08T23:47:19Z","event_type":"label_added","id":94,"issue_id":"beth-bv0","new_value":null,"old_value":null}
+{"actor":"Stephanie Schofield","comment":"Added label: e2e","created_at":"2026-03-08T23:47:19Z","event_type":"label_added","id":95,"issue_id":"beth-bv0","new_value":null,"old_value":null}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:47:23Z","event_type":"created","id":96,"issue_id":"beth-6ac","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:47:25Z","event_type":"created","id":97,"issue_id":"beth-j5x","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:47:32Z","event_type":"created","id":98,"issue_id":"beth-hau","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:47:36Z","event_type":"created","id":99,"issue_id":"beth-5yz","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:47:39Z","event_type":"created","id":100,"issue_id":"beth-5yz.1","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:47:41Z","event_type":"created","id":101,"issue_id":"beth-5yz.2","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:47:46Z","event_type":"created","id":102,"issue_id":"beth-9xy","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:47:48Z","event_type":"created","id":103,"issue_id":"beth-5v7","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:47:56Z","event_type":"created","id":104,"issue_id":"beth-cr1","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:48:05Z","event_type":"created","id":106,"issue_id":"beth-4op","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:48:07Z","event_type":"closed","id":107,"issue_id":"beth-4op","new_value":"testing list --all","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:48:10Z","event_type":"created","id":108,"issue_id":"beth-au4","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:48:13Z","event_type":"updated","id":109,"issue_id":"beth-au4","new_value":"{\"title\":\"E2E test: updated title\"}","old_value":"{\"id\":\"beth-au4\",\"title\":\"E2E test: original title\",\"status\":\"open\",\"priority\":2,\"issue_type\":\"task\",\"owner\":\"sschofield@microsoft.com\",\"created_at\":\"2026-03-09T04:48:11Z\",\"created_by\":\"Stephanie Schofield\",\"updated_at\":\"2026-03-09T04:48:11Z\"}"}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:48:24Z","event_type":"created","id":112,"issue_id":"beth-mlo","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:48:26Z","event_type":"status_changed","id":113,"issue_id":"beth-mlo","new_value":"{\"status\":\"in_progress\"}","old_value":"{\"id\":\"beth-mlo\",\"title\":\"E2E test: update status\",\"status\":\"open\",\"priority\":2,\"issue_type\":\"task\",\"owner\":\"sschofield@microsoft.com\",\"created_at\":\"2026-03-09T04:48:24Z\",\"created_by\":\"Stephanie Schofield\",\"updated_at\":\"2026-03-09T04:48:24Z\"}"}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:48:31Z","event_type":"created","id":114,"issue_id":"beth-z67","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:48:33Z","event_type":"claimed","id":115,"issue_id":"beth-z67","new_value":"{\"assignee\":\"Stephanie Schofield\",\"status\":\"in_progress\"}","old_value":"{\"id\":\"beth-z67\",\"title\":\"E2E test: claimable\",\"status\":\"open\",\"priority\":2,\"issue_type\":\"task\",\"owner\":\"sschofield@microsoft.com\",\"created_at\":\"2026-03-09T04:48:31Z\",\"created_by\":\"Stephanie Schofield\",\"updated_at\":\"2026-03-09T04:48:31Z\"}"}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:48:38Z","event_type":"created","id":116,"issue_id":"beth-cmn","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":"Added label: foo","created_at":"2026-03-08T23:48:41Z","event_type":"label_added","id":117,"issue_id":"beth-cmn","new_value":null,"old_value":null}
+{"actor":"Stephanie Schofield","comment":"Added label: bar","created_at":"2026-03-08T23:48:41Z","event_type":"label_added","id":118,"issue_id":"beth-cmn","new_value":null,"old_value":null}
+{"actor":"Stephanie Schofield","comment":"Removed label: foo","created_at":"2026-03-08T23:48:45Z","event_type":"label_removed","id":119,"issue_id":"beth-cmn","new_value":null,"old_value":null}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:48:51Z","event_type":"created","id":120,"issue_id":"beth-2ff","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:48:54Z","event_type":"updated","id":121,"issue_id":"beth-2ff","new_value":"{\"description\":\"New description content\"}","old_value":"{\"id\":\"beth-2ff\",\"title\":\"E2E test: update desc\",\"status\":\"open\",\"priority\":2,\"issue_type\":\"task\",\"owner\":\"sschofield@microsoft.com\",\"created_at\":\"2026-03-09T04:48:52Z\",\"created_by\":\"Stephanie Schofield\",\"updated_at\":\"2026-03-09T04:48:52Z\"}"}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:48:59Z","event_type":"created","id":122,"issue_id":"beth-4sc","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:49:01Z","event_type":"closed","id":123,"issue_id":"beth-4sc","new_value":"Closed","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:49:07Z","event_type":"created","id":124,"issue_id":"beth-5il","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:49:09Z","event_type":"closed","id":125,"issue_id":"beth-5il","new_value":"Work completed successfully","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:49:13Z","event_type":"created","id":126,"issue_id":"beth-e7t","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:49:15Z","event_type":"closed","id":127,"issue_id":"beth-e7t","new_value":"Closed","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:49:24Z","event_type":"created","id":128,"issue_id":"beth-pqy","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:49:27Z","event_type":"created","id":129,"issue_id":"beth-fo1","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:49:33Z","event_type":"created","id":130,"issue_id":"beth-n41","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:49:35Z","event_type":"created","id":131,"issue_id":"beth-ixj","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:49:41Z","event_type":"closed","id":132,"issue_id":"beth-n41","new_value":"Closed","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:49:46Z","event_type":"created","id":133,"issue_id":"beth-7v5","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:49:48Z","event_type":"claimed","id":134,"issue_id":"beth-7v5","new_value":"{\"assignee\":\"Stephanie Schofield\",\"status\":\"in_progress\"}","old_value":"{\"id\":\"beth-7v5\",\"title\":\"E2E test: ready-in-progress\",\"status\":\"open\",\"priority\":2,\"issue_type\":\"task\",\"owner\":\"sschofield@microsoft.com\",\"created_at\":\"2026-03-09T04:49:46Z\",\"created_by\":\"Stephanie Schofield\",\"updated_at\":\"2026-03-09T04:49:46Z\"}"}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:49:53Z","event_type":"created","id":135,"issue_id":"beth-b2k","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:49:55Z","event_type":"created","id":136,"issue_id":"beth-xmr","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:50:01Z","event_type":"created","id":137,"issue_id":"beth-t7y","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:50:03Z","event_type":"created","id":138,"issue_id":"beth-t7y.1","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:50:05Z","event_type":"created","id":139,"issue_id":"beth-t7y.2","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:50:15Z","event_type":"created","id":140,"issue_id":"beth-2f2","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:50:20Z","event_type":"created","id":142,"issue_id":"beth-4tr","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:50:24Z","event_type":"created","id":143,"issue_id":"beth-123","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:50:34Z","event_type":"created","id":145,"issue_id":"beth-6m5","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:50:37Z","event_type":"created","id":146,"issue_id":"beth-6m5.1","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:50:39Z","event_type":"created","id":147,"issue_id":"beth-4my","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":"Added label: test-label","created_at":"2026-03-08T23:50:39Z","event_type":"label_added","id":148,"issue_id":"beth-4my","new_value":null,"old_value":null}
+{"actor":"Stephanie Schofield","comment":"Added label: e2e","created_at":"2026-03-08T23:50:39Z","event_type":"label_added","id":149,"issue_id":"beth-4my","new_value":null,"old_value":null}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:50:43Z","event_type":"created","id":150,"issue_id":"beth-0dn","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:50:45Z","event_type":"created","id":151,"issue_id":"beth-lig","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:50:50Z","event_type":"created","id":152,"issue_id":"beth-31b","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:50:57Z","event_type":"created","id":153,"issue_id":"beth-dgi","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:51:03Z","event_type":"created","id":155,"issue_id":"beth-l66","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:51:07Z","event_type":"created","id":156,"issue_id":"beth-c80","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:51:14Z","event_type":"created","id":158,"issue_id":"beth-0ky","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:51:21Z","event_type":"created","id":159,"issue_id":"beth-hi3","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:51:30Z","event_type":"created","id":161,"issue_id":"beth-826","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:51:36Z","event_type":"created","id":162,"issue_id":"beth-0mg","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:51:42Z","event_type":"created","id":163,"issue_id":"beth-ju1","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:51:50Z","event_type":"created","id":165,"issue_id":"beth-e29","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:51:57Z","event_type":"created","id":167,"issue_id":"beth-ki2","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:52:01Z","event_type":"created","id":168,"issue_id":"beth-x34","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:52:09Z","event_type":"created","id":170,"issue_id":"beth-qfc","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:52:11Z","event_type":"created","id":171,"issue_id":"beth-qfc.1","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:52:13Z","event_type":"created","id":172,"issue_id":"beth-70v","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":"Added label: test-label","created_at":"2026-03-08T23:52:13Z","event_type":"label_added","id":173,"issue_id":"beth-70v","new_value":null,"old_value":null}
+{"actor":"Stephanie Schofield","comment":"Added label: e2e","created_at":"2026-03-08T23:52:13Z","event_type":"label_added","id":174,"issue_id":"beth-70v","new_value":null,"old_value":null}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:52:16Z","event_type":"created","id":175,"issue_id":"beth-txy","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:52:18Z","event_type":"created","id":176,"issue_id":"beth-581","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:52:22Z","event_type":"created","id":177,"issue_id":"beth-3sz","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:52:26Z","event_type":"created","id":178,"issue_id":"beth-q7l","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:52:29Z","event_type":"created","id":179,"issue_id":"beth-q7l.1","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:52:31Z","event_type":"created","id":180,"issue_id":"beth-q7l.2","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:52:35Z","event_type":"created","id":181,"issue_id":"beth-13o","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:52:36Z","event_type":"created","id":182,"issue_id":"beth-4g2","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:53:26Z","event_type":"created","id":183,"issue_id":"beth-s34","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:53:32Z","event_type":"created","id":185,"issue_id":"beth-joo","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:53:38Z","event_type":"created","id":186,"issue_id":"beth-2j1","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:53:45Z","event_type":"created","id":188,"issue_id":"beth-4v2","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:53:47Z","event_type":"created","id":189,"issue_id":"beth-4v2.1","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:53:49Z","event_type":"created","id":190,"issue_id":"beth-pr4","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":"Added label: test-label","created_at":"2026-03-08T23:53:49Z","event_type":"label_added","id":191,"issue_id":"beth-pr4","new_value":null,"old_value":null}
+{"actor":"Stephanie Schofield","comment":"Added label: e2e","created_at":"2026-03-08T23:53:49Z","event_type":"label_added","id":192,"issue_id":"beth-pr4","new_value":null,"old_value":null}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:53:54Z","event_type":"created","id":193,"issue_id":"beth-vsn","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:53:56Z","event_type":"created","id":194,"issue_id":"beth-jd1","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:54:01Z","event_type":"created","id":195,"issue_id":"beth-vpn","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:54:05Z","event_type":"created","id":196,"issue_id":"beth-a1r","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:54:09Z","event_type":"created","id":197,"issue_id":"beth-a1r.1","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:54:11Z","event_type":"created","id":198,"issue_id":"beth-a1r.2","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:54:15Z","event_type":"created","id":199,"issue_id":"beth-9ev","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:54:17Z","event_type":"created","id":200,"issue_id":"beth-1f8","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:54:26Z","event_type":"created","id":201,"issue_id":"beth-jmv","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:54:35Z","event_type":"created","id":203,"issue_id":"beth-tta","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:54:37Z","event_type":"closed","id":204,"issue_id":"beth-tta","new_value":"testing list --all","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:54:42Z","event_type":"created","id":205,"issue_id":"beth-99m","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:54:44Z","event_type":"updated","id":206,"issue_id":"beth-99m","new_value":"{\"title\":\"E2E test: updated title\"}","old_value":"{\"id\":\"beth-99m\",\"title\":\"E2E test: original title\",\"status\":\"open\",\"priority\":2,\"issue_type\":\"task\",\"owner\":\"sschofield@microsoft.com\",\"created_at\":\"2026-03-09T04:54:42Z\",\"created_by\":\"Stephanie Schofield\",\"updated_at\":\"2026-03-09T04:54:42Z\"}"}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:54:56Z","event_type":"created","id":209,"issue_id":"beth-wox","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:54:58Z","event_type":"status_changed","id":210,"issue_id":"beth-wox","new_value":"{\"status\":\"in_progress\"}","old_value":"{\"id\":\"beth-wox\",\"title\":\"E2E test: update status\",\"status\":\"open\",\"priority\":2,\"issue_type\":\"task\",\"owner\":\"sschofield@microsoft.com\",\"created_at\":\"2026-03-09T04:54:56Z\",\"created_by\":\"Stephanie Schofield\",\"updated_at\":\"2026-03-09T04:54:56Z\"}"}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:55:03Z","event_type":"created","id":211,"issue_id":"beth-0sy","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:55:05Z","event_type":"claimed","id":212,"issue_id":"beth-0sy","new_value":"{\"assignee\":\"Stephanie Schofield\",\"status\":\"in_progress\"}","old_value":"{\"id\":\"beth-0sy\",\"title\":\"E2E test: claimable\",\"status\":\"open\",\"priority\":2,\"issue_type\":\"task\",\"owner\":\"sschofield@microsoft.com\",\"created_at\":\"2026-03-09T04:55:03Z\",\"created_by\":\"Stephanie Schofield\",\"updated_at\":\"2026-03-09T04:55:03Z\"}"}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:55:09Z","event_type":"created","id":213,"issue_id":"beth-h6t","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":"Added label: foo","created_at":"2026-03-08T23:55:12Z","event_type":"label_added","id":214,"issue_id":"beth-h6t","new_value":null,"old_value":null}
+{"actor":"Stephanie Schofield","comment":"Added label: bar","created_at":"2026-03-08T23:55:12Z","event_type":"label_added","id":215,"issue_id":"beth-h6t","new_value":null,"old_value":null}
+{"actor":"Stephanie Schofield","comment":"Removed label: foo","created_at":"2026-03-08T23:55:19Z","event_type":"label_removed","id":216,"issue_id":"beth-h6t","new_value":null,"old_value":null}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:55:24Z","event_type":"created","id":217,"issue_id":"beth-7jl","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:55:26Z","event_type":"updated","id":218,"issue_id":"beth-7jl","new_value":"{\"description\":\"New description content\"}","old_value":"{\"id\":\"beth-7jl\",\"title\":\"E2E test: update desc\",\"status\":\"open\",\"priority\":2,\"issue_type\":\"task\",\"owner\":\"sschofield@microsoft.com\",\"created_at\":\"2026-03-09T04:55:24Z\",\"created_by\":\"Stephanie Schofield\",\"updated_at\":\"2026-03-09T04:55:24Z\"}"}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:55:30Z","event_type":"created","id":219,"issue_id":"beth-xy9","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:55:33Z","event_type":"closed","id":220,"issue_id":"beth-xy9","new_value":"Closed","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:55:37Z","event_type":"created","id":221,"issue_id":"beth-6g4","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:55:39Z","event_type":"closed","id":222,"issue_id":"beth-6g4","new_value":"Work completed successfully","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:55:44Z","event_type":"created","id":223,"issue_id":"beth-tnf","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:55:47Z","event_type":"closed","id":224,"issue_id":"beth-tnf","new_value":"Closed","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:55:54Z","event_type":"created","id":225,"issue_id":"beth-qke","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:55:57Z","event_type":"created","id":226,"issue_id":"beth-8kh","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:56:01Z","event_type":"created","id":227,"issue_id":"beth-elu","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:56:03Z","event_type":"created","id":228,"issue_id":"beth-3dg","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:56:07Z","event_type":"closed","id":229,"issue_id":"beth-elu","new_value":"Closed","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:56:12Z","event_type":"created","id":230,"issue_id":"beth-jey","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:56:13Z","event_type":"claimed","id":231,"issue_id":"beth-jey","new_value":"{\"assignee\":\"Stephanie Schofield\",\"status\":\"in_progress\"}","old_value":"{\"id\":\"beth-jey\",\"title\":\"E2E test: ready-in-progress\",\"status\":\"open\",\"priority\":2,\"issue_type\":\"task\",\"owner\":\"sschofield@microsoft.com\",\"created_at\":\"2026-03-09T04:56:12Z\",\"created_by\":\"Stephanie Schofield\",\"updated_at\":\"2026-03-09T04:56:12Z\"}"}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:56:17Z","event_type":"created","id":232,"issue_id":"beth-lie","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:56:19Z","event_type":"created","id":233,"issue_id":"beth-42t","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:56:27Z","event_type":"created","id":234,"issue_id":"beth-3w5","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:56:29Z","event_type":"created","id":235,"issue_id":"beth-3w5.1","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:56:31Z","event_type":"created","id":236,"issue_id":"beth-3w5.2","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:56:37Z","event_type":"created","id":237,"issue_id":"beth-dao","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:56:39Z","event_type":"created","id":238,"issue_id":"beth-det","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:56:43Z","event_type":"created","id":239,"issue_id":"beth-w21","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:56:45Z","event_type":"created","id":240,"issue_id":"beth-w21.1","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:56:47Z","event_type":"created","id":241,"issue_id":"beth-w21.2","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:56:50Z","event_type":"created","id":242,"issue_id":"beth-94m","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:56:57Z","event_type":"created","id":244,"issue_id":"beth-vxx.1","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:57:00Z","event_type":"created","id":245,"issue_id":"beth-vxx.2","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:57:02Z","event_type":"created","id":246,"issue_id":"beth-vxx.3","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:57:08Z","event_type":"closed","id":247,"issue_id":"beth-vxx.1","new_value":"Requirements done","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:57:13Z","event_type":"closed","id":248,"issue_id":"beth-vxx.2","new_value":"Design done","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:57:18Z","event_type":"closed","id":249,"issue_id":"beth-vxx.3","new_value":"Implementation done","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:57:32Z","event_type":"created","id":252,"issue_id":"beth-znz","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:57:35Z","event_type":"created","id":253,"issue_id":"beth-znz.1","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:57:37Z","event_type":"created","id":254,"issue_id":"beth-znz.2","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:57:40Z","event_type":"created","id":255,"issue_id":"beth-znz.3","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:57:44Z","event_type":"closed","id":256,"issue_id":"beth-znz.1","new_value":"Closed","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:57:50Z","event_type":"created","id":257,"issue_id":"beth-hrw","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:57:53Z","event_type":"closed","id":258,"issue_id":"beth-hrw","new_value":"Closed","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:57:55Z","event_type":"closed","id":259,"issue_id":"beth-hrw","new_value":"Closed","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:57:57Z","event_type":"created","id":260,"issue_id":"beth-c4i","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:57:59Z","event_type":"created","id":261,"issue_id":"beth-igs","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:58:02Z","event_type":"closed","id":262,"issue_id":"beth-igs","new_value":"Closed","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:58:08Z","event_type":"reopened","id":264,"issue_id":"beth-igs","new_value":"{\"defer_until\":null,\"status\":\"open\"}","old_value":"{\"id\":\"beth-igs\",\"title\":\"E2E test: reopen me\",\"status\":\"closed\",\"priority\":2,\"issue_type\":\"task\",\"owner\":\"sschofield@microsoft.com\",\"created_at\":\"2026-03-09T04:58:00Z\",\"created_by\":\"Stephanie Schofield\",\"updated_at\":\"2026-03-09T04:58:02Z\",\"closed_at\":\"2026-03-09T04:58:02Z\",\"close_reason\":\"Closed\"}"}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:58:12Z","event_type":"created","id":265,"issue_id":"beth-67z","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:58:14Z","event_type":"created","id":267,"issue_id":"beth-5jz","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:58:18Z","event_type":"created","id":269,"issue_id":"beth-fcj","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-08T23:58:26Z","event_type":"closed","id":270,"issue_id":"beth-fcj","new_value":"test cleanup","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:12:26Z","event_type":"created","id":278,"issue_id":"beth-vz9","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:12:29Z","event_type":"created","id":282,"issue_id":"beth-0f0","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:12:30Z","event_type":"created","id":284,"issue_id":"beth-3qj","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:12:34Z","event_type":"created","id":289,"issue_id":"beth-2va","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:12:35Z","event_type":"created","id":290,"issue_id":"beth-2va.1","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:12:36Z","event_type":"created","id":294,"issue_id":"beth-59n","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":"Added label: test-label","created_at":"2026-03-09T00:12:36Z","event_type":"label_added","id":295,"issue_id":"beth-59n","new_value":null,"old_value":null}
+{"actor":"Stephanie Schofield","comment":"Added label: e2e","created_at":"2026-03-09T00:12:36Z","event_type":"label_added","id":296,"issue_id":"beth-59n","new_value":null,"old_value":null}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:12:39Z","event_type":"created","id":298,"issue_id":"beth-aj5","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:12:40Z","event_type":"created","id":300,"issue_id":"beth-5qn","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:12:43Z","event_type":"created","id":302,"issue_id":"beth-uad","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:12:45Z","event_type":"created","id":304,"issue_id":"beth-719","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:12:45Z","event_type":"created","id":306,"issue_id":"beth-719.1","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:12:46Z","event_type":"created","id":308,"issue_id":"beth-719.2","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:12:49Z","event_type":"created","id":310,"issue_id":"beth-0of","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:12:50Z","event_type":"created","id":312,"issue_id":"beth-u0v","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:12:57Z","event_type":"created","id":314,"issue_id":"beth-kzf","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:13:05Z","event_type":"created","id":318,"issue_id":"beth-bkg","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:13:07Z","event_type":"closed","id":320,"issue_id":"beth-bkg","new_value":"testing list --all","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:13:11Z","event_type":"created","id":322,"issue_id":"beth-nil","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:13:13Z","event_type":"updated","id":324,"issue_id":"beth-nil","new_value":"{\"title\":\"E2E test: updated title\"}","old_value":"{\"id\":\"beth-nil\",\"title\":\"E2E test: original title\",\"status\":\"open\",\"priority\":2,\"issue_type\":\"task\",\"owner\":\"sschofield@microsoft.com\",\"created_at\":\"2026-03-09T05:13:12Z\",\"created_by\":\"Stephanie Schofield\",\"updated_at\":\"2026-03-09T05:13:12Z\"}"}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:13:22Z","event_type":"created","id":330,"issue_id":"beth-rm2","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:13:24Z","event_type":"status_changed","id":332,"issue_id":"beth-rm2","new_value":"{\"status\":\"in_progress\"}","old_value":"{\"id\":\"beth-rm2\",\"title\":\"E2E test: update status\",\"status\":\"open\",\"priority\":2,\"issue_type\":\"task\",\"owner\":\"sschofield@microsoft.com\",\"created_at\":\"2026-03-09T05:13:23Z\",\"created_by\":\"Stephanie Schofield\",\"updated_at\":\"2026-03-09T05:13:23Z\"}"}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:13:28Z","event_type":"created","id":334,"issue_id":"beth-o0h","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:13:31Z","event_type":"claimed","id":336,"issue_id":"beth-o0h","new_value":"{\"assignee\":\"Stephanie Schofield\",\"status\":\"in_progress\"}","old_value":"{\"id\":\"beth-o0h\",\"title\":\"E2E test: claimable\",\"status\":\"open\",\"priority\":2,\"issue_type\":\"task\",\"owner\":\"sschofield@microsoft.com\",\"created_at\":\"2026-03-09T05:13:28Z\",\"created_by\":\"Stephanie Schofield\",\"updated_at\":\"2026-03-09T05:13:28Z\"}"}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:13:35Z","event_type":"created","id":338,"issue_id":"beth-7oq","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":"Added label: foo","created_at":"2026-03-09T00:13:35Z","event_type":"label_added","id":341,"issue_id":"beth-7oq","new_value":null,"old_value":null}
+{"actor":"Stephanie Schofield","comment":"Added label: bar","created_at":"2026-03-09T00:13:35Z","event_type":"label_added","id":342,"issue_id":"beth-7oq","new_value":null,"old_value":null}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:13:40Z","event_type":"created","id":344,"issue_id":"beth-986","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:13:43Z","event_type":"created","id":348,"issue_id":"beth-gvy","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:13:45Z","event_type":"created","id":351,"issue_id":"beth-gogf","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:13:49Z","event_type":"created","id":355,"issue_id":"beth-fx97","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:13:50Z","event_type":"created","id":357,"issue_id":"beth-fx97.1","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:13:50Z","event_type":"created","id":359,"issue_id":"beth-n7pk","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":"Added label: test-label","created_at":"2026-03-09T00:13:50Z","event_type":"label_added","id":360,"issue_id":"beth-n7pk","new_value":null,"old_value":null}
+{"actor":"Stephanie Schofield","comment":"Added label: e2e","created_at":"2026-03-09T00:13:50Z","event_type":"label_added","id":361,"issue_id":"beth-n7pk","new_value":null,"old_value":null}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:13:53Z","event_type":"created","id":362,"issue_id":"beth-3sza","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:13:53Z","event_type":"created","id":364,"issue_id":"beth-hk5b","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:13:57Z","event_type":"created","id":367,"issue_id":"beth-yqlt","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:13:59Z","event_type":"created","id":371,"issue_id":"beth-i291","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:14:01Z","event_type":"created","id":373,"issue_id":"beth-1t1p","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:14:05Z","event_type":"created","id":378,"issue_id":"beth-7cmp","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:14:05Z","event_type":"created","id":379,"issue_id":"beth-7cmp.1","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:14:06Z","event_type":"created","id":380,"issue_id":"beth-57bb","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":"Added label: test-label","created_at":"2026-03-09T00:14:06Z","event_type":"label_added","id":381,"issue_id":"beth-57bb","new_value":null,"old_value":null}
+{"actor":"Stephanie Schofield","comment":"Added label: e2e","created_at":"2026-03-09T00:14:07Z","event_type":"label_added","id":382,"issue_id":"beth-57bb","new_value":null,"old_value":null}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:14:08Z","event_type":"created","id":385,"issue_id":"beth-plnm","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:14:09Z","event_type":"created","id":386,"issue_id":"beth-kl4x","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:14:11Z","event_type":"created","id":388,"issue_id":"beth-ohib","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:14:13Z","event_type":"created","id":390,"issue_id":"beth-5yjt","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:14:14Z","event_type":"created","id":392,"issue_id":"beth-5yjt.1","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:14:15Z","event_type":"created","id":393,"issue_id":"beth-5yjt.2","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:14:17Z","event_type":"created","id":394,"issue_id":"beth-j978","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:14:18Z","event_type":"created","id":396,"issue_id":"beth-d8hx","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:14:25Z","event_type":"created","id":400,"issue_id":"beth-19vs","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:14:33Z","event_type":"created","id":405,"issue_id":"beth-9lw4","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:14:34Z","event_type":"closed","id":407,"issue_id":"beth-9lw4","new_value":"testing list --all","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:14:39Z","event_type":"created","id":409,"issue_id":"beth-yh6t","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:14:41Z","event_type":"updated","id":410,"issue_id":"beth-yh6t","new_value":"{\"title\":\"E2E test: updated title\"}","old_value":"{\"id\":\"beth-yh6t\",\"title\":\"E2E test: original title\",\"status\":\"open\",\"priority\":2,\"issue_type\":\"task\",\"owner\":\"sschofield@microsoft.com\",\"created_at\":\"2026-03-09T05:14:39Z\",\"created_by\":\"Stephanie Schofield\",\"updated_at\":\"2026-03-09T05:14:39Z\"}"}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:14:50Z","event_type":"created","id":416,"issue_id":"beth-2u9f","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:14:52Z","event_type":"status_changed","id":418,"issue_id":"beth-2u9f","new_value":"{\"status\":\"in_progress\"}","old_value":"{\"id\":\"beth-2u9f\",\"title\":\"E2E test: update status\",\"status\":\"open\",\"priority\":2,\"issue_type\":\"task\",\"owner\":\"sschofield@microsoft.com\",\"created_at\":\"2026-03-09T05:14:50Z\",\"created_by\":\"Stephanie Schofield\",\"updated_at\":\"2026-03-09T05:14:50Z\"}"}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:14:56Z","event_type":"created","id":420,"issue_id":"beth-k5g1","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:14:58Z","event_type":"claimed","id":422,"issue_id":"beth-k5g1","new_value":"{\"assignee\":\"Stephanie Schofield\",\"status\":\"in_progress\"}","old_value":"{\"id\":\"beth-k5g1\",\"title\":\"E2E test: claimable\",\"status\":\"open\",\"priority\":2,\"issue_type\":\"task\",\"owner\":\"sschofield@microsoft.com\",\"created_at\":\"2026-03-09T05:14:56Z\",\"created_by\":\"Stephanie Schofield\",\"updated_at\":\"2026-03-09T05:14:56Z\"}"}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:15:02Z","event_type":"created","id":425,"issue_id":"beth-5t3j","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":"Added label: foo","created_at":"2026-03-09T00:15:04Z","event_type":"label_added","id":426,"issue_id":"beth-5t3j","new_value":null,"old_value":null}
+{"actor":"Stephanie Schofield","comment":"Added label: bar","created_at":"2026-03-09T00:15:04Z","event_type":"label_added","id":427,"issue_id":"beth-5t3j","new_value":null,"old_value":null}
+{"actor":"Stephanie Schofield","comment":"Removed label: foo","created_at":"2026-03-09T00:15:07Z","event_type":"label_removed","id":429,"issue_id":"beth-5t3j","new_value":null,"old_value":null}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:15:11Z","event_type":"created","id":430,"issue_id":"beth-4llh","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:15:14Z","event_type":"updated","id":432,"issue_id":"beth-4llh","new_value":"{\"description\":\"New description content\"}","old_value":"{\"id\":\"beth-4llh\",\"title\":\"E2E test: update desc\",\"status\":\"open\",\"priority\":2,\"issue_type\":\"task\",\"owner\":\"sschofield@microsoft.com\",\"created_at\":\"2026-03-09T05:15:11Z\",\"created_by\":\"Stephanie Schofield\",\"updated_at\":\"2026-03-09T05:15:11Z\"}"}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:15:17Z","event_type":"created","id":435,"issue_id":"beth-luvc","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:15:19Z","event_type":"closed","id":436,"issue_id":"beth-luvc","new_value":"Closed","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:15:23Z","event_type":"created","id":439,"issue_id":"beth-erhj","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:15:25Z","event_type":"closed","id":440,"issue_id":"beth-erhj","new_value":"Work completed successfully","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:15:28Z","event_type":"created","id":442,"issue_id":"beth-2fd1","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:15:30Z","event_type":"closed","id":444,"issue_id":"beth-2fd1","new_value":"Closed","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:15:36Z","event_type":"created","id":447,"issue_id":"beth-2k6h","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:15:37Z","event_type":"created","id":448,"issue_id":"beth-wqbk","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:15:41Z","event_type":"created","id":450,"issue_id":"beth-vu1h","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:15:47Z","event_type":"created","id":452,"issue_id":"beth-8evc","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:15:50Z","event_type":"created","id":455,"issue_id":"beth-uw5k","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:15:52Z","event_type":"created","id":457,"issue_id":"beth-13sq","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:15:56Z","event_type":"created","id":460,"issue_id":"beth-vgh3","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:15:59Z","event_type":"created","id":464,"issue_id":"beth-c2ch","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:16:00Z","event_type":"created","id":467,"issue_id":"beth-mcvv","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:16:04Z","event_type":"created","id":470,"issue_id":"beth-cizj","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:16:05Z","event_type":"created","id":472,"issue_id":"beth-cizj.1","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:16:06Z","event_type":"created","id":473,"issue_id":"beth-wsgx","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":"Added label: test-label","created_at":"2026-03-09T00:16:06Z","event_type":"label_added","id":474,"issue_id":"beth-wsgx","new_value":null,"old_value":null}
+{"actor":"Stephanie Schofield","comment":"Added label: e2e","created_at":"2026-03-09T00:16:06Z","event_type":"label_added","id":475,"issue_id":"beth-wsgx","new_value":null,"old_value":null}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:16:07Z","event_type":"created","id":477,"issue_id":"beth-kcwx","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:16:09Z","event_type":"created","id":479,"issue_id":"beth-z5a4","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:16:11Z","event_type":"created","id":481,"issue_id":"beth-tafg","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:16:12Z","event_type":"created","id":483,"issue_id":"beth-zb76","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:16:13Z","event_type":"created","id":484,"issue_id":"beth-zb76.1","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:16:14Z","event_type":"created","id":487,"issue_id":"beth-zb76.2","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:16:16Z","event_type":"created","id":489,"issue_id":"beth-ah9n","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:16:17Z","event_type":"created","id":490,"issue_id":"beth-utu4","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:16:26Z","event_type":"created","id":493,"issue_id":"beth-vhgh","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:16:33Z","event_type":"created","id":498,"issue_id":"beth-pr8o","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:16:35Z","event_type":"closed","id":499,"issue_id":"beth-pr8o","new_value":"testing list --all","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:16:38Z","event_type":"created","id":501,"issue_id":"beth-os51","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:16:39Z","event_type":"updated","id":503,"issue_id":"beth-os51","new_value":"{\"title\":\"E2E test: updated title\"}","old_value":"{\"id\":\"beth-os51\",\"title\":\"E2E test: original title\",\"status\":\"open\",\"priority\":2,\"issue_type\":\"task\",\"owner\":\"sschofield@microsoft.com\",\"created_at\":\"2026-03-09T05:16:38Z\",\"created_by\":\"Stephanie Schofield\",\"updated_at\":\"2026-03-09T05:16:38Z\"}"}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:16:47Z","event_type":"created","id":508,"issue_id":"beth-0c3c","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:16:49Z","event_type":"status_changed","id":510,"issue_id":"beth-0c3c","new_value":"{\"status\":\"in_progress\"}","old_value":"{\"id\":\"beth-0c3c\",\"title\":\"E2E test: update status\",\"status\":\"open\",\"priority\":2,\"issue_type\":\"task\",\"owner\":\"sschofield@microsoft.com\",\"created_at\":\"2026-03-09T05:16:48Z\",\"created_by\":\"Stephanie Schofield\",\"updated_at\":\"2026-03-09T05:16:48Z\"}"}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:16:53Z","event_type":"created","id":512,"issue_id":"beth-lfo6","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:16:55Z","event_type":"claimed","id":513,"issue_id":"beth-lfo6","new_value":"{\"assignee\":\"Stephanie Schofield\",\"status\":\"in_progress\"}","old_value":"{\"id\":\"beth-lfo6\",\"title\":\"E2E test: claimable\",\"status\":\"open\",\"priority\":2,\"issue_type\":\"task\",\"owner\":\"sschofield@microsoft.com\",\"created_at\":\"2026-03-09T05:16:54Z\",\"created_by\":\"Stephanie Schofield\",\"updated_at\":\"2026-03-09T05:16:54Z\"}"}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:16:59Z","event_type":"created","id":515,"issue_id":"beth-pts2","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":"Added label: foo","created_at":"2026-03-09T00:17:01Z","event_type":"label_added","id":517,"issue_id":"beth-pts2","new_value":null,"old_value":null}
+{"actor":"Stephanie Schofield","comment":"Added label: bar","created_at":"2026-03-09T00:17:01Z","event_type":"label_added","id":518,"issue_id":"beth-pts2","new_value":null,"old_value":null}
+{"actor":"Stephanie Schofield","comment":"Removed label: foo","created_at":"2026-03-09T00:17:05Z","event_type":"label_removed","id":520,"issue_id":"beth-pts2","new_value":null,"old_value":null}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:17:08Z","event_type":"created","id":522,"issue_id":"beth-1qha","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:17:10Z","event_type":"updated","id":523,"issue_id":"beth-1qha","new_value":"{\"description\":\"New description content\"}","old_value":"{\"id\":\"beth-1qha\",\"title\":\"E2E test: update desc\",\"status\":\"open\",\"priority\":2,\"issue_type\":\"task\",\"owner\":\"sschofield@microsoft.com\",\"created_at\":\"2026-03-09T05:17:08Z\",\"created_by\":\"Stephanie Schofield\",\"updated_at\":\"2026-03-09T05:17:08Z\"}"}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:17:13Z","event_type":"created","id":525,"issue_id":"beth-92r2","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:17:14Z","event_type":"closed","id":527,"issue_id":"beth-92r2","new_value":"Closed","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:17:18Z","event_type":"created","id":529,"issue_id":"beth-bvf9","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:17:20Z","event_type":"closed","id":530,"issue_id":"beth-bvf9","new_value":"Work completed successfully","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:34:45Z","event_type":"created","id":556,"issue_id":"beth-uknv","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:34:55Z","event_type":"created","id":558,"issue_id":"beth-gb0m","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:34:59Z","event_type":"created","id":559,"issue_id":"beth-a7yt","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:35:09Z","event_type":"created","id":561,"issue_id":"beth-nivq","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:35:10Z","event_type":"created","id":562,"issue_id":"beth-nivq.1","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:35:13Z","event_type":"created","id":563,"issue_id":"beth-xv4t","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":"Added label: test-label","created_at":"2026-03-09T00:35:13Z","event_type":"label_added","id":564,"issue_id":"beth-xv4t","new_value":null,"old_value":null}
+{"actor":"Stephanie Schofield","comment":"Added label: e2e","created_at":"2026-03-09T00:35:13Z","event_type":"label_added","id":565,"issue_id":"beth-xv4t","new_value":null,"old_value":null}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:35:17Z","event_type":"created","id":566,"issue_id":"beth-hcdb","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:35:20Z","event_type":"created","id":567,"issue_id":"beth-mqah","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:35:25Z","event_type":"created","id":568,"issue_id":"beth-eoc2","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:35:30Z","event_type":"created","id":569,"issue_id":"beth-w6qi","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:35:32Z","event_type":"created","id":570,"issue_id":"beth-w6qi.1","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:35:35Z","event_type":"created","id":571,"issue_id":"beth-w6qi.2","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:35:40Z","event_type":"created","id":572,"issue_id":"beth-rj3z","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:35:44Z","event_type":"created","id":573,"issue_id":"beth-skl8","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:35:54Z","event_type":"created","id":574,"issue_id":"beth-j4b9","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:36:04Z","event_type":"created","id":576,"issue_id":"beth-84xl","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:36:06Z","event_type":"closed","id":577,"issue_id":"beth-84xl","new_value":"testing list --all","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:36:11Z","event_type":"created","id":578,"issue_id":"beth-2poz","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:36:15Z","event_type":"updated","id":579,"issue_id":"beth-2poz","new_value":"{\"title\":\"E2E test: updated title\"}","old_value":"{\"id\":\"beth-2poz\",\"title\":\"E2E test: original title\",\"status\":\"open\",\"priority\":2,\"issue_type\":\"task\",\"owner\":\"sschofield@microsoft.com\",\"created_at\":\"2026-03-09T05:36:12Z\",\"created_by\":\"Stephanie Schofield\",\"updated_at\":\"2026-03-09T05:36:12Z\"}"}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:36:29Z","event_type":"created","id":582,"issue_id":"beth-v15h","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:36:32Z","event_type":"status_changed","id":583,"issue_id":"beth-v15h","new_value":"{\"status\":\"in_progress\"}","old_value":"{\"id\":\"beth-v15h\",\"title\":\"E2E test: update status\",\"status\":\"open\",\"priority\":2,\"issue_type\":\"task\",\"owner\":\"sschofield@microsoft.com\",\"created_at\":\"2026-03-09T05:36:29Z\",\"created_by\":\"Stephanie Schofield\",\"updated_at\":\"2026-03-09T05:36:29Z\"}"}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:36:37Z","event_type":"created","id":584,"issue_id":"beth-zrxt","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:36:39Z","event_type":"claimed","id":585,"issue_id":"beth-zrxt","new_value":"{\"assignee\":\"Stephanie Schofield\",\"status\":\"in_progress\"}","old_value":"{\"id\":\"beth-zrxt\",\"title\":\"E2E test: claimable\",\"status\":\"open\",\"priority\":2,\"issue_type\":\"task\",\"owner\":\"sschofield@microsoft.com\",\"created_at\":\"2026-03-09T05:36:37Z\",\"created_by\":\"Stephanie Schofield\",\"updated_at\":\"2026-03-09T05:36:37Z\"}"}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:36:43Z","event_type":"created","id":586,"issue_id":"beth-7k9i","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":"Added label: foo","created_at":"2026-03-09T00:36:46Z","event_type":"label_added","id":587,"issue_id":"beth-7k9i","new_value":null,"old_value":null}
+{"actor":"Stephanie Schofield","comment":"Added label: bar","created_at":"2026-03-09T00:36:46Z","event_type":"label_added","id":588,"issue_id":"beth-7k9i","new_value":null,"old_value":null}
+{"actor":"Stephanie Schofield","comment":"Removed label: foo","created_at":"2026-03-09T00:36:51Z","event_type":"label_removed","id":589,"issue_id":"beth-7k9i","new_value":null,"old_value":null}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:36:56Z","event_type":"created","id":590,"issue_id":"beth-ihme","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:36:58Z","event_type":"updated","id":591,"issue_id":"beth-ihme","new_value":"{\"description\":\"New description content\"}","old_value":"{\"id\":\"beth-ihme\",\"title\":\"E2E test: update desc\",\"status\":\"open\",\"priority\":2,\"issue_type\":\"task\",\"owner\":\"sschofield@microsoft.com\",\"created_at\":\"2026-03-09T05:36:57Z\",\"created_by\":\"Stephanie Schofield\",\"updated_at\":\"2026-03-09T05:36:57Z\"}"}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:37:01Z","event_type":"created","id":592,"issue_id":"beth-xi0v","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:37:03Z","event_type":"closed","id":593,"issue_id":"beth-xi0v","new_value":"Closed","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:37:06Z","event_type":"created","id":594,"issue_id":"beth-9mvh","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:37:07Z","event_type":"closed","id":595,"issue_id":"beth-9mvh","new_value":"Work completed successfully","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:37:14Z","event_type":"created","id":596,"issue_id":"beth-b5kg","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:37:16Z","event_type":"closed","id":597,"issue_id":"beth-b5kg","new_value":"Closed","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:37:24Z","event_type":"created","id":598,"issue_id":"beth-qmo8","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:37:27Z","event_type":"created","id":599,"issue_id":"beth-miiq","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:37:30Z","event_type":"created","id":600,"issue_id":"beth-t671","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:37:32Z","event_type":"created","id":601,"issue_id":"beth-7s7c","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:37:35Z","event_type":"closed","id":602,"issue_id":"beth-t671","new_value":"Closed","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:37:39Z","event_type":"created","id":603,"issue_id":"beth-udgl","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:37:41Z","event_type":"claimed","id":604,"issue_id":"beth-udgl","new_value":"{\"assignee\":\"Stephanie Schofield\",\"status\":\"in_progress\"}","old_value":"{\"id\":\"beth-udgl\",\"title\":\"E2E test: ready-in-progress\",\"status\":\"open\",\"priority\":2,\"issue_type\":\"task\",\"owner\":\"sschofield@microsoft.com\",\"created_at\":\"2026-03-09T05:37:40Z\",\"created_by\":\"Stephanie Schofield\",\"updated_at\":\"2026-03-09T05:37:40Z\"}"}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:37:46Z","event_type":"created","id":605,"issue_id":"beth-rhba","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:37:48Z","event_type":"created","id":606,"issue_id":"beth-wa0p","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:37:55Z","event_type":"created","id":607,"issue_id":"beth-ocm1","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:37:56Z","event_type":"created","id":608,"issue_id":"beth-ocm1.1","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:37:59Z","event_type":"created","id":609,"issue_id":"beth-ocm1.2","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:38:05Z","event_type":"created","id":610,"issue_id":"beth-onlp","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:38:10Z","event_type":"created","id":611,"issue_id":"beth-kxvh","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:38:17Z","event_type":"created","id":612,"issue_id":"beth-xliw","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:38:19Z","event_type":"created","id":613,"issue_id":"beth-xliw.1","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:38:21Z","event_type":"created","id":614,"issue_id":"beth-xliw.2","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:38:25Z","event_type":"created","id":615,"issue_id":"beth-5is7","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:38:32Z","event_type":"created","id":617,"issue_id":"beth-uqag.1","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:38:34Z","event_type":"created","id":618,"issue_id":"beth-uqag.2","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:38:36Z","event_type":"created","id":619,"issue_id":"beth-uqag.3","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:38:40Z","event_type":"closed","id":620,"issue_id":"beth-uqag.1","new_value":"Requirements done","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:38:44Z","event_type":"closed","id":621,"issue_id":"beth-uqag.2","new_value":"Design done","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:38:49Z","event_type":"closed","id":622,"issue_id":"beth-uqag.3","new_value":"Implementation done","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:38:58Z","event_type":"created","id":625,"issue_id":"beth-2gj9","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:39:02Z","event_type":"created","id":626,"issue_id":"beth-2gj9.1","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:39:05Z","event_type":"created","id":627,"issue_id":"beth-2gj9.2","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:39:07Z","event_type":"created","id":628,"issue_id":"beth-2gj9.3","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:39:11Z","event_type":"closed","id":629,"issue_id":"beth-2gj9.1","new_value":"Closed","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:39:18Z","event_type":"created","id":630,"issue_id":"beth-c4vu","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:39:20Z","event_type":"closed","id":631,"issue_id":"beth-c4vu","new_value":"Closed","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:39:23Z","event_type":"closed","id":632,"issue_id":"beth-c4vu","new_value":"Closed","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:44:21Z","event_type":"created","id":633,"issue_id":"beth-uwud","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:44:27Z","event_type":"created","id":635,"issue_id":"beth-tfjx","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:44:32Z","event_type":"created","id":636,"issue_id":"beth-jgpm","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:44:41Z","event_type":"created","id":638,"issue_id":"beth-owp1","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:44:44Z","event_type":"created","id":639,"issue_id":"beth-owp1.1","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:44:47Z","event_type":"created","id":640,"issue_id":"beth-tq8f","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":"Added label: test-label","created_at":"2026-03-09T00:44:47Z","event_type":"label_added","id":641,"issue_id":"beth-tq8f","new_value":null,"old_value":null}
+{"actor":"Stephanie Schofield","comment":"Added label: e2e","created_at":"2026-03-09T00:44:47Z","event_type":"label_added","id":642,"issue_id":"beth-tq8f","new_value":null,"old_value":null}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:44:52Z","event_type":"created","id":643,"issue_id":"beth-igt8","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:44:54Z","event_type":"created","id":644,"issue_id":"beth-15yb","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:44:58Z","event_type":"created","id":645,"issue_id":"beth-csy6","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:45:02Z","event_type":"created","id":646,"issue_id":"beth-xsbe","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:45:04Z","event_type":"created","id":647,"issue_id":"beth-xsbe.1","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:45:07Z","event_type":"created","id":648,"issue_id":"beth-xsbe.2","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:45:12Z","event_type":"created","id":649,"issue_id":"beth-qd7s","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:45:14Z","event_type":"created","id":650,"issue_id":"beth-ba3v","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:45:23Z","event_type":"created","id":651,"issue_id":"beth-lysa","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:45:33Z","event_type":"created","id":653,"issue_id":"beth-l9zg","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:45:35Z","event_type":"closed","id":654,"issue_id":"beth-l9zg","new_value":"testing list --all","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:45:39Z","event_type":"created","id":655,"issue_id":"beth-y5bi","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:45:41Z","event_type":"updated","id":656,"issue_id":"beth-y5bi","new_value":"{\"title\":\"E2E test: updated title\"}","old_value":"{\"id\":\"beth-y5bi\",\"title\":\"E2E test: original title\",\"status\":\"open\",\"priority\":2,\"issue_type\":\"task\",\"owner\":\"sschofield@microsoft.com\",\"created_at\":\"2026-03-09T05:45:40Z\",\"created_by\":\"Stephanie Schofield\",\"updated_at\":\"2026-03-09T05:45:40Z\"}"}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:46:39Z","event_type":"created","id":678,"issue_id":"beth-gpw4","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:46:42Z","event_type":"created","id":682,"issue_id":"beth-bldu","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:46:43Z","event_type":"created","id":683,"issue_id":"beth-hfoq","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:46:47Z","event_type":"created","id":688,"issue_id":"beth-nfr3","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:46:48Z","event_type":"created","id":690,"issue_id":"beth-nfr3.1","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:46:49Z","event_type":"created","id":691,"issue_id":"beth-5w9o","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":"Added label: test-label","created_at":"2026-03-09T00:46:49Z","event_type":"label_added","id":692,"issue_id":"beth-5w9o","new_value":null,"old_value":null}
+{"actor":"Stephanie Schofield","comment":"Added label: e2e","created_at":"2026-03-09T00:46:49Z","event_type":"label_added","id":693,"issue_id":"beth-5w9o","new_value":null,"old_value":null}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:46:51Z","event_type":"created","id":695,"issue_id":"beth-ifs0","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:46:52Z","event_type":"created","id":697,"issue_id":"beth-vqe6","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:46:54Z","event_type":"created","id":699,"issue_id":"beth-m0m7","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:46:56Z","event_type":"created","id":701,"issue_id":"beth-2rqk","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:46:57Z","event_type":"created","id":703,"issue_id":"beth-2rqk.1","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:46:58Z","event_type":"created","id":704,"issue_id":"beth-2rqk.2","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:47:01Z","event_type":"created","id":706,"issue_id":"beth-anmt","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:47:02Z","event_type":"created","id":708,"issue_id":"beth-eoex","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:47:08Z","event_type":"created","id":711,"issue_id":"beth-scrm","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:47:14Z","event_type":"created","id":716,"issue_id":"beth-nx0z","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:47:15Z","event_type":"closed","id":718,"issue_id":"beth-nx0z","new_value":"testing list --all","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:47:17Z","event_type":"created","id":720,"issue_id":"beth-4aej","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:47:18Z","event_type":"updated","id":721,"issue_id":"beth-4aej","new_value":"{\"title\":\"E2E test: updated title\"}","old_value":"{\"id\":\"beth-4aej\",\"title\":\"E2E test: original title\",\"status\":\"open\",\"priority\":2,\"issue_type\":\"task\",\"owner\":\"sschofield@microsoft.com\",\"created_at\":\"2026-03-09T05:47:17Z\",\"created_by\":\"Stephanie Schofield\",\"updated_at\":\"2026-03-09T05:47:17Z\"}"}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:47:25Z","event_type":"created","id":727,"issue_id":"beth-cxuc","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:47:26Z","event_type":"status_changed","id":729,"issue_id":"beth-cxuc","new_value":"{\"status\":\"in_progress\"}","old_value":"{\"id\":\"beth-cxuc\",\"title\":\"E2E test: update status\",\"status\":\"open\",\"priority\":2,\"issue_type\":\"task\",\"owner\":\"sschofield@microsoft.com\",\"created_at\":\"2026-03-09T05:47:25Z\",\"created_by\":\"Stephanie Schofield\",\"updated_at\":\"2026-03-09T05:47:25Z\"}"}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:47:29Z","event_type":"created","id":731,"issue_id":"beth-33e0","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:47:31Z","event_type":"claimed","id":733,"issue_id":"beth-33e0","new_value":"{\"assignee\":\"Stephanie Schofield\",\"status\":\"in_progress\"}","old_value":"{\"id\":\"beth-33e0\",\"title\":\"E2E test: claimable\",\"status\":\"open\",\"priority\":2,\"issue_type\":\"task\",\"owner\":\"sschofield@microsoft.com\",\"created_at\":\"2026-03-09T05:47:30Z\",\"created_by\":\"Stephanie Schofield\",\"updated_at\":\"2026-03-09T05:47:30Z\"}"}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:47:34Z","event_type":"created","id":736,"issue_id":"beth-lxta","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":"Added label: foo","created_at":"2026-03-09T00:47:36Z","event_type":"label_added","id":737,"issue_id":"beth-lxta","new_value":null,"old_value":null}
+{"actor":"Stephanie Schofield","comment":"Added label: bar","created_at":"2026-03-09T00:47:36Z","event_type":"label_added","id":738,"issue_id":"beth-lxta","new_value":null,"old_value":null}
+{"actor":"Stephanie Schofield","comment":"Removed label: foo","created_at":"2026-03-09T00:47:41Z","event_type":"label_removed","id":740,"issue_id":"beth-lxta","new_value":null,"old_value":null}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:47:44Z","event_type":"created","id":742,"issue_id":"beth-e67e","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:47:45Z","event_type":"updated","id":744,"issue_id":"beth-e67e","new_value":"{\"description\":\"New description content\"}","old_value":"{\"id\":\"beth-e67e\",\"title\":\"E2E test: update desc\",\"status\":\"open\",\"priority\":2,\"issue_type\":\"task\",\"owner\":\"sschofield@microsoft.com\",\"created_at\":\"2026-03-09T05:47:45Z\",\"created_by\":\"Stephanie Schofield\",\"updated_at\":\"2026-03-09T05:47:45Z\"}"}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:47:48Z","event_type":"created","id":746,"issue_id":"beth-2hv9","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:47:50Z","event_type":"closed","id":748,"issue_id":"beth-2hv9","new_value":"Closed","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:47:53Z","event_type":"created","id":750,"issue_id":"beth-rj5q","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:47:54Z","event_type":"closed","id":752,"issue_id":"beth-rj5q","new_value":"Work completed successfully","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:47:56Z","event_type":"created","id":754,"issue_id":"beth-8f4j","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:47:57Z","event_type":"closed","id":756,"issue_id":"beth-8f4j","new_value":"Closed","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:48:02Z","event_type":"created","id":758,"issue_id":"beth-snay","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:48:03Z","event_type":"created","id":759,"issue_id":"beth-31vs","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:48:05Z","event_type":"created","id":761,"issue_id":"beth-vza9","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:48:07Z","event_type":"created","id":762,"issue_id":"beth-df59","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:48:10Z","event_type":"closed","id":764,"issue_id":"beth-vza9","new_value":"Closed","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:48:14Z","event_type":"created","id":766,"issue_id":"beth-79rr","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:48:16Z","event_type":"claimed","id":768,"issue_id":"beth-79rr","new_value":"{\"assignee\":\"Stephanie Schofield\",\"status\":\"in_progress\"}","old_value":"{\"id\":\"beth-79rr\",\"title\":\"E2E test: ready-in-progress\",\"status\":\"open\",\"priority\":2,\"issue_type\":\"task\",\"owner\":\"sschofield@microsoft.com\",\"created_at\":\"2026-03-09T05:48:14Z\",\"created_by\":\"Stephanie Schofield\",\"updated_at\":\"2026-03-09T05:48:14Z\"}"}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:48:18Z","event_type":"created","id":770,"issue_id":"beth-o66x","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:48:19Z","event_type":"created","id":771,"issue_id":"beth-3bbj","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:48:23Z","event_type":"created","id":773,"issue_id":"beth-ug5s","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:48:24Z","event_type":"created","id":776,"issue_id":"beth-ug5s.1","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:48:26Z","event_type":"created","id":777,"issue_id":"beth-ug5s.2","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:48:29Z","event_type":"created","id":780,"issue_id":"beth-hmyz","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:48:30Z","event_type":"created","id":781,"issue_id":"beth-0edy","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:48:35Z","event_type":"created","id":784,"issue_id":"beth-e4z9","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:48:36Z","event_type":"created","id":786,"issue_id":"beth-e4z9.1","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:48:37Z","event_type":"created","id":787,"issue_id":"beth-e4z9.2","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:48:40Z","event_type":"created","id":789,"issue_id":"beth-5pcm","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:52:14Z","event_type":"created","id":907,"issue_id":"beth-1j8.1","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":"Added label: closed","created_at":"2026-03-09T00:52:14Z","event_type":"label_added","id":908,"issue_id":"beth-1j8.1","new_value":null,"old_value":null}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:54:10Z","event_type":"closed","id":993,"issue_id":"beth-1j8.1","new_value":"Complete","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:54:10Z","event_type":"closed","id":994,"issue_id":"beth-1j8","new_value":"all steps complete","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:54:46Z","event_type":"created","id":1015,"issue_id":"beth-l2j8","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:55:10Z","event_type":"created","id":1032,"issue_id":"beth-l2j8.1","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:55:13Z","event_type":"created","id":1036,"issue_id":"beth-l2j8.2","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T00:55:14Z","event_type":"created","id":1038,"issue_id":"beth-lhie","new_value":"","old_value":""}

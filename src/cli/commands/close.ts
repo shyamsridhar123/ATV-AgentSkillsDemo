@@ -3,8 +3,10 @@
  *
  * Wraps `bd close` with dependency enforcement:
  * - Refuses to close issues that have open children
+ * - Refuses to close issues that have open blockers (unresolved dependencies)
+ * - Refuses to close epics that lack mandatory test subtasks
  * - Validates issue ID format to prevent injection
- * - Passes through to `bd close` when checks pass
+ * - Passes through to `bd close` when all checks pass
  * - --force bypasses enforcement checks
  */
 
@@ -29,9 +31,30 @@ export interface BeadsChild {
   status: string;
 }
 
+export interface BeadsDep {
+  id: string;
+  title: string;
+  status: string;
+  dependency_type: string;
+}
+
+export interface BeadsIssue {
+  id: string;
+  title: string;
+  status: string;
+  issue_type: string;
+}
+
 // Beads issue ID: <rig>-<hash> or <rig>-<hash>.<N>
 // e.g. beth-cip, beth-cip.1, beth-abc123, hq-xyz.42
 const ISSUE_ID_PATTERN = /^[a-z]+-[a-z0-9]{2,10}(\.\d+)?$/;
+
+// Test subtask title patterns — at least one of each category required for epics
+const TEST_PATTERNS = {
+  unit: /\bunit\s+test/i,
+  e2e: /\b(e2e|end.to.end|integration)\s+test/i,
+  security: /\bsecurity\s+test/i,
+};
 
 /**
  * Validate a beads issue ID format.
@@ -39,6 +62,38 @@ const ISSUE_ID_PATTERN = /^[a-z]+-[a-z0-9]{2,10}(\.\d+)?$/;
  */
 export function validateIssueId(id: string): boolean {
   return ISSUE_ID_PATTERN.test(id);
+}
+
+/**
+ * Get issue metadata (id, title, status, issue_type) via `bd show --json`.
+ * Returns null if issue not found or bd unavailable.
+ */
+export function getIssueInfo(issueId: string): BeadsIssue | null {
+  try {
+    const output = execFileSync('bd', ['show', issueId, '--json'], {
+      encoding: 'utf-8',
+      timeout: 10000,
+      stdio: ['pipe', 'pipe', 'pipe'],
+    });
+
+    const parsed: unknown = JSON.parse(output);
+
+    // bd show --json returns an array with one item
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      const item = parsed[0];
+      if (
+        typeof item === 'object' &&
+        item !== null &&
+        'id' in item &&
+        'issue_type' in item
+      ) {
+        return item as BeadsIssue;
+      }
+    }
+    return null;
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -55,7 +110,7 @@ export function getOpenChildren(issueId: string): BeadsChild[] {
 
     const parsed: unknown = JSON.parse(output);
 
-    // bd children --json returns an array (only open children)
+    // bd children --json returns an array (only open children by default)
     if (!Array.isArray(parsed)) {
       return [];
     }
@@ -74,6 +129,118 @@ export function getOpenChildren(issueId: string): BeadsChild[] {
     // bd not available, no children, or parse error — allow close
     return [];
   }
+}
+
+/**
+ * Get ALL children (including closed) for test subtask validation.
+ * Uses bd show --json which includes dependents.
+ */
+export function getAllChildren(issueId: string): BeadsChild[] {
+  try {
+    // bd show returns dependents array with all children
+    const output = execFileSync('bd', ['show', issueId, '--json'], {
+      encoding: 'utf-8',
+      timeout: 10000,
+      stdio: ['pipe', 'pipe', 'pipe'],
+    });
+
+    const parsed: unknown = JSON.parse(output);
+
+    if (!Array.isArray(parsed) || parsed.length === 0) {
+      return [];
+    }
+
+    const issue = parsed[0];
+    if (
+      typeof issue !== 'object' ||
+      issue === null ||
+      !('dependents' in issue)
+    ) {
+      return [];
+    }
+
+    const dependents = (issue as Record<string, unknown>).dependents;
+    if (!Array.isArray(dependents)) {
+      return [];
+    }
+
+    return dependents.filter(
+      (item: unknown): item is BeadsChild =>
+        typeof item === 'object' &&
+        item !== null &&
+        'id' in item &&
+        'title' in item &&
+        'status' in item,
+    );
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Get open blockers for an issue via `bd dep list --json`.
+ * Returns only non-parent-child dependencies that are still open.
+ */
+export function getOpenBlockers(issueId: string): BeadsDep[] {
+  try {
+    const output = execFileSync(
+      'bd',
+      ['dep', 'list', issueId, '--json'],
+      {
+        encoding: 'utf-8',
+        timeout: 10000,
+        stdio: ['pipe', 'pipe', 'pipe'],
+      },
+    );
+
+    const parsed: unknown = JSON.parse(output);
+
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+
+    return parsed
+      .filter(
+        (item: unknown): item is BeadsDep =>
+          typeof item === 'object' &&
+          item !== null &&
+          'id' in item &&
+          'title' in item &&
+          'status' in item &&
+          'dependency_type' in item,
+      )
+      .filter(
+        (dep) =>
+          dep.dependency_type !== 'parent-child' && dep.status !== 'closed',
+      );
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Check if an epic has the mandatory test subtasks.
+ * Returns list of missing test categories.
+ */
+export function getMissingTestSubtasks(children: BeadsChild[]): string[] {
+  const found = {
+    unit: false,
+    e2e: false,
+    security: false,
+  };
+
+  for (const child of children) {
+    if (TEST_PATTERNS.unit.test(child.title)) found.unit = true;
+    if (TEST_PATTERNS.e2e.test(child.title)) found.e2e = true;
+    if (TEST_PATTERNS.security.test(child.title)) found.security = true;
+  }
+
+  const missing: string[] = [];
+  if (!found.unit) missing.push('Unit tests');
+  if (!found.e2e) missing.push('E2E/Integration tests');
+  if (!found.security) missing.push('Security tests');
+
+  return missing;
 }
 
 /**
@@ -110,12 +277,12 @@ export function parseCloseArgs(rawArgs: string[]): {
 
 /**
  * Execute enforced close for a single issue.
- * Returns true if close succeeded, false if blocked.
+ * Checks: ID format → open blockers → open children → test subtasks (epics) → bd close
  */
 export function closeIssue(
   issueId: string,
   options: { reason?: string; force?: boolean },
-): { success: boolean; blocked?: BeadsChild[] } {
+): { success: boolean; blocked?: BeadsChild[]; blockers?: BeadsDep[]; missingTests?: string[] } {
   // Validate issue ID format
   if (!validateIssueId(issueId)) {
     console.error(
@@ -127,8 +294,25 @@ export function closeIssue(
     return { success: false };
   }
 
-  // Check for open children (unless --force)
   if (!options.force) {
+    // 1. Check for open blockers (non-parent dependencies)
+    const openBlockers = getOpenBlockers(issueId);
+    if (openBlockers.length > 0) {
+      console.error(
+        `\n${COLORS.red}✗ Cannot close ${COLORS.bright}${issueId}${COLORS.reset}${COLORS.red} — ${openBlockers.length} unresolved blocker${openBlockers.length === 1 ? '' : 's'}:${COLORS.reset}\n`,
+      );
+      for (const blocker of openBlockers) {
+        console.error(
+          `   ● ${COLORS.cyan}${blocker.id}${COLORS.reset}: ${blocker.title} [${blocker.status}] (${blocker.dependency_type})`,
+        );
+      }
+      console.error(
+        `\n${COLORS.yellow}Resolve blockers first, or use --force to override.${COLORS.reset}\n`,
+      );
+      return { success: false, blockers: openBlockers };
+    }
+
+    // 2. Check for open children
     const openChildren = getOpenChildren(issueId);
     if (openChildren.length > 0) {
       console.error(
@@ -143,6 +327,36 @@ export function closeIssue(
         `\n${COLORS.yellow}Close all children first, or use --force to override.${COLORS.reset}\n`,
       );
       return { success: false, blocked: openChildren };
+    }
+
+    // 3. For epics: verify mandatory test subtasks exist
+    const issueInfo = getIssueInfo(issueId);
+    if (issueInfo && issueInfo.issue_type === 'epic') {
+      // Prefer children/dependents from the existing bd show response for this epic,
+      // falling back to getAllChildren(issueId) only if necessary.
+      const allChildren =
+        (Array.isArray((issueInfo as any).dependents) &&
+          (issueInfo as any).dependents.length > 0
+          ? (issueInfo as any).dependents
+          : getAllChildren(issueId));
+      const missingTests = getMissingTestSubtasks(allChildren);
+      if (missingTests.length > 0) {
+        console.error(
+          `\n${COLORS.red}✗ Cannot close epic ${COLORS.bright}${issueId}${COLORS.reset}${COLORS.red} — missing mandatory test subtasks:${COLORS.reset}\n`,
+        );
+        for (const missing of missingTests) {
+          console.error(
+            `   ✗ ${COLORS.yellow}${missing}${COLORS.reset}`,
+          );
+        }
+        console.error(
+          `\n${COLORS.yellow}Create test subtasks with: bd create "<type> tests for <feature>" --parent ${issueId}${COLORS.reset}`,
+        );
+        console.error(
+          `${COLORS.yellow}Or use --force to override.${COLORS.reset}\n`,
+        );
+        return { success: false, missingTests };
+      }
     }
   }
 
