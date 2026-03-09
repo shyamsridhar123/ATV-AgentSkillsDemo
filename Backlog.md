@@ -2,7 +2,7 @@
 
 > *"I don't have time to explain things twice. Read this."*
 
-Last updated: 2026-03-09 (beth-xre.4 closed: Extract shared boilerplate to AGENTS.md reference)
+Last updated: 2026-03-09 (beth-bdh closed: Beads DB recovery + Dolt orphan cleanup + test fix)
 
 ---
 
@@ -10,6 +10,7 @@ Last updated: 2026-03-09 (beth-xre.4 closed: Extract shared boilerplate to AGENT
 
 | Task | Notes |
 |------|-------|
+| **Beads DB Recovery + Dolt Orphan Cleanup + Test Fix (beth-bdh)** | Dolt server lost `beth` database after restart — root cause: 73 orphaned `beth_quickstart_test_*` databases from E2E tests overloaded the server. Recovered 34 issues/40 deps/64 events from git-committed JSONL backups (commit cc9f9f0). Deleted 73 test DBs + 1 phantom, freed 29MB. Fixed `quickstart.test.ts`: added `beforeAll` safety net to clean stale test databases from prior crashed runs, added `afterEach` to drop Dolt database for each test. Zero orphans after test run. 287 tests pass. |
 | **Extract Shared Boilerplate to AGENTS.md Reference (beth-xre.4)** | Replaced ~120 lines of duplicated Work Tracking + Team Coordination sections across 12 files (6 subagents + 6 templates) with a compact 3-line AGENTS.md reference. Fixed inconsistent `bd close` vs `npx beth-copilot close` in template security-reviewer. Net -260 lines. 286 tests pass, 0 fail. |
 | **Replace Lateral Handoffs with Escalate-to-Beth Pattern (beth-xre.2)** | Replaced 15 lateral handoffs across 6 subagents with single "Escalate to Beth" handoff per agent (`send: true`). Updated all 12 agent files (6 source + 6 templates). Fixed 2 handoff validation tests to accept agent `name:` refs (VS Code resolves by name, not filename ID). Before: 15-edge mesh where agents bypassed orchestration. After: hub-and-spoke — all agents report to Beth. 286 tests pass, 0 fail. |
 | **Beads tracking migration: beth-gau → beth-xre** | beth-gau epic was a phantom from a Dolt transaction that didn't persist (see March 9 war story). Recreated as beth-xre with same 7 subtasks. Closed beth-xre.1 (Skill Routing Table — already completed as beth-gau.1 in previous session, verified in code). |
@@ -85,7 +86,7 @@ Last updated: 2026-03-09 (beth-xre.4 closed: Extract shared boilerplate to AGENT
 
 | Task | Epic | Notes |
 |------|------|-------|
-| **Agent Handoff & Skill Routing Optimization (beth-xre)** | beth-xre | Overhaul Beth's subagent handoff config, skill routing, and context efficiency. 7 subtasks. Migrated from phantom beth-gau. 2/7 complete. |
+| **Agent Handoff & Skill Routing Optimization (beth-xre)** | beth-xre | Overhaul Beth's subagent handoff config, skill routing, and context efficiency. 7 subtasks. Migrated from phantom beth-gau. 4/7 complete (1,2,4 done + verified in code). |
 
 ### Epic beth-xre — Subtask Breakdown (formerly beth-gau)
 
@@ -94,7 +95,7 @@ Last updated: 2026-03-09 (beth-xre.4 closed: Extract shared boilerplate to AGENT
 | 1 | **Add Skill Routing Table to Beth's Agent Definition** | beth-xre.1 | P0 | none | ✅ done |
 | 2 | **Replace Lateral Handoffs with Escalate-to-Beth Pattern** | beth-xre.2 | P0 | none | ✅ done |
 | 3 | **Restructure Subagent Prompt Templates with Explicit Skill Loading** | beth-xre.3 | P1 | beth-xre.1 | open |
-| 4 | **Extract Shared Boilerplate to AGENTS.md Reference** | beth-xre.4 | P1 | none | open |
+| 4 | **Extract Shared Boilerplate to AGENTS.md Reference** | beth-xre.4 | P1 | none | ✅ done |
 | 5 | **Migrate Areas of Expertise to On-Demand Skills** | beth-xre.5 | P2 | beth-xre.4 | open |
 | 6 | **Wire Orphaned Skills to Their Natural Agents** | beth-xre.6 | P1 | none | open |
 | 7 | **Update Beth Handoff Prompts with Context-Rich Defaults** | beth-xre.7 | P2 | beth-xre.1 | open |

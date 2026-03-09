@@ -75,7 +75,18 @@ grep -r "import.*ComponentName" src/
 ```
 If beads says "done" but the code disagrees, reopen the issue and re-apply the fix.
 
-### 4. Sync beads state
+### 4. Check Dolt database hygiene
+```bash
+npx beth-copilot doctor        # Detects orphaned test DBs and excessive DB count
+```
+If doctor reports orphaned `*test*` databases or more than 5 user databases, clean them up before proceeding:
+```bash
+cd .beads/dolt && dolt sql -q "SHOW DATABASES;"
+# Drop any test/orphaned databases:
+cd .beads/dolt && dolt sql -q "DROP DATABASE <name>;"
+```
+
+### 5. Sync beads state
 ```bash
 bd list
 bd ready
@@ -95,6 +106,21 @@ This can happen to ANY file touched by agents. The most vulnerable are files tou
 > **War story (March 9, 2026): Tracking drift.** An epic (beth-gau) was planned in Backlog.md with 7 detailed subtasks but never created in beads. A new session saw the Backlog.md entry, tried `bd show beth-gau`, got "not found" (intermittent ID resolution), and created a duplicate epic. The duplicate was a phantom (Dolt transaction didn't persist). **Fix:** When checking for existing work, always use `bd list --json` as the source of truth — not `bd show`, which has intermittent resolution failures. And ALWAYS create beads issues before (or simultaneously with) Backlog.md entries.
 
 > **Rule: beads and Backlog.md must be created together.** If it's in Backlog.md, it must be in beads. If it's in beads, the summary must be in Backlog.md. One system without the other is a lie waiting to cause damage.
+
+> **War story (March 9, 2026): Database loss from bd init --force.** `bd list` failed with "database 'beth' not found". Running `bd init --force` nuked the tables. `bd backup restore` consumed the JSONL backup files (truncated them to 0 bytes) but imported 0 rows because the files were already damaged. Recovery was only possible because JSONL backups were committed to git.
+
+### Recovery sequence: Never trust `bd init --force`
+
+When `bd list` fails with "database not found", follow this exact sequence:
+
+1. **Check backup first** — `wc -l .beads/backup/issues.jsonl` — if non-zero, you have a lifeline
+2. **Try `bd doctor --fix`** — let it attempt repair without destroying data
+3. **Restart the server** — kill the Dolt server, restart it, try `bd list` again
+4. **Only as last resort** — `bd init --force` then immediately `bd backup restore`
+5. **ALWAYS verify** backup JSONLs have data before ANY destructive operation
+6. **If backups are gone** — check git history: `git log --all -- .beads/backup/issues.jsonl`
+
+> **Rule:** `bd init --force` is a nuclear option. It does not preserve data. Treat it like `rm -rf` — verify you have a recovery path before pulling the trigger.
 
 ## Workflow
 
@@ -147,7 +173,14 @@ This can happen to ANY file touched by agents. The most vulnerable are files tou
    ```bash
    npm run test:gate           # Runs tests + generates docs/test-reports/ report
    ```
-6. **PUSH TO EPIC BRANCH** - This is MANDATORY:
+6. **Backup beads data** (CRITICAL for disaster recovery):
+   ```bash
+   bd backup                   # Export JSONL backups
+   git add .beads/backup/      # Commit backups to git — this is your lifeline
+   ```
+   > **Why:** Git-committed JSONL backups are the ONLY reason we recovered from the March 9 database loss. If the Dolt server loses the database, `bd init --force` nukes it, and backup files get consumed on restore. Without the git-committed copies, the data is gone forever.
+
+7. **PUSH TO EPIC BRANCH** - This is MANDATORY:
 
    ```bash
    git add -A
@@ -157,7 +190,7 @@ This can happen to ANY file touched by agents. The most vulnerable are files tou
    git status  # MUST show "up to date with origin"
    ```
 
-6. **CREATE A PR TO `main`** - Use GitHub MCP to create a pull request:
+8. **CREATE A PR TO `main`** - Use GitHub MCP to create a pull request:
 
    ```text
    mcp_github2_create_pull_request(
@@ -171,8 +204,8 @@ This can happen to ANY file touched by agents. The most vulnerable are files tou
    )
    ```
 
-7. **Share the PR link** with the user
-8. **Hand off** - Provide context for next session including the epic ID, branch, and PR URL
+9. **Share the PR link** with the user
+10. **Hand off** - Provide context for next session including the epic ID, branch, and PR URL
 
 **CRITICAL RULES:**
 
@@ -281,16 +314,22 @@ For more details, see README.md.
    # If failures: create follow-up issues, DO NOT close parent issue
    ```
 3. **Update issue status** - Close finished work, update in-progress items
-4. **PUSH TO REMOTE** - This is MANDATORY:
+4. **Backup beads data** (CRITICAL for disaster recovery):
+   ```bash
+   bd backup                   # Export JSONL backups
+   git add .beads/backup/      # Commit backups to git — this is your lifeline
+   ```
+   > **Why:** Git-committed JSONL backups are the ONLY reason we recovered from the March 9 database loss. If the Dolt server loses the database, `bd init --force` nukes it, and backup files get consumed on restore. Without the git-committed copies, the data is gone forever.
+5. **PUSH TO REMOTE** - This is MANDATORY:
    ```bash
    git pull --rebase
    bd sync
    git push
    git status  # MUST show "up to date with origin"
    ```
-5. **Clean up** - Clear stashes, prune remote branches
-6. **Verify** - All changes committed AND pushed
-7. **Hand off** - Provide context for next session
+6. **Clean up** - Clear stashes, prune remote branches
+7. **Verify** - All changes committed AND pushed
+8. **Hand off** - Provide context for next session
 
 **CRITICAL RULES:**
 - Work is NOT complete until `git push` succeeds

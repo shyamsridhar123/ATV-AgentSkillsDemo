@@ -7,6 +7,7 @@
  * - backlog.md CLI available
  * - .github/agents/ exists with valid frontmatter
  * - .github/skills/ exists
+ * - Dolt database hygiene (orphaned test databases, database count)
  */
 
 import { execSync } from 'child_process';
@@ -233,6 +234,80 @@ function checkBeadsInit(cwd: string): CheckResult {
 }
 
 /**
+ * Check Dolt for orphaned test databases and excessive database count.
+ * E2E tests can leave behind *_test_* databases if cleanup doesn't run.
+ * More than 5 databases usually indicates test pollution or forgotten experiments.
+ */
+function checkDoltDatabases(cwd: string): CheckResult[] {
+  const results: CheckResult[] = [];
+  const doltDir = join(cwd, '.beads', 'dolt');
+  
+  if (!existsSync(doltDir)) {
+    return [];
+  }
+  
+  try {
+    const output = execSync('dolt sql -q "SHOW DATABASES;"', {
+      encoding: 'utf-8',
+      cwd: doltDir,
+      stdio: ['pipe', 'pipe', 'pipe'],
+    });
+    
+    // Parse database names from Dolt table output
+    const systemDbs = new Set(['information_schema', 'mysql', 'dolt']);
+    const databases = output
+      .split('\n')
+      .map(line => line.replace(/^\|\s*|\s*\|$/g, '').trim())
+      .filter(line => line && !line.startsWith('-') && line !== 'Database')
+      .filter(name => !systemDbs.has(name));
+    
+    // Check for orphaned test databases
+    const testDbs = databases.filter(name => /test/i.test(name));
+    if (testDbs.length > 0) {
+      results.push({
+        name: 'Dolt Test DBs',
+        status: 'warn',
+        message: `${testDbs.length} orphaned test database(s) found`,
+        details: `Orphaned: ${testDbs.join(', ')}. Clean up with: dolt sql -q "DROP DATABASE <name>;" from .beads/dolt/`,
+      });
+    } else {
+      results.push({
+        name: 'Dolt Test DBs',
+        status: 'pass',
+        message: 'no orphaned test databases',
+      });
+    }
+    
+    // Check total database count (user databases only)
+    const DB_COUNT_THRESHOLD = 5;
+    if (databases.length > DB_COUNT_THRESHOLD) {
+      results.push({
+        name: 'Dolt DB Count',
+        status: 'warn',
+        message: `${databases.length} user databases (expected ≤${DB_COUNT_THRESHOLD})`,
+        details: `Databases: ${databases.join(', ')}. Investigate and drop unused databases.`,
+      });
+    } else {
+      results.push({
+        name: 'Dolt DB Count',
+        status: 'pass',
+        message: `${databases.length} user database(s) (≤${DB_COUNT_THRESHOLD})`,
+      });
+    }
+  } catch {
+    // Dolt not running or not accessible — skip these checks silently
+    results.push({
+      name: 'Dolt Hygiene',
+      status: 'warn',
+      message: 'could not query Dolt databases',
+      details: 'Dolt server may not be running. Start with: cd .beads/dolt && dolt sql-server &',
+    });
+  }
+  
+  return results;
+}
+
+/**
  * Main doctor command
  * @param options - Command options
  * @param exitOnFailure - If false, returns result instead of calling process.exit
@@ -252,6 +327,7 @@ export async function doctor(options: DoctorOptions = {}, exitOnFailure = true):
     checkAgents(cwd),
     checkSkills(cwd),
     checkBeadsInit(cwd),
+    ...checkDoltDatabases(cwd),
   ];
   
   // Display results
