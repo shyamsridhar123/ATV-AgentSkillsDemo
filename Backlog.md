@@ -2,7 +2,7 @@
 
 > *"I don't have time to explain things twice. Read this."*
 
-Last updated: 2026-03-09 (beth-4vv: Unit tests for checkDoltDatabases parsing logic)
+Last updated: 2026-03-09 (beth-gau.3: Restructure subagent templates with explicit skill loading)
 
 ---
 
@@ -10,6 +10,8 @@ Last updated: 2026-03-09 (beth-4vv: Unit tests for checkDoltDatabases parsing lo
 
 | Task | Notes |
 |------|-------|
+| **Restructure subagent templates with explicit skill loading (beth-gau.3)** | All 6 subagent templates in beth.agent.md now include `Load and follow:` directives matching the Skill Routing table: product-manager→prd, ux-designer→web-design-guidelines, developer→vercel-react-best-practices+shadcn-ui, security-reviewer→security-analysis, tester→web-design-guidelines, researcher→web-search (new template). Subagent Protocol updated with step 3 (skill loading). Template version upgraded from 4 bare "Examples" to 6 structured templates. Both source + templates updated. 304 tests pass, 0 fail. |
+| **Beads zombie cleanup (beth-gau.2, beth-gau.4)** | Closed phantom issues from Dolt database recovery that duplicated already-completed beth-xre.2 (Replace Lateral Handoffs) and beth-xre.4 (Extract Shared Boilerplate). Both verified in code before closing: all 6 agents have Escalate-to-Beth handoff, all 6 agents reference AGENTS.md. Unblocked beth-gau.5. |
 | **Unit tests for checkDoltDatabases parsing logic (beth-4vv)** | Extracted `parseDoltDatabases()` as exported function from `doctor.ts` with `SYSTEM_DBS` and `DB_COUNT_THRESHOLD` constants. Added 18 unit tests covering: `+` separator filtering (the exact bug class just fixed), `-` separator lines, header row exclusion, system DB exclusion, multiple user databases, edge cases (empty/whitespace output, trailing newlines, varying column widths), test DB identification regex pattern, threshold logic (above/at/below), and exported constants. 304 tests pass, 0 fail. |
 | **Beads/Dolt Hardening: Doctor Hygiene + Backup + Recovery Docs (beth-fl3)** | Added `checkDoltDatabases()` to doctor command: detects orphaned `*test*` databases and warns when user DB count exceeds 5. Added Step 4 (Dolt database hygiene) to Session Startup in AGENTS.md. Added backup step with `bd backup` + `git add .beads/backup/` to both Landing the Plane sections. Documented `bd init --force` recovery sequence (6-step escalation path) with March 9 war story. 286 tests pass, 0 fail. |
 | **Fix CI build failure on PR #38 (beth-bdh follow-up)** | `quickstart.test.ts` and `beads.e2e.test.ts` imported `beforeAll`/`afterAll` from `node:test`, which doesn't export those names (it uses `before`/`after`). Vitest's `node:test` → `vitest` alias masked the problem at runtime, but `tsc` compiled against real `node:test` types and failed with TS2724. Fix: import hooks directly from `vitest`. Also committed previously-staged AGENTS.md Dolt hygiene docs and `doctor.ts` enhancements. 287 tests pass, all 7 CI checks green. |
