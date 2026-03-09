@@ -217,9 +217,9 @@ docs/test-reports/test-report-{YYYY-MM-DD}-{commit-short}.md
 - **Status:** ✅ All passed / ❌ Failures (list below)
 - **Reproduction:**
   ```bash
-  pnpm test:unit -- --reporter=verbose {test-file}
-  pnpm test:e2e -- --grep="{test-name}"
-  pnpm test:security -- --reporter=verbose {test-file}
+  npm test:unit -- --reporter=verbose {test-file}
+  npm test:e2e -- --grep="{test-name}"
+  npm test:security -- --reporter=verbose {test-file}
   ```
 
 ## Failed Tests (if any)
