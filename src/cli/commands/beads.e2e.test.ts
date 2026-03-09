@@ -5,7 +5,9 @@
  * close, ready, dep, children, and epic workflows.
  *
  * These tests run against the REAL beads database. All test issues are
- * cleaned up in afterAll. Uses --json for deterministic assertions.
+ * cleaned up in afterAll via batch deletion. A beforeAll safety net also
+ * removes stale "E2E test:" issues from previous failed runs to prevent
+ * pollution of `bd list` and `bd ready` output.
  *
  * Run with: npx tsx --test src/cli/commands/beads.e2e.test.ts
  */
@@ -13,11 +15,84 @@
 import { describe, it, beforeAll, afterAll } from 'node:test';
 import assert from 'node:assert';
 import { execSync } from 'child_process';
+import { writeFileSync, unlinkSync } from 'fs';
+import { join } from 'path';
 
 const PROJECT_ROOT = process.cwd();
 
 /** Track all issue IDs created during tests for cleanup */
 const createdIssueIds: string[] = [];
+
+/**
+ * Find and delete stale E2E test issues from previous failed runs.
+ * This is the safety net — if afterAll didn't run (crash, timeout, kill),
+ * these orphans get cleaned up on the next run.
+ */
+function cleanupStaleTestIssues(): void {
+  try {
+    const output = execSync('bd list -n 500 --json --sandbox', {
+      cwd: PROJECT_ROOT,
+      encoding: 'utf-8',
+      stdio: ['pipe', 'pipe', 'pipe'],
+      timeout: 15000,
+    });
+    const issues = JSON.parse(output) as Array<{ id: string; title: string }>;
+    const staleIds = issues
+      .filter((i) => i.title.startsWith('E2E test:'))
+      .map((i) => i.id);
+
+    if (staleIds.length > 0) {
+      // Batch delete via --from-file for speed
+      const tmpFile = join(PROJECT_ROOT, '.beads-e2e-cleanup.tmp');
+      writeFileSync(tmpFile, staleIds.join('\n'));
+      try {
+        execSync(`bd delete --from-file "${tmpFile}" --force --sandbox`, {
+          cwd: PROJECT_ROOT,
+          encoding: 'utf-8',
+          stdio: ['pipe', 'pipe', 'pipe'],
+          timeout: 30000,
+        });
+      } catch {
+        // Best effort — some may already be deleted
+      }
+      try { unlinkSync(tmpFile); } catch { /* ignore */ }
+    }
+  } catch {
+    // If bd list fails, skip cleanup — tests will still create fresh issues
+  }
+}
+
+/**
+ * Batch-delete all tracked test issues. Uses --from-file for efficiency.
+ */
+function batchDeleteTestIssues(ids: string[]): void {
+  if (ids.length === 0) return;
+
+  // Close all first (reverse order for children-before-parents)
+  for (const id of [...ids].reverse()) {
+    try {
+      execSync(`bd close ${id} --force --reason "test cleanup" --sandbox`, {
+        cwd: PROJECT_ROOT,
+        encoding: 'utf-8',
+        stdio: ['pipe', 'pipe', 'pipe'],
+        timeout: 10000,
+      });
+    } catch { /* already closed or doesn't exist */ }
+  }
+
+  // Then batch delete via temp file
+  const tmpFile = join(PROJECT_ROOT, '.beads-e2e-cleanup.tmp');
+  writeFileSync(tmpFile, [...ids].reverse().join('\n'));
+  try {
+    execSync(`bd delete --from-file "${tmpFile}" --force --sandbox`, {
+      cwd: PROJECT_ROOT,
+      encoding: 'utf-8',
+      stdio: ['pipe', 'pipe', 'pipe'],
+      timeout: 30000,
+    });
+  } catch { /* best effort */ }
+  try { unlinkSync(tmpFile); } catch { /* ignore */ }
+}
 
 /**
  * Run a bd command and return stdout. Uses --sandbox to prevent auto-sync.
@@ -75,34 +150,13 @@ describe('beads CLI E2E tests', () => {
     } catch {
       throw new Error('bd CLI is not installed. These tests require beads. Run: curl -fsSL https://raw.githubusercontent.com/steveyegge/beads/main/scripts/install.sh | bash');
     }
+
+    // Clean up stale test issues from previous failed runs
+    cleanupStaleTestIssues();
   });
 
   afterAll(() => {
-    // Clean up all test issues (reverse order to handle children first)
-    for (const id of [...createdIssueIds].reverse()) {
-      try {
-        // Force close first (in case it's open), then delete
-        // try/catch handles already-closed/deleted issues
-        execSync(`bd close ${id} --force --reason "test cleanup" --sandbox`, {
-          cwd: PROJECT_ROOT,
-          encoding: 'utf-8',
-          stdio: ['pipe', 'pipe', 'pipe'],
-          timeout: 10000,
-        });
-      } catch {
-        // Already closed or doesn't exist — fine
-      }
-      try {
-        execSync(`bd delete ${id} --force --sandbox`, {
-          cwd: PROJECT_ROOT,
-          encoding: 'utf-8',
-          stdio: ['pipe', 'pipe', 'pipe'],
-          timeout: 10000,
-        });
-      } catch {
-        // Already deleted — fine
-      }
-    }
+    batchDeleteTestIssues(createdIssueIds);
   });
 
   // ==========================================================================

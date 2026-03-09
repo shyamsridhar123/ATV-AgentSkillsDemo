@@ -88,6 +88,14 @@ Verify beads reflects reality before creating new work.
 
 This can happen to ANY file touched by agents. The most vulnerable are files touched by formatters on save (page.tsx, component files with import changes). When in doubt, check the code.
 
+### Beads known issues
+
+> **War story (March 9, 2026): Test pollution.** E2E tests for `bd` commands create real issues in the Dolt database. If `afterAll` cleanup doesn't run (crash, timeout, process kill), orphan "E2E test:" issues pollute `bd list` and `bd ready`, hiding real work behind 30+ garbage entries. **Fix:** `beads.e2e.test.ts` now runs a `beforeAll` safety net that searches for stale "E2E test:" issues and batch-deletes them before creating new ones. Cleanup also uses `bd delete --from-file` for speed instead of per-issue `execSync` loops.
+
+> **War story (March 9, 2026): Tracking drift.** An epic (beth-gau) was planned in Backlog.md with 7 detailed subtasks but never created in beads. A new session saw the Backlog.md entry, tried `bd show beth-gau`, got "not found" (intermittent ID resolution), and created a duplicate epic. The duplicate was a phantom (Dolt transaction didn't persist). **Fix:** When checking for existing work, always use `bd list --json` as the source of truth — not `bd show`, which has intermittent resolution failures. And ALWAYS create beads issues before (or simultaneously with) Backlog.md entries.
+
+> **Rule: beads and Backlog.md must be created together.** If it's in Backlog.md, it must be in beads. If it's in beads, the summary must be in Backlog.md. One system without the other is a lie waiting to cause damage.
+
 ## Workflow
 
 ### Simple Tasks
