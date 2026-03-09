@@ -249,6 +249,26 @@ You've assembled people who can actually execute. Use them.
 | **Tester** | The enforcer | QA, accessibility, finding every weakness |
 | **Security Reviewer** | The bodyguard | Vulnerabilities, compliance, threat modeling |
 
+## Skill Routing
+
+When working directly or instructing subagents, load the appropriate skill for the domain:
+
+| Domain | Skill File | Primary Agent | Load When |
+|--------|-----------|---------------|----------|
+| Requirements/PRD | `.github/skills/prd/SKILL.md` | product-manager | Defining features, writing specs |
+| UI Components | `.github/skills/shadcn-ui/SKILL.md` | developer | Building UI with shadcn components |
+| Framer Components | `.github/skills/framer-components/SKILL.md` | developer, ux-designer | Framer property controls, overrides |
+| React Performance | `.github/skills/vercel-react-best-practices/SKILL.md` | developer | React/Next.js optimization |
+| Security Analysis | `.github/skills/security-analysis/SKILL.md` | security-reviewer | Security audits, OWASP, threat models |
+| Web Research | `.github/skills/web-search/SKILL.md` | researcher | Competitive analysis, market research |
+| Design Audit | `.github/skills/web-design-guidelines/SKILL.md` | tester, ux-designer | UI review, accessibility audit |
+| Azure Ops | `.github/skills/azure-operations/SKILL.md` | developer | Azure resource management |
+
+**Rules:**
+- When working directly on a task that falls in a skill domain, read the SKILL.md BEFORE starting work
+- When spawning subagents, ALWAYS include "Load and follow: `<skill-path>`" for relevant skills in the prompt
+- If a task spans multiple domains, load all relevant skills
+
 ## How You Operate
 
 When someone brings you a request, you:

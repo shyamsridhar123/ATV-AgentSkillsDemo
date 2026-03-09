@@ -2,7 +2,7 @@
 
 > *"I don't have time to explain things twice. Read this."*
 
-Last updated: 2026-03-09
+Last updated: 2026-03-09 (Beads cleanup: E2E test pollution fix, tracking drift documentation, beth-gau.1 closed)
 
 ---
 
@@ -10,6 +10,8 @@ Last updated: 2026-03-09
 
 | Task | Notes |
 |------|-------|
+| **Beads housekeeping: E2E test pollution fix + tracking drift documentation (beth-0cf)** | Fixed `beads.e2e.test.ts` cleanup: added `beforeAll` safety net that batch-deletes stale "E2E test:" issues from previous failed runs via `bd delete --from-file`. Replaced per-issue `execSync` cleanup loop in `afterAll` with batch deletion. Documented both test pollution and tracking drift war stories in AGENTS.md + templates. Closed beth-gau.1 (was done in code but still in-progress in beads). Verified beth-gau epic fully intact with 7 subtasks. |
+| **Fix merge conflict on PR #33 (stale label cleanup)** | PR #33 (`copilot/sub-pr-31-again` → `epic/beth-0cf`) had a merge conflict in `.beads/backup/labels.jsonl`. Base branch added `beth-qz7` closed label while PR removed stale `in_progress` labels. Resolved: kept both changes (removals + new entry). Also expanded `beth.agent.md` tools from shorthand to explicit tool names (uncommitted from prior session). 286 tests pass. |
 | **PR cleanup & beads backup hygiene** | Resolved merge conflicts on PR #29 (gitignore beads backup) and PR #30 (remove bash-isms from E2E test cleanup). Both were draft sub-PRs from Copilot coding agent that had recurring merge conflicts because `bd` auto-re-adds backup files. Applied both changes directly to `epic/beth-0cf`: added `.beads/backup/` to `.gitignore`, removed 7 tracked backup files via `git rm --cached`, removed `shell: '/bin/bash'` and `2>/dev/null \|\| true` from `afterAll` cleanup in `beads.e2e.test.ts`. Closed both PRs. 286 tests pass, 0 fail. |
 | **CI fix: Split unit vs E2E Vitest configs (beth-1j8)** | `src/**/*.e2e.test.ts` (including `beads.e2e.test.ts`) were failing CI because the `bd` CLI isn't installed in the GitHub Actions runner. Updated `vitest.config.ts` to exclude all E2E specs from the default run and added a separate E2E Vitest config. Default CI jobs now only run unit/integration tests; E2E suites are expected to run via the dedicated E2E config (locally or from an explicit CI job, e.g. `npm run test:e2e`). 17/17 non‑E2E test files, 361 passed, 0 failures. |
 | **Agent Coordination Enforcement Phase 1 COMPLETE (beth-1j8.1)** | `npx beth-copilot close` with 3-layer enforcement: (1) open blocker deps via `bd dep list`, (2) open children via `bd children`, (3) mandatory test subtasks (unit/e2e/security) for epics via `bd show`. 66 unit tests. All 16+ agent/doc files updated from `bd close` → `npx beth-copilot close`. `--force` bypasses all checks. Excluded `beads.e2e.test.ts` from tsc compilation (separate epic). |
@@ -86,7 +88,7 @@ Last updated: 2026-03-09
 
 | # | Task | ID | Priority | Deps | Status |
 |---|------|----|----------|------|--------|
-| 1 | **Add Skill Routing Table to Beth's Agent Definition** | beth-gau.1 | P0 | none | open |
+| 1 | **Add Skill Routing Table to Beth's Agent Definition** | beth-gau.1 | P0 | none | ✅ done |
 | 2 | **Replace Lateral Handoffs with Escalate-to-Beth Pattern** | beth-gau.2 | P0 | none | open |
 | 3 | **Restructure Subagent Prompt Templates with Explicit Skill Loading** | beth-gau.3 | P1 | beth-gau.1 | open |
 | 4 | **Extract Shared Boilerplate to AGENTS.md Reference** | beth-gau.4 | P1 | none | open |

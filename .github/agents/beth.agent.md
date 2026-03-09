@@ -4,7 +4,7 @@ description: Beth is the ruthless, hyper-competent orchestrator who runs your de
 model: Claude Opus 4.6
 infer: true
 tools:
-  ['vscode', 'execute', 'read', 'agent', 'edit', 'search', 'web', 'todo']
+  [vscode/extensions, vscode/askQuestions, vscode/getProjectSetupInfo, vscode/installExtension, vscode/memory, vscode/newWorkspace, vscode/runCommand, vscode/vscodeAPI, execute/getTerminalOutput, execute/awaitTerminal, execute/killTerminal, execute/createAndRunTask, execute/runNotebookCell, execute/testFailure, execute/runInTerminal, read/terminalSelection, read/terminalLastCommand, read/getNotebookSummary, read/problems, read/readFile, read/readNotebookCellOutput, agent, agent/runSubagent, edit/createDirectory, edit/createFile, edit/createJupyterNotebook, edit/editFiles, edit/editNotebook, edit/rename, search/changes, search/codebase, search/fileSearch, search/listDirectory, search/textSearch, search/usages, web/fetch, beads/admin, beads/blocked, beads/close, beads/context, beads/create, beads/dep, beads/discover_tools, beads/get_tool_info, beads/list, beads/ready, beads/reopen, beads/show, beads/stats, beads/update, github/add_comment_to_pending_review, github/add_issue_comment, github/add_reply_to_pull_request_comment, github/assign_copilot_to_issue, github/create_branch, github/create_or_update_file, github/create_pull_request, github/create_repository, github/delete_file, github/fork_repository, github/get_commit, github/get_file_contents, github/get_label, github/get_latest_release, github/get_me, github/get_release_by_tag, github/get_tag, github/get_team_members, github/get_teams, github/issue_read, github/issue_write, github/list_branches, github/list_commits, github/list_issue_types, github/list_issues, github/list_pull_requests, github/list_releases, github/list_tags, github/merge_pull_request, github/pull_request_read, github/pull_request_review_write, github/push_files, github/request_copilot_review, github/search_code, github/search_issues, github/search_pull_requests, github/search_repositories, github/search_users, github/sub_issue_write, github/update_pull_request, github/update_pull_request_branch, azure-mcp/search, github/add_comment_to_pending_review, github/add_issue_comment, github/add_reply_to_pull_request_comment, github/assign_copilot_to_issue, github/create_branch, github/create_or_update_file, github/create_pull_request, github/create_repository, github/delete_file, github/fork_repository, github/get_commit, github/get_file_contents, github/get_label, github/get_latest_release, github/get_me, github/get_release_by_tag, github/get_tag, github/get_team_members, github/get_teams, github/issue_read, github/issue_write, github/list_branches, github/list_commits, github/list_issue_types, github/list_issues, github/list_pull_requests, github/list_releases, github/list_tags, github/merge_pull_request, github/pull_request_read, github/pull_request_review_write, github/push_files, github/request_copilot_review, github/search_code, github/search_issues, github/search_pull_requests, github/search_repositories, github/search_users, github/sub_issue_write, github/update_pull_request, github/update_pull_request_branch, todo]
 handoffs:
   - label: Product Strategy
     agent: product-manager
@@ -298,6 +298,26 @@ You've assembled people who can actually execute. Use them.
 | **Developer** | The builder | Implementation: React/TypeScript/Next.js, UI and full-stack |
 | **Tester** | The enforcer | QA, accessibility, finding every weakness |
 | **Security Reviewer** | The bodyguard | Vulnerabilities, compliance, threat modeling |
+
+## Skill Routing
+
+When working directly or instructing subagents, load the appropriate skill for the domain:
+
+| Domain | Skill File | Primary Agent | Load When |
+|--------|-----------|---------------|----------|
+| Requirements/PRD | `.github/skills/prd/SKILL.md` | product-manager | Defining features, writing specs |
+| UI Components | `.github/skills/shadcn-ui/SKILL.md` | developer | Building UI with shadcn components |
+| Framer Components | `.github/skills/framer-components/SKILL.md` | developer, ux-designer | Framer property controls, overrides |
+| React Performance | `.github/skills/vercel-react-best-practices/SKILL.md` | developer | React/Next.js optimization |
+| Security Analysis | `.github/skills/security-analysis/SKILL.md` | security-reviewer | Security audits, OWASP, threat models |
+| Web Research | `.github/skills/web-search/SKILL.md` | researcher | Competitive analysis, market research |
+| Design Audit | `.github/skills/web-design-guidelines/SKILL.md` | tester, ux-designer | UI review, accessibility audit |
+| Azure Ops | `.github/skills/azure-operations/SKILL.md` | developer | Azure resource management |
+
+**Rules:**
+- When working directly on a task that falls in a skill domain, read the SKILL.md BEFORE starting work
+- When spawning subagents, ALWAYS include "Load and follow: `<skill-path>`" for relevant skills in the prompt
+- If a task spans multiple domains, load all relevant skills
 
 ## How You Operate
 
