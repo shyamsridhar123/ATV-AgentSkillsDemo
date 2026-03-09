@@ -382,13 +382,17 @@ describe('runSubagent capability validation', () => {
   it('agents with handoffs should reference valid agent names', () => {
     const result = loadAgents(TEMPLATES_AGENTS_DIR);
     const agentIds = result.agents.map((a) => a.id);
+    const agentNames = result.agents
+      .map((a) => a.frontmatter.name)
+      .filter(Boolean) as string[];
+    const validTargets = [...agentIds, ...agentNames];
 
     for (const agent of result.agents) {
       const handoffs = agent.frontmatter.handoffs ?? [];
 
       for (const handoff of handoffs) {
         assert.ok(
-          agentIds.includes(handoff.agent),
+          validTargets.includes(handoff.agent),
           `${agent.id} has handoff to unknown agent: ${handoff.agent}`
         );
       }
