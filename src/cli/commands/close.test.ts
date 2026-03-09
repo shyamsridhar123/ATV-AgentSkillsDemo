@@ -260,7 +260,7 @@ describe('getIssueInfo', () => {
     expect(result!.id).toBe('beth-abc');
   });
 
-  it('returns null for non-epic tasks', () => {
+  it('returns issue metadata for non-epic tasks', () => {
     const mockIssue = [
       { id: 'beth-abc.1', title: 'Task', status: 'open', issue_type: 'task' },
     ];
