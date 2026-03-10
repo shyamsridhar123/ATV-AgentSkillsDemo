@@ -326,38 +326,42 @@ describe.skip('update command E2E', () => {
     it('should install new agent files that did not exist before', () => {
       setupInstalledProject(testDir);
 
-      // Our setup only creates beth.agent.md — update should add the rest
+      // Setup creates only beth.agent.md — update should add more
+      const agentsDir = join(testDir, '.github', 'agents');
+      const beforeCount = readdirSync(agentsDir).filter(f => f.endsWith('.agent.md')).length;
+
       runCli('update', { cwd: testDir });
 
-      const agentsDir = join(testDir, '.github', 'agents');
-      const agentFiles = existsSync(agentsDir)
-        ? readdirSync(agentsDir).filter(f => f.endsWith('.agent.md'))
-        : [];
+      const afterCount = readdirSync(agentsDir).filter(f => f.endsWith('.agent.md')).length;
 
-      // Should have more than just the one we created
       assert.ok(
-        agentFiles.length >= 1,
-        `Should have agent files after update, found ${agentFiles.length}`
+        afterCount > beforeCount,
+        `Update should install new agent files. Before: ${beforeCount}, after: ${afterCount}`
       );
     });
 
     it('should install new skill directories that did not exist before', () => {
       setupInstalledProject(testDir);
 
+      // Setup creates only prd/ — update should add more
+      const skillsDir = join(testDir, '.github', 'skills');
+      const beforeCount = readdirSync(skillsDir, { withFileTypes: true })
+        .filter(d => d.isDirectory()).length;
+
       runCli('update', { cwd: testDir });
 
-      const skillsDir = join(testDir, '.github', 'skills');
-      if (existsSync(skillsDir)) {
-        const skillDirs = readdirSync(skillsDir, { withFileTypes: true })
-          .filter(d => d.isDirectory())
-          .map(d => d.name);
+      assert.ok(
+        existsSync(skillsDir),
+        'Skills directory should exist after update'
+      );
 
-        // Should have more than just prd
-        assert.ok(
-          skillDirs.length >= 1,
-          `Should have skill dirs after update, found ${skillDirs.length}`
-        );
-      }
+      const afterCount = readdirSync(skillsDir, { withFileTypes: true })
+        .filter(d => d.isDirectory()).length;
+
+      assert.ok(
+        afterCount > beforeCount,
+        `Update should install new skill dirs. Before: ${beforeCount}, after: ${afterCount}`
+      );
     });
   });
 });
