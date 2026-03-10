@@ -25,7 +25,7 @@ import { describe, it, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert';
 import { execSync, spawnSync } from 'child_process';
 import { resolve, join } from 'path';
-import { mkdirSync, rmSync, existsSync } from 'fs';
+import { mkdirSync, rmSync, existsSync, mkdtempSync } from 'fs';
 import { tmpdir } from 'os';
 
 const CLI_PATH = resolve(join(import.meta.dirname, '..', '..', '..', 'bin', 'cli.js'));
@@ -56,17 +56,38 @@ function runGuard(
   };
 }
 
+function createGitRepoOnBranch(branchName: string, prefix: string): string {
+  const tmpDir = mkdtempSync(join(tmpdir(), prefix));
+  execSync('git init', { cwd: tmpDir, stdio: 'ignore' });
+  execSync('git config user.name "Test"', { cwd: tmpDir, stdio: 'ignore' });
+  execSync('git config user.email "test@test.com"', { cwd: tmpDir, stdio: 'ignore' });
+  execSync(`git checkout --orphan ${branchName}`, { cwd: tmpDir, stdio: 'ignore' });
+  execSync('git commit --allow-empty -m "init"', { cwd: tmpDir, stdio: 'ignore' });
+  return tmpDir;
+}
+
 describe('pre-push-guard command E2E', () => {
-  describe('runs from project root (current epic branch)', () => {
-    // Expected: since we're on an epic branch, the guard should pass 
+  describe('valid epic branch repo', () => {
+    let tmpDir: string;
+
+    beforeEach(() => {
+      tmpDir = createGitRepoOnBranch('epic/beth-ywg', 'beth-guard-epic-');
+    });
+
+    afterEach(() => {
+      if (existsSync(tmpDir)) {
+        rmSync(tmpDir, { recursive: true, force: true });
+      }
+    });
+
+    // Expected: the guard should pass on a valid epic branch.
     it('should exit 0 on the current epic branch', () => {
-      // We're on epic/beth-ywg — a valid epic branch
-      const result = runGuard();
+      const result = runGuard({ cwd: tmpDir });
       assert.strictEqual(result.code, 0, 'Should exit 0 on a valid epic branch');
     });
 
     it('should not produce error output on a valid branch', () => {
-      const result = runGuard();
+      const result = runGuard({ cwd: tmpDir });
       // Errors go to stderr — should be empty or just warnings
       const hasBlockingError = result.stderr.includes('blocked') || result.stderr.includes('BLOCKED');
       assert.ok(!hasBlockingError, 'Should not have blocking errors on epic branch');
@@ -94,7 +115,7 @@ describe('pre-push-guard command E2E', () => {
     let tmpDir: string;
 
     beforeEach(() => {
-      tmpDir = join(tmpdir(), `beth-guard-test-${Date.now()}`);
+      tmpDir = mkdtempSync(join(tmpdir(), 'beth-guard-test-'));
       mkdirSync(tmpDir, { recursive: true });
     });
 
@@ -119,22 +140,7 @@ describe('pre-push-guard command E2E', () => {
     let tmpDir: string;
 
     beforeEach(() => {
-      tmpDir = join(tmpdir(), `beth-guard-main-${Date.now()}`);
-      mkdirSync(tmpDir, { recursive: true });
-      // Create a git repo on 'main' to test protected branch blocking
-      execSync('git init', { cwd: tmpDir, stdio: 'ignore' });
-      execSync('git checkout -b main', { cwd: tmpDir, stdio: 'ignore' });
-      execSync('git commit --allow-empty -m "init"', {
-        cwd: tmpDir,
-        stdio: 'ignore',
-        env: {
-          ...process.env,
-          GIT_AUTHOR_NAME: 'Test',
-          GIT_AUTHOR_EMAIL: 'test@test.com',
-          GIT_COMMITTER_NAME: 'Test',
-          GIT_COMMITTER_EMAIL: 'test@test.com',
-        },
-      });
+      tmpDir = createGitRepoOnBranch('main', 'beth-guard-main-');
     });
 
     afterEach(() => {
@@ -169,21 +175,7 @@ describe('pre-push-guard command E2E', () => {
     let tmpDir: string;
 
     beforeEach(() => {
-      tmpDir = join(tmpdir(), `beth-guard-weird-${Date.now()}`);
-      mkdirSync(tmpDir, { recursive: true });
-      execSync('git init', { cwd: tmpDir, stdio: 'ignore' });
-      execSync('git checkout -b my-random-branch', { cwd: tmpDir, stdio: 'ignore' });
-      execSync('git commit --allow-empty -m "init"', {
-        cwd: tmpDir,
-        stdio: 'ignore',
-        env: {
-          ...process.env,
-          GIT_AUTHOR_NAME: 'Test',
-          GIT_AUTHOR_EMAIL: 'test@test.com',
-          GIT_COMMITTER_NAME: 'Test',
-          GIT_COMMITTER_EMAIL: 'test@test.com',
-        },
-      });
+      tmpDir = createGitRepoOnBranch('my-random-branch', 'beth-guard-weird-');
     });
 
     afterEach(() => {

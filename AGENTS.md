@@ -111,6 +111,9 @@ This can happen to ANY file touched by agents. The most vulnerable are files tou
 
 ### Recovery sequence: Never trust `bd init --force`
 
+For the `bd backup` parser failure (`failed to parse backup state`), see
+`docs/BD-BACKUP-PARSER-FAILURE.md` for exact repro and recovery steps.
+
 When `bd list` fails with "database not found", follow this exact sequence:
 
 1. **Check backup first** — `wc -l .beads/backup/issues.jsonl` — if non-zero, you have a lifeline

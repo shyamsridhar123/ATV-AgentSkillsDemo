@@ -2,7 +2,7 @@
 
 > *"I don't have time to explain things twice. Read this."*
 
-Last updated: 2026-03-10 (beth-z9n: Fix PR #46 CI and E2E expectation drift)
+Last updated: 2026-03-10 (beth-u5s: Fix pre-push-guard E2E branch assumptions)
 
 ---
 
@@ -10,6 +10,8 @@ Last updated: 2026-03-10 (beth-z9n: Fix PR #46 CI and E2E expectation drift)
 
 | Task | Notes |
 |------|-------|
+| **Fix PR #47 merge workflow pre-push-guard E2E branch assumptions (beth-u5s)** | GitHub Actions reran the `pre-push-guard.e2e.test.ts` suite in an environment where the repo root was not guaranteed to be on a valid epic branch, which made the two "current epic branch" assertions brittle. Reworked the E2E harness in [src/cli/commands/pre-push-guard.e2e.test.ts](src/cli/commands/pre-push-guard.e2e.test.ts) to create temporary git repositories on explicit branches (`epic/beth-ywg`, `main`, and an unrecognized branch) before invoking the CLI. Verified with `npm test` (438 passed, 1 skipped) and `npm run test:gate`, which generated [docs/test-reports/test-report-2026-03-10-199327d.md](docs/test-reports/test-report-2026-03-10-199327d.md). |
+| **Document `bd backup` parser failure repro and recovery (beth-ywg)** | Added [docs/BD-BACKUP-PARSER-FAILURE.md](docs/BD-BACKUP-PARSER-FAILURE.md) with the exact parser error, root cause, worktree caveat, deterministic repro steps, and three recovery paths. Added a pointer from AGENTS.md so the recovery sequence for beads failures links directly to the focused incident doc instead of burying the fix in chat history. |
 | **Fix PR #46 CI and E2E expectation drift (beth-z9n)** | PR #46 failed first on `framework-isolation.test.ts` because `node:test` was imported with an unsupported `beforeAll` symbol for the TypeScript environment used in CI. After fixing that build break, the rerun exposed 3 E2E expectation drifts: oversized-arg validation was asserting only `stderr` even though the CLI logs via `stdout`, `init-logic.e2e.test.ts` incorrectly treated `.vscode/settings.json` as strict JSON instead of JSONC, and `quickstart-expanded.e2e.test.ts` expected guidance output without providing a usable `bd` CLI in CI. Fixed by restoring the supported hook import pattern, updating the E2E assertions to match actual CLI behavior, and injecting a mock `bd` binary so quickstart reaches the guidance path under test. Verified locally with `npm run build`, `npm test` (438 passed, 1 skipped), and `npm run test:e2e` (147 passed). PR #46 checks all green. |
 | **Comprehensive CLI Test Suite — Fill 7 Coverage Gaps (beth-ywg)** | Epic with 7 subtasks, all complete. (1) close.e2e.test.ts — E2E tests for `npx beth-copilot close` command. (2) pre-push-guard.e2e.test.ts — E2E tests for pre-push hook guard. (3) quickstart-expanded.e2e.test.ts — expanded quickstart test coverage. (4) cli-edge-cases.e2e.test.ts — unknown command error handling, version flag tests. (5) framework-isolation.test.ts — 11 unit tests auditing vitest/node:test framework isolation. (6) init-logic.e2e.test.ts — init command logic extraction tests. **Landing command improvements:** `isUpToDateWithOrigin` rewritten to compare SHA refs directly (was unreliable with `git status --branch` when no upstream tracking set), `remoteBranchExists()` helper, `gitRebaseAbort()` for conflict recovery, rebase conflicts now abort landing cleanly instead of proceeding to push, `hasStagedChanges` now distinguishes exit-1 (diffs) from unexpected errors. 438 tests pass (1 skip), 0 fail. |
 | **Agent Coordination Enforcement Phase 2 COMPLETE (beth-l2j8)** | Epic with 2 subtasks, both complete. (1) Pre-push hook (beth-l2j8.1) — blocks direct pushes to main/master, warns on non-epic branches. (2) Landing gate command (beth-l2j8.2) — `npx beth-copilot land` automates session completion: verifies epic branch, runs tests, backs up beads, stages/commits/pushes, verifies sync. Options: `--skip-tests`, `--skip-backup`, `--message/-m`, `--force`, `--dry-run`. Protected branch blocking, epic ID extraction for commit prefixes, non-blocking beads backup, structured step results. 59 unit tests for land command. 420 total tests pass (1 skip), 0 fail. |
@@ -94,9 +96,7 @@ Last updated: 2026-03-10 (beth-z9n: Fix PR #46 CI and E2E expectation drift)
 
 ## In Progress
 
-| Task | Epic | Notes |
-|------|------|-------|
-| **Agent Coordination Enforcement Phase 2 (beth-l2j8)** | beth-l2j8 | Branch guard pre-push hook (beth-l2j8.1) → landing gate command `bd land` (beth-l2j8.2). Phase 1 (close enforcement) complete. |
+*No active work.*
 
 ---
 
@@ -104,10 +104,7 @@ Last updated: 2026-03-10 (beth-z9n: Fix PR #46 CI and E2E expectation drift)
 
 ### High Priority (P1)
 
-| Task | Notes |
-|------|-------|
-| **Agent Coordination Enforcement Phase 2 (beth-l2j8)** | Branch guard pre-push hook (beth-l2j8.1) → landing gate command `bd land` (beth-l2j8.2). Phase 1 (close enforcement) complete. |
-| **Clean up E2E test crud in beads (beth-lhie)** | Closed — tracked as part of Phase 2 work. ~50 orphaned "E2E test:" issues need cleanup script or test isolation. |
+*All P1 items completed.*
 
 ### Medium Priority (P2)
 
@@ -137,26 +134,27 @@ Last updated: 2026-03-10 (beth-z9n: Fix PR #46 CI and E2E expectation drift)
 
 **For Leadership:**
 
-The Beth orchestrator system is operational. Core personality, README, and full agent roster are complete. Next phase is MCP integrations for enhanced capabilities.
+Beth is fully operational — orchestrator, 6 specialist agents, 8 skills, CI/CD, quality gates, and comprehensive test infrastructure. 438 tests passing. All planned enforcement phases complete.
 
 **What's Working:**
 
-- Beth agent (orchestrator) — Live
-- Product Manager, Researcher, UX Designer, Developer, Tester — Live
-- Developer — Enhanced with shadcn/ui MCP integration
-- Security Reviewer — Live (OWASP, compliance, threat modeling)
-- All skills — PRD, Framer, React Best Practices, Web Design, shadcn-ui, Security Analysis
-- Installation guide — docs/INSTALLATION.md
-- MCP setup guide — docs/MCP-SETUP.md
+- Beth agent (orchestrator) with hub-and-spoke coordination — Live
+- Product Manager, Researcher, UX Designer, Developer, Tester, Security Reviewer — Live
+- All 8 skills wired to agents — PRD, Framer, React Best Practices, Web Design, shadcn-ui, Security Analysis, Web Search, Azure Operations
+- Quality gate infrastructure — `npm run test:gate` generates test reports
+- Agent coordination enforcement — `npx beth-copilot close` with dependency/child/test checks
+- Pre-push hook — blocks direct pushes to main/master, warns on non-epic branches
+- Landing command — `npx beth-copilot land` automates session completion
+- Drift-prevention session startup — all agents verify git state before trusting trackers
 - npm package — `npx beth-copilot init` for one-command installation
+- CI pipeline — GitHub Actions with npm audit, gitleaks, CodeQL, SBOM
+- Beads + Backlog.md dual tracking — agents and humans both have visibility
 
 **What's Coming:**
 
-- Cut next npm release to ship drift-prevention to all `npx beth-copilot init` users
-- Test Quality Gate Infrastructure (beth-gtl) — Vitest/RTL/Playwright configs, agent test requirements, quality gate script
-- Agent Coordination Enforcement (beth-cip) — dependency enforcement on `bd close`, branch guard hook, `bd land` command
+- Cut next npm release to ship all enforcement improvements to `npx beth-copilot init` users
 - MCP-enhanced skills (optional, graceful degradation)
-- Agent consistency review
+- Consider additional skills (API security, performance profiling)
 
 **Blockers:** None.
 
@@ -164,14 +162,14 @@ The Beth orchestrator system is operational. Core personality, README, and full 
 
 ## How We Track Work
 
-This file is the single source of truth. When you start work:
+Dual tracking: **beads** for agents, **Backlog.md** for humans. They must never drift apart.
 
-1. Move the task to **In Progress**
-2. Do the work
-3. Move to **Completed** when done
-4. Commit changes
+1. `bd create` + add to Backlog.md — create in both systems
+2. `bd update --claim` + move to **In Progress** — track in both
+3. `npx beth-copilot close` + move to **Completed** — close in both
+4. Commit and push
 
-No external tools. No databases. Just this markdown file.
+Beads is the source of truth for dependencies and blockers. This file is the source of truth for decisions and history.
 
 ---
 
