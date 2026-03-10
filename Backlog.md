@@ -2,7 +2,7 @@
 
 > *"I don't have time to explain things twice. Read this."*
 
-Last updated: 2026-03-10 (beth-z9n: Fix invalid test report in PR #42)
+Last updated: 2026-03-10 (beth-l2j8: Agent Coordination Enforcement Phase 2 COMPLETE)
 
 ---
 
@@ -10,6 +10,7 @@ Last updated: 2026-03-10 (beth-z9n: Fix invalid test report in PR #42)
 
 | Task | Notes |
 |------|-------|
+| **Agent Coordination Enforcement Phase 2 COMPLETE (beth-l2j8)** | Epic with 2 subtasks, both complete. (1) Pre-push hook (beth-l2j8.1) — blocks direct pushes to main/master, warns on non-epic branches. (2) Landing gate command (beth-l2j8.2) — `npx beth-copilot land` automates session completion: verifies epic branch, runs tests, backs up beads, stages/commits/pushes, verifies sync. Options: `--skip-tests`, `--skip-backup`, `--message/-m`, `--force`, `--dry-run`. Protected branch blocking, epic ID extraction for commit prefixes, non-blocking beads backup, structured step results. 59 unit tests for land command. 420 total tests pass (1 skip), 0 fail. |
 | **Branch guard pre-push hook (beth-l2j8.1)** | Git pre-push hook enforcing branch discipline. Pure shell hook appended to `.beads/hooks/pre-push` (no Node overhead at push time): blocks direct pushes from `main`/`master` (exit 1), warns on non-epic branch names. TypeScript module `pre-push-guard.ts` with same logic + beads in-progress issue reporting, accessible via `npx beth-copilot pre-push-guard`. Init command auto-installs the hook after beads setup (idempotent — detects existing installation). Bypass: `BETH_SKIP_PUSH_GUARD=1`. 56 unit tests covering ref parsing, branch validators, guard logic, hook script generation. 361 total tests pass (360+1 skip), 0 fail. |
 | **Fix invalid test report in PR #42 (beth-z9n)** | PR #42 (beth-gau epic) shipped with test-report-2026-03-09-13bf559.md that: (1) referenced branch `epic/beth-bdh` not the beth-gau epic, (2) claimed 360 tests while PR body said 304, (3) was generated in a later session after additional code changes — not at the point beth-gau was committed. Verified: actual test count at commit 13bf559 was 360 passed / 1 skipped (the "304" in the original commit message was stale from a prior session). Removed bogus report, generated correct test-report-2026-03-10-be64258.md validating current main (361 total, 360 pass, 1 skip). Corrected test counts in Backlog.md. |
 | **Agent Handoff & Skill Routing Optimization EPIC COMPLETE (beth-gau)** | All 7/7 subtasks done. (1) Skill Routing Table added to Beth. (2) Lateral handoffs replaced with Escalate-to-Beth hub-and-spoke. (3) Subagent templates restructured with explicit skill loading. (4) Shared boilerplate extracted to AGENTS.md reference. (5) Areas of Expertise migrated to compact on-demand Expertise pointers — net -135 lines across 6 agents. (6) Wired 3 orphaned skills (web-search→researcher, web-design-guidelines→tester+ux-designer, azure-operations→developer) — zero orphaned skills remain, all 8 referenced. (7) Beth handoffs enriched with send:true, SKILL.md paths, concrete deliverables, AGENTS.md reference. All 14 files updated (7 source + 7 templates). 360 tests pass, 1 skip, 0 fail. *(Corrected: original said 304 — stale count from prior session.)* |
