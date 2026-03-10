@@ -9,7 +9,7 @@ import { execSync } from 'child_process';
 import { existsSync, mkdirSync, writeFileSync, rmSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
-import { parseDoltDatabases, SYSTEM_DBS, DB_COUNT_THRESHOLD } from './doctor.js';
+import { parseDoltDatabases, SYSTEM_DBS, DB_COUNT_THRESHOLD, checkGitHooks } from './doctor.js';
 
 // Test utilities - we can't import the private functions from doctor.ts
 // but we can test the overall behavior
@@ -388,5 +388,89 @@ describe('exported constants', () => {
 
   it('DB_COUNT_THRESHOLD should be 5', () => {
     assert.strictEqual(DB_COUNT_THRESHOLD, 5);
+  });
+});
+
+describe('checkGitHooks', () => {
+  let testDir: string;
+
+  beforeEach(() => {
+    testDir = join(tmpdir(), `beth-hooks-test-${Date.now()}`);
+    mkdirSync(testDir, { recursive: true });
+    // Initialize a git repo so git config works
+    execSync('git init', { cwd: testDir, stdio: 'pipe' });
+  });
+
+  afterEach(() => {
+    if (existsSync(testDir)) {
+      rmSync(testDir, { recursive: true, force: true });
+    }
+  });
+
+  it('should return empty array when .beads/hooks does not exist', () => {
+    const results = checkGitHooks(testDir);
+    assert.deepStrictEqual(results, []);
+  });
+
+  it('should fail when core.hooksPath is not set', () => {
+    const hooksDir = join(testDir, '.beads', 'hooks');
+    mkdirSync(hooksDir, { recursive: true });
+    writeFileSync(join(hooksDir, 'pre-push'), '#!/bin/sh\nexit 0\n', { mode: 0o755 });
+
+    const results = checkGitHooks(testDir);
+    const hooksPathResult = results.find(r => r.name === 'Git hooksPath');
+    assert.ok(hooksPathResult, 'should have a Git hooksPath result');
+    assert.strictEqual(hooksPathResult.status, 'fail');
+  });
+
+  it('should pass when core.hooksPath is .beads/hooks', () => {
+    const hooksDir = join(testDir, '.beads', 'hooks');
+    mkdirSync(hooksDir, { recursive: true });
+    writeFileSync(join(hooksDir, 'pre-push'), '#!/bin/sh\nexit 0\n', { mode: 0o755 });
+    execSync('git config core.hooksPath .beads/hooks', { cwd: testDir, stdio: 'pipe' });
+
+    const results = checkGitHooks(testDir);
+    const hooksPathResult = results.find(r => r.name === 'Git hooksPath');
+    assert.ok(hooksPathResult, 'should have a Git hooksPath result');
+    assert.strictEqual(hooksPathResult.status, 'pass');
+  });
+
+  it('should warn when core.hooksPath is set to wrong directory', () => {
+    const hooksDir = join(testDir, '.beads', 'hooks');
+    mkdirSync(hooksDir, { recursive: true });
+    writeFileSync(join(hooksDir, 'pre-push'), '#!/bin/sh\nexit 0\n', { mode: 0o755 });
+    execSync('git config core.hooksPath .git/hooks', { cwd: testDir, stdio: 'pipe' });
+
+    const results = checkGitHooks(testDir);
+    const hooksPathResult = results.find(r => r.name === 'Git hooksPath');
+    assert.ok(hooksPathResult, 'should have a Git hooksPath result');
+    assert.strictEqual(hooksPathResult.status, 'warn');
+  });
+
+  it('should fail when hooks are not executable', () => {
+    const hooksDir = join(testDir, '.beads', 'hooks');
+    mkdirSync(hooksDir, { recursive: true });
+    // Create hook without execute permission
+    writeFileSync(join(hooksDir, 'pre-push'), '#!/bin/sh\nexit 0\n', { mode: 0o644 });
+    execSync('git config core.hooksPath .beads/hooks', { cwd: testDir, stdio: 'pipe' });
+
+    const results = checkGitHooks(testDir);
+    const permsResult = results.find(r => r.name === 'Hook permissions');
+    assert.ok(permsResult, 'should have a Hook permissions result');
+    assert.strictEqual(permsResult.status, 'fail');
+    assert.ok(permsResult.message.includes('pre-push'), 'should mention pre-push');
+  });
+
+  it('should pass when all present hooks are executable', () => {
+    const hooksDir = join(testDir, '.beads', 'hooks');
+    mkdirSync(hooksDir, { recursive: true });
+    writeFileSync(join(hooksDir, 'pre-push'), '#!/bin/sh\nexit 0\n', { mode: 0o755 });
+    writeFileSync(join(hooksDir, 'pre-commit'), '#!/bin/sh\nexit 0\n', { mode: 0o755 });
+    execSync('git config core.hooksPath .beads/hooks', { cwd: testDir, stdio: 'pipe' });
+
+    const results = checkGitHooks(testDir);
+    const permsResult = results.find(r => r.name === 'Hook permissions');
+    assert.ok(permsResult, 'should have a Hook permissions result');
+    assert.strictEqual(permsResult.status, 'pass');
   });
 });
