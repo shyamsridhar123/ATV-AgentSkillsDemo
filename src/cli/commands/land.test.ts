@@ -1,7 +1,11 @@
 /**
  * Land Command Tests
  *
- * Tests the automated session completion ("landing the plane"):
+ * Tests the partial session completion automation ("landing the plane").
+ * This command handles the git-mechanical steps only — see land.ts header
+ * for what remains manual.
+ *
+ * Covers:
  * - Argument parsing (--skip-tests, --message, --force, --dry-run)
  * - Branch detection and epic ID extraction
  * - Protected branch blocking

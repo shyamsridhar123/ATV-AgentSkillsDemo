@@ -1,12 +1,28 @@
 /**
- * Land Command — Automated session completion
+ * Land Command — Partial session completion automation
  *
- * `npx beth-copilot land` orchestrates the "landing the plane" checklist:
- * 1. Verify we're on an epic branch (not main/master)
- * 2. Run quality gates (npm test)
- * 3. Backup beads data (bd backup)
- * 4. Stage, commit, and push to origin
- * 5. Report final status
+ * `npx beth-copilot land` automates the **git-mechanical** portion of the
+ * "Landing the Plane" checklist defined in AGENTS.md. It does NOT replace
+ * the full checklist — several steps require agent judgment and are left
+ * to the caller.
+ *
+ * What this command handles:
+ *   1. Verify we're on an epic branch (not main/master)
+ *   2. Run quality gates (npm test)
+ *   3. Backup beads data (bd backup)
+ *   4. Stage, commit, and push to origin
+ *   5. Report final status
+ *
+ * What this command does NOT handle (manual / agent responsibility):
+ *   - Closing beads issues          (`npx beth-copilot close <id>`)
+ *   - Creating follow-up issues     (`bd create`)
+ *   - Updating Backlog.md           (human-readable completed-work archive)
+ *   - Generating test gate report   (`npm run test:gate`)
+ *   - Creating a PR to main         (`gh pr create` or GitHub MCP)
+ *
+ * See AGENTS.md → "Landing the Plane (Session Completion)" for the full
+ * checklist. Agents should complete the manual steps before or after
+ * invoking this command.
  *
  * Options:
  *   --skip-tests    Skip test execution (not recommended)
@@ -654,8 +670,13 @@ export function executeLanding(options: LandOptions = {}): LandResult {
   console.log(`\n${COLORS.bright}${COLORS.cyan}━━━ Landing Summary ━━━${COLORS.reset}`);
   if (failed === 0) {
     console.log(`${COLORS.green}✓ Landed successfully on ${branch}${COLORS.reset}`);
+    console.log(`\n${COLORS.bright}Remaining manual steps (see AGENTS.md):${COLORS.reset}`);
+    console.log(`${COLORS.dim}  1. Close completed beads issues   npx beth-copilot close <id>${COLORS.reset}`);
+    console.log(`${COLORS.dim}  2. Create follow-up issues         bd create "..." ${COLORS.reset}`);
+    console.log(`${COLORS.dim}  3. Update Backlog.md               (completed-work archive)${COLORS.reset}`);
+    console.log(`${COLORS.dim}  4. Generate test gate report        npm run test:gate${COLORS.reset}`);
     if (epicId) {
-      console.log(`${COLORS.dim}  Next: Create a PR to main via GitHub MCP${COLORS.reset}`);
+      console.log(`${COLORS.dim}  5. Create a PR to main             gh pr create --base main --head ${branch}${COLORS.reset}`);
     }
   } else {
     console.log(`${COLORS.red}✗ Landing incomplete — ${failed} step(s) failed${COLORS.reset}`);
