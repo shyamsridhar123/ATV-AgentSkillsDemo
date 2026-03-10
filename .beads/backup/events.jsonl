@@ -241,3 +241,17 @@
 {"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-10T02:01:06Z","event_type":"created","id":1753,"issue_id":"beth-r08.5","new_value":"","old_value":""}
 {"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-10T02:01:15Z","event_type":"created","id":1754,"issue_id":"beth-r08.6","new_value":"","old_value":""}
 {"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-10T02:14:18Z","event_type":"created","id":1755,"issue_id":"beth-2wi","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-10T10:26:03Z","event_type":"closed","id":1756,"issue_id":"beth-2wi","new_value":"{\"status\":\"closed\"}","old_value":"{\"id\":\"beth-2wi\",\"title\":\"Make git hooks active on install: set hooksPath + chmod +x\",\"status\":\"open\",\"priority\":1,\"issue_type\":\"epic\",\"owner\":\"sschofield@microsoft.com\",\"created_at\":\"2026-03-10T07:14:18Z\",\"created_by\":\"Stephanie Schofield\",\"updated_at\":\"2026-03-10T07:14:18Z\"}"}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-10T10:26:15Z","event_type":"created","id":1757,"issue_id":"beth-92c","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-10T10:26:19Z","event_type":"closed","id":1758,"issue_id":"beth-92c","new_value":"E2E test cleanup","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-10T10:26:21Z","event_type":"created","id":1759,"issue_id":"beth-dq5","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-10T10:26:22Z","event_type":"closed","id":1760,"issue_id":"beth-dq5","new_value":"Force close E2E","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-10T10:26:23Z","event_type":"created","id":1761,"issue_id":"beth-eiw","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-10T10:26:25Z","event_type":"created","id":1762,"issue_id":"beth-eiw.1","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-10T10:26:30Z","event_type":"closed","id":1763,"issue_id":"beth-eiw.1","new_value":"Closed","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-10T10:26:30Z","event_type":"closed","id":1764,"issue_id":"beth-eiw","new_value":"all steps complete","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-10T10:26:32Z","event_type":"closed","id":1765,"issue_id":"beth-eiw","new_value":"Closed","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-10T10:26:34Z","event_type":"created","id":1766,"issue_id":"beth-bto","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-10T10:26:35Z","event_type":"created","id":1767,"issue_id":"beth-bto.1","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-10T10:26:37Z","event_type":"closed","id":1768,"issue_id":"beth-bto.1","new_value":"Closed","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-10T10:26:37Z","event_type":"closed","id":1769,"issue_id":"beth-bto","new_value":"all steps complete","old_value":""}
