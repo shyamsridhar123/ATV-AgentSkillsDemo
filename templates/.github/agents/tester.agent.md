@@ -2,7 +2,6 @@
 name: tester
 description: Expert QA engineer for IDEO-style React/TypeScript/Next.js applications. Specializes in testing strategies, accessibility auditing, performance testing, and quality assurance. Use for testing features, writing test suites, validating accessibility, or performance auditing.
 model: Claude Opus 4.6
-infer: true
 tools:
   - codebase
   - readFile

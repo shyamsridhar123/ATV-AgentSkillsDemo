@@ -2,7 +2,6 @@
 name: researcher
 description: Expert UX and market researcher for IDEO-style human-centered design. Specializes in user interviews, competitive analysis, analytics interpretation, and insight synthesis. Use when validating assumptions, understanding users, analyzing competition, or interpreting usage data.
 model: Claude Opus 4.6
-infer: true
 tools:
   - codebase
   - readFile

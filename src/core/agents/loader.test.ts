@@ -55,7 +55,8 @@ describe('Agent Loader', () => {
       assert.strictEqual(agent.frontmatter.name, 'Beth');
       assert.ok(agent.frontmatter.description?.includes('orchestrator'));
       assert.strictEqual(agent.frontmatter.model, 'Claude Opus 4.6');
-      assert.strictEqual(agent.frontmatter.infer, true);
+      // infer: true is deprecated — agents are inferable by default
+      assert.ok(agent.frontmatter.infer === undefined || agent.frontmatter.infer === true);
       assert.ok(Array.isArray(agent.frontmatter.tools));
       assert.ok(Array.isArray(agent.frontmatter.handoffs));
       assert.ok(agent.body.length > 100, 'Should have substantial body content');
@@ -123,14 +124,17 @@ describe('Agent Loader', () => {
   });
 
   describe('getInferableAgents', () => {
-    it('should return only agents with infer: true', () => {
+    it('should return agents that are inferable (all by default, since infer: true is deprecated)', () => {
       const result = loadAgents(TEMPLATES_AGENTS_DIR);
       const inferable = getInferableAgents(result);
 
       assert.ok(inferable.length > 0, 'Should have at least one inferable agent');
 
       for (const agent of inferable) {
-        assert.strictEqual(agent.frontmatter.infer, true, `${agent.id} should have infer: true`);
+        assert.ok(
+          agent.frontmatter.infer !== false,
+          `${agent.id} should not have infer: false`
+        );
       }
 
       // Beth should be inferable

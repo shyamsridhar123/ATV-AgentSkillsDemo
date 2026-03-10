@@ -347,7 +347,8 @@ describe('runSubagent capability validation', () => {
     const beth = result.agents.find((a) => a.id === 'beth');
 
     assert.ok(beth, 'Beth agent should exist');
-    assert.ok(beth?.frontmatter.infer === true, 'Beth should be inferable');
+    // infer: true is deprecated — agents are inferable by default
+    assert.ok(beth?.frontmatter.infer !== false, 'Beth should be inferable');
 
     // Beth should have handoffs to all specialist agents
     const handoffs = beth?.frontmatter.handoffs ?? [];
@@ -364,7 +365,7 @@ describe('runSubagent capability validation', () => {
 
   it('all inferable agents can be spawned as subagents', () => {
     const result = loadAgents(TEMPLATES_AGENTS_DIR);
-    const inferableAgents = result.agents.filter((a) => a.frontmatter.infer === true);
+    const inferableAgents = result.agents.filter((a) => a.frontmatter.infer !== false);
 
     assert.ok(inferableAgents.length > 0, 'Should have at least one inferable agent');
 
