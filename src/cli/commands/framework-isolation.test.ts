@@ -27,7 +27,8 @@
  * Expected outcomes documented inline per test case.
  */
 
-import { describe, it, beforeEach, afterEach, beforeAll } from 'node:test';
+import { describe, it, beforeEach, afterEach } from 'node:test';
+import { beforeAll } from 'vitest';
 import assert from 'node:assert';
 
 // Track execution order to detect lifecycle issues
