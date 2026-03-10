@@ -14,7 +14,7 @@
  *   7. Does not overwrite user-modified files without --force
  *   8. Handles network errors gracefully (npm registry unreachable)
  *   9. Exits with code 0 on success, non-zero on failure
- *  10. Shows changelog between versions when available
+ *  10. Installs new agent/skill files that did not exist before
  *
  * These tests exercise the real CLI binary in temp directories.
  * They do NOT hit the npm registry — network calls are tested
