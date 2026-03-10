@@ -174,3 +174,17 @@
 {"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T22:49:00Z","event_type":"closed","id":1686,"issue_id":"beth-ywg.7","new_value":"Added init logic behavior tests and documented repro steps/expected outcomes in beads.","old_value":""}
 {"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T22:49:01Z","event_type":"closed","id":1687,"issue_id":"beth-ywg.6","new_value":"Added framework isolation tests and documented repro steps/expected outcomes in beads.","old_value":""}
 {"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T22:49:29Z","event_type":"closed","id":1688,"issue_id":"beth-ywg","new_value":"Completed all 7 CLI test coverage subtasks, documented repro steps/test commands/expected outcomes in beads, and verified 72 new tests passing plus framework isolation tests.","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T22:51:50Z","event_type":"created","id":1689,"issue_id":"beth-gcw","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T22:51:58Z","event_type":"closed","id":1690,"issue_id":"beth-gcw","new_value":"E2E test cleanup","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T22:52:00Z","event_type":"created","id":1691,"issue_id":"beth-s6h","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T22:52:01Z","event_type":"closed","id":1692,"issue_id":"beth-s6h","new_value":"Force close E2E","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T22:52:03Z","event_type":"created","id":1693,"issue_id":"beth-s9t","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T22:52:05Z","event_type":"created","id":1694,"issue_id":"beth-s9t.1","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T22:52:09Z","event_type":"closed","id":1695,"issue_id":"beth-s9t.1","new_value":"Closed","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T22:52:10Z","event_type":"closed","id":1696,"issue_id":"beth-s9t","new_value":"all steps complete","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T22:52:11Z","event_type":"closed","id":1697,"issue_id":"beth-s9t","new_value":"Closed","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T22:52:13Z","event_type":"created","id":1698,"issue_id":"beth-wvs","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T22:52:15Z","event_type":"created","id":1699,"issue_id":"beth-wvs.1","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T22:52:16Z","event_type":"closed","id":1700,"issue_id":"beth-wvs.1","new_value":"Closed","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T22:52:16Z","event_type":"closed","id":1701,"issue_id":"beth-wvs","new_value":"all steps complete","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T22:52:22Z","event_type":"closed","id":1702,"issue_id":"beth-wvs","new_value":"Closed","old_value":""}
