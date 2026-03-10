@@ -23,17 +23,50 @@
 import { describe, it, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert';
 import { spawnSync } from 'child_process';
-import { existsSync, mkdirSync, rmSync, writeFileSync } from 'fs';
-import { join, resolve } from 'path';
+import { chmodSync, existsSync, mkdirSync, rmSync, writeFileSync } from 'fs';
+import { delimiter, join, resolve } from 'path';
 import { tmpdir } from 'os';
 
 const CLI_PATH = resolve(join(import.meta.dirname, '..', '..', '..', 'bin', 'cli.js'));
 
-function runQuickstart(cwd: string, args: string[] = []): { stdout: string; stderr: string; code: number } {
+function createMockBeadsCli(binDir: string): void {
+  const cliPath = join(binDir, 'bd');
+  const script = `#!/bin/sh
+set -eu
+
+command_name="\${1:-}"
+
+case "$command_name" in
+  --version)
+    echo "bd 0.0.0-test"
+    exit 0
+    ;;
+  init)
+    mkdir -p .beads
+    printf '{"version":"1.0"}' > .beads/config.json
+    exit 0
+    ;;
+  *)
+    echo "mock bd: unsupported command $command_name" >&2
+    exit 0
+    ;;
+esac
+`;
+
+  writeFileSync(cliPath, script);
+  chmodSync(cliPath, 0o755);
+}
+
+function runQuickstart(cwd: string, mockBinDir: string, args: string[] = []): { stdout: string; stderr: string; code: number } {
   const result = spawnSync('node', [CLI_PATH, 'quickstart', ...args], {
     cwd,
     encoding: 'utf-8',
-    env: { ...process.env, NO_COLOR: '1', FORCE_COLOR: '0' },
+    env: {
+      ...process.env,
+      NO_COLOR: '1',
+      FORCE_COLOR: '0',
+      PATH: `${mockBinDir}${delimiter}${process.env.PATH ?? ''}`,
+    },
     timeout: 30000,
   });
   return {
@@ -62,10 +95,15 @@ function createFullBethProject(dir: string): void {
 
 describe('quickstart expanded E2E tests', () => {
   let testDir: string;
+  let mockBinDir: string;
 
   beforeEach(() => {
     testDir = join(tmpdir(), `beth-qs-expanded-${Date.now()}-${Math.random().toString(36).slice(2)}`);
     mkdirSync(testDir, { recursive: true });
+
+    mockBinDir = join(testDir, 'mock-bin');
+    mkdirSync(mockBinDir, { recursive: true });
+    createMockBeadsCli(mockBinDir);
   });
 
   afterEach(() => {
@@ -77,12 +115,12 @@ describe('quickstart expanded E2E tests', () => {
   describe('empty directory (Beth not initialized)', () => {
     // Expected: exit 1, clear error about Beth not being set up
     it('should exit 1 in an empty directory', () => {
-      const result = runQuickstart(testDir);
+      const result = runQuickstart(testDir, mockBinDir);
       assert.strictEqual(result.code, 1, 'Should exit 1 when Beth is not initialized');
     });
 
     it('should tell user to run init first', () => {
-      const result = runQuickstart(testDir);
+      const result = runQuickstart(testDir, mockBinDir);
       const combined = result.stdout + result.stderr;
       assert.ok(
         combined.includes('init') || combined.includes('not initialized'),
@@ -91,7 +129,7 @@ describe('quickstart expanded E2E tests', () => {
     });
 
     it('should not crash with unhandled exception', () => {
-      const result = runQuickstart(testDir);
+      const result = runQuickstart(testDir, mockBinDir);
       assert.ok(
         !result.stderr.includes('TypeError') && !result.stderr.includes('ReferenceError'),
         'Should not have unhandled JS errors'
@@ -103,7 +141,7 @@ describe('quickstart expanded E2E tests', () => {
     // Expected: quickstart proceeds past Beth check, may warn about missing skills
     it('should detect Beth is initialized even without skills', () => {
       createMinimalBethProject(testDir);
-      const result = runQuickstart(testDir);
+      const result = runQuickstart(testDir, mockBinDir);
       const combined = result.stdout + result.stderr;
       assert.ok(
         combined.includes('initialized') || combined.includes('✓') || combined.includes('Beth'),
@@ -115,7 +153,7 @@ describe('quickstart expanded E2E tests', () => {
   describe('Beth fully initialized', () => {
     it('should proceed past Beth initialization check', () => {
       createFullBethProject(testDir);
-      const result = runQuickstart(testDir);
+      const result = runQuickstart(testDir, mockBinDir);
       const combined = result.stdout + result.stderr;
       // Should get past the "not initialized" gate
       assert.ok(
@@ -128,7 +166,7 @@ describe('quickstart expanded E2E tests', () => {
   describe('output format and content', () => {
     it('should produce non-empty stdout', () => {
       createFullBethProject(testDir);
-      const result = runQuickstart(testDir);
+      const result = runQuickstart(testDir, mockBinDir);
       assert.ok(
         result.stdout.length > 0 || result.stderr.length > 0,
         'Should produce some output'
@@ -137,7 +175,7 @@ describe('quickstart expanded E2E tests', () => {
 
     it('should mention @Beth or VS Code in guidance', () => {
       createFullBethProject(testDir);
-      const result = runQuickstart(testDir);
+      const result = runQuickstart(testDir, mockBinDir);
       const combined = result.stdout + result.stderr;
       assert.ok(
         combined.includes('@Beth') || combined.includes('VS Code') || combined.includes('Copilot'),
@@ -149,7 +187,7 @@ describe('quickstart expanded E2E tests', () => {
   describe('--verbose flag', () => {
     it('should accept --verbose without error', () => {
       createFullBethProject(testDir);
-      const result = runQuickstart(testDir, ['--verbose']);
+      const result = runQuickstart(testDir, mockBinDir, ['--verbose']);
       // Should not reject the flag
       assert.ok(
         !result.stderr.includes('Unknown flag'),
@@ -159,8 +197,8 @@ describe('quickstart expanded E2E tests', () => {
 
     it('should produce equal or more output with --verbose', () => {
       createFullBethProject(testDir);
-      const normal = runQuickstart(testDir);
-      const verbose = runQuickstart(testDir, ['--verbose']);
+      const normal = runQuickstart(testDir, mockBinDir);
+      const verbose = runQuickstart(testDir, mockBinDir, ['--verbose']);
       assert.ok(
         verbose.stdout.length >= normal.stdout.length || verbose.stderr.length >= normal.stderr.length,
         '--verbose should produce at least as much output'
@@ -177,7 +215,7 @@ describe('quickstart expanded E2E tests', () => {
         join(testDir, '.github', 'agents', 'broken.agent.md'),
         'this is not valid frontmatter at all {{{'
       );
-      const result = runQuickstart(testDir);
+      const result = runQuickstart(testDir, mockBinDir);
       // Should not crash — may warn or fail gracefully
       assert.ok(
         typeof result.code === 'number',
@@ -188,7 +226,7 @@ describe('quickstart expanded E2E tests', () => {
     it('should handle very deep nested directories', () => {
       const deepDir = join(testDir, 'a', 'b', 'c', 'd', 'e');
       mkdirSync(deepDir, { recursive: true });
-      const result = runQuickstart(deepDir);
+      const result = runQuickstart(deepDir, mockBinDir);
       assert.strictEqual(result.code, 1, 'Should exit 1 (no Beth project in deep dir)');
     });
   });
