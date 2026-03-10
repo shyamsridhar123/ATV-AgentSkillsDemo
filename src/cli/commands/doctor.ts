@@ -53,24 +53,43 @@ function logResult(result: CheckResult, verbose: boolean): void {
 }
 
 /**
- * Check Node.js version
+ * Parse the minimum major Node.js version from package.json engines.node.
+ * Supports formats like ">=18", "^18", ">=18.0.0", etc.
+ * Returns the parsed major version, or a fallback if parsing fails.
  */
-function checkNodeVersion(): CheckResult {
+export function getMinNodeVersion(cwd: string): number {
+  const fallback = 18;
+  try {
+    const pkg = JSON.parse(readFileSync(join(cwd, 'package.json'), 'utf-8'));
+    const constraint = pkg?.engines?.node;
+    if (typeof constraint !== 'string') return fallback;
+    const match = constraint.match(/(\d+)/);
+    return match ? parseInt(match[1], 10) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+/**
+ * Check Node.js version against the minimum from package.json engines.node
+ */
+function checkNodeVersion(cwd: string): CheckResult {
   const version = process.version;
   const major = parseInt(version.slice(1).split('.')[0], 10);
+  const minMajor = getMinNodeVersion(cwd);
   
-  if (major >= 18) {
+  if (major >= minMajor) {
     return {
       name: 'Node.js',
       status: 'pass',
-      message: `${version} (≥18 required)`,
+      message: `${version} (≥${minMajor} required)`,
     };
   }
   
   return {
     name: 'Node.js',
     status: 'fail',
-    message: `${version} (≥18 required)`,
+    message: `${version} (≥${minMajor} required)`,
     details: 'Upgrade Node.js: https://nodejs.org/',
   };
 }
@@ -432,7 +451,7 @@ export async function doctor(options: DoctorOptions = {}, exitOnFailure = true):
   console.log('');
   
   const results: CheckResult[] = [
-    checkNodeVersion(),
+    checkNodeVersion(cwd),
     checkCli('beads', 'bd', 'curl -fsSL https://raw.githubusercontent.com/steveyegge/beads/main/scripts/install.sh | bash'),
     checkAgents(cwd),
     checkSkills(cwd),
