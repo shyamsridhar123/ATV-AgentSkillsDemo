@@ -165,8 +165,8 @@ Beth is fully operational — orchestrator, 6 specialist agents, 8 skills, CI/CD
 Dual tracking: **beads** for agents, **Backlog.md** for humans. They must never drift apart.
 
 1. `bd create` + add to Backlog.md — create in both systems
-2. `bd update --claim` + move to **In Progress** — track in both
-3. `npx beth-copilot close` + move to **Completed** — close in both
+2. `bd update <id> --claim` + move to **In Progress** — track in both
+3. `npx beth-copilot close <id>` + move to **Completed** — close in both
 4. Commit and push
 
 Beads is the source of truth for dependencies and blockers. This file is the source of truth for decisions and history.

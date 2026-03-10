@@ -39,13 +39,14 @@ That is not valid JSON, so `bd` fails while unmarshalling the file.
 ## Important Worktree Detail
 
 In a git worktree, `bd` resolves `.beads` from the main repository first.
-That means a failure seen from a worktree such as `/tmp/beth-pr46` can still be
+That means a failure seen from a worktree (e.g. `/tmp/beth-pr46`) can still be
 caused by the main repository file at:
 
 ```text
-/home/sschofield/repos/beth/.beads/backup/backup_state.json
+$REPO_ROOT/.beads/backup/backup_state.json
 ```
 
+where `$REPO_ROOT` is the path to your main checkout (find it with `git worktree list`).
 Do not assume the worktree-local `.beads` copy is the one being read.
 
 ## Repro Steps
@@ -56,7 +57,7 @@ debugging.
 ### 1. Save a known-good copy
 
 ```bash
-cd /home/sschofield/repos/beth
+cd "$REPO_ROOT"  # your main repo checkout, e.g. ~/repos/beth
 cp .beads/backup/backup_state.json /tmp/beth-main-backup-state.good.json
 ```
 
@@ -91,7 +92,7 @@ bd backup status --json
 Use this when the committed file is known-good.
 
 ```bash
-cd /home/sschofield/repos/beth
+cd "$REPO_ROOT"
 git show HEAD:.beads/backup/backup_state.json > .beads/backup/backup_state.json
 bd backup status --json | head -40
 bd backup --force
@@ -104,7 +105,7 @@ This is the safest recovery path when the file is tracked and healthy in git.
 Use this only if you already saved a clean version before debugging.
 
 ```bash
-cd /home/sschofield/repos/beth
+cd "$REPO_ROOT"
 cp /tmp/beth-main-backup-state.good.json .beads/backup/backup_state.json
 bd backup status --json | head -40
 bd backup --force
@@ -116,7 +117,7 @@ If you cannot recover the file contents but can tolerate a fresh full export,
 remove the corrupted state file and force a new backup.
 
 ```bash
-cd /home/sschofield/repos/beth
+cd "$REPO_ROOT"
 rm .beads/backup/backup_state.json
 bd backup --force
 ```
