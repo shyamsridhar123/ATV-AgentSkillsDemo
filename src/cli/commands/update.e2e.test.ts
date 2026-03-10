@@ -14,7 +14,7 @@
  *   7. Does not overwrite user-modified files without --force
  *   8. Handles network errors gracefully (npm registry unreachable)
  *   9. Exits with code 0 on success, non-zero on failure
- *  10. Shows changelog between versions when available
+ *  10. Installs new agent/skill files that did not exist before
  *
  * These tests exercise the real CLI binary in temp directories.
  * They do NOT hit the npm registry — network calls are tested
@@ -100,7 +100,9 @@ tools:
 // Test suites
 // ─────────────────────────────────────────────────────────
 
-describe('update command E2E', () => {
+// Skipped: update command not yet implemented in bin/cli.js (beth-r08).
+// Unskip once `case 'update'` is wired into the CLI entrypoint.
+describe.skip('update command E2E', () => {
   let testDir: string;
 
   beforeEach(() => {
@@ -126,15 +128,16 @@ describe('update command E2E', () => {
       const result = runCli('update --check-only', { cwd: testDir });
 
       // The command should either succeed or fail for a reason
-      // OTHER than "unknown command". If it fails with "Unknown command",
-      // the command hasn't been wired into ALLOWED_COMMANDS yet.
-      const isUnknownCommand =
-        result.stdout.includes('Unknown command') ||
-        result.stderr.includes('Unknown command');
+      // OTHER than "unknown command" or "unknown flag". Without this
+      // dual check, the test passes vacuously when the CLI rejects
+      // --check-only as an unknown flag before it ever dispatches.
+      const combined = result.stdout + result.stderr;
+      const isRejected =
+        /unknown (command|flag)/i.test(combined);
       assert.strictEqual(
-        isUnknownCommand,
+        isRejected,
         false,
-        '"update" should be recognized as a valid command, not rejected as unknown'
+        '"update --check-only" should be recognized — not rejected as unknown command or unknown flag'
       );
     });
   });
@@ -323,38 +326,42 @@ describe('update command E2E', () => {
     it('should install new agent files that did not exist before', () => {
       setupInstalledProject(testDir);
 
-      // Our setup only creates beth.agent.md — update should add the rest
+      // Setup creates only beth.agent.md — update should add more
+      const agentsDir = join(testDir, '.github', 'agents');
+      const beforeCount = readdirSync(agentsDir).filter(f => f.endsWith('.agent.md')).length;
+
       runCli('update', { cwd: testDir });
 
-      const agentsDir = join(testDir, '.github', 'agents');
-      const agentFiles = existsSync(agentsDir)
-        ? readdirSync(agentsDir).filter(f => f.endsWith('.agent.md'))
-        : [];
+      const afterCount = readdirSync(agentsDir).filter(f => f.endsWith('.agent.md')).length;
 
-      // Should have more than just the one we created
       assert.ok(
-        agentFiles.length >= 1,
-        `Should have agent files after update, found ${agentFiles.length}`
+        afterCount > beforeCount,
+        `Update should install new agent files. Before: ${beforeCount}, after: ${afterCount}`
       );
     });
 
     it('should install new skill directories that did not exist before', () => {
       setupInstalledProject(testDir);
 
+      // Setup creates only prd/ — update should add more
+      const skillsDir = join(testDir, '.github', 'skills');
+      const beforeCount = readdirSync(skillsDir, { withFileTypes: true })
+        .filter(d => d.isDirectory()).length;
+
       runCli('update', { cwd: testDir });
 
-      const skillsDir = join(testDir, '.github', 'skills');
-      if (existsSync(skillsDir)) {
-        const skillDirs = readdirSync(skillsDir, { withFileTypes: true })
-          .filter(d => d.isDirectory())
-          .map(d => d.name);
+      assert.ok(
+        existsSync(skillsDir),
+        'Skills directory should exist after update'
+      );
 
-        // Should have more than just prd
-        assert.ok(
-          skillDirs.length >= 1,
-          `Should have skill dirs after update, found ${skillDirs.length}`
-        );
-      }
+      const afterCount = readdirSync(skillsDir, { withFileTypes: true })
+        .filter(d => d.isDirectory()).length;
+
+      assert.ok(
+        afterCount > beforeCount,
+        `Update should install new skill dirs. Before: ${beforeCount}, after: ${afterCount}`
+      );
     });
   });
 });

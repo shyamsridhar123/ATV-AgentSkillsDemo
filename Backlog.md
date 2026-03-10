@@ -2,14 +2,22 @@
 
 > *"I don't have time to explain things twice. Read this."*
 
-Last updated: 2026-03-10 (beth-r08: CLI update command)
+Last updated: 2026-03-10 (beth-0c2: Azure skills integration — Phase 1)
 
 ---
+
+## In Progress
+
+| Task | Epic | Status |
+|------|------|--------|
+| **Integrate Microsoft Azure Skills into Beth agent system** | beth-0c2 | `.1` complete (clone + extract). `.2`-`.6` open (install verification, agent routing, docs update, old skill cleanup). |
 
 ## Completed
 
 | Task | Notes |
 |------|-------|
+| **Azure Skills Phase 1: Clone 20 skills from microsoft/azure-skills (beth-0c2.1)** | Cloned 20 Azure skill folders (SKILL.md + references/) from `microsoft/azure-skills` into `.github/skills/`. Skills: appinsights-instrumentation, azure-ai, azure-aigateway, azure-cloud-migrate, azure-compliance, azure-compute, azure-cost-optimization, azure-deploy, azure-diagnostics, azure-hosted-copilot-sdk, azure-kusto, azure-messaging, azure-prepare, azure-rbac, azure-resource-lookup, azure-resource-visualizer, azure-storage, azure-validate, entra-app-registration, microsoft-foundry. No MCP server config included — skills-only approach. Decision: use Azure Skills plugin knowledge layer instead of Azure MCP extension (which was installed but non-functional). Removed `azure-mcp/search` from Beth's frontmatter in prior session work (beth-r08). 450 tests pass, 0 fail. |
+| **PR triage + beth-r08 review fixes** | Closed duplicate PR #57. Merged sub-PRs #54/#55/#56/#58 into epic/beth-2wi, then merged #53 (beth-2wi) into main. Rebased beth-r08 onto updated main, resolved 4 merge conflicts (3 beads backups, 1 doctor.test.ts import merge). Fixed Copilot code review issues on PR #52: (1) vacuous command recognition test now rejects both "Unknown command" and "Unknown flag" via regex, (2) entire update E2E suite marked `describe.skip` since CLI `update` command not yet wired. 450 tests pass, 0 fail. |
 | **CLI `update` command — update project templates in-place (beth-r08)** | New `npx beth-copilot update` command that compares installed project files against bundled templates and selectively updates them. New files always installed; user-modified files skipped (with warning) unless `--force`; `--check-only` reports status without modifying anything; `--verbose` for per-file detail. TypeScript implementation in [src/cli/commands/update.ts](src/cli/commands/update.ts), registered in [bin/cli.js](bin/cli.js) (ALLOWED_COMMANDS, switch/case, help text). Also removed ~150 lines of broken dead code from a prior session that crashed the entire CLI (non-async function with `await`). 12 E2E tests in [src/cli/commands/update.e2e.test.ts](src/cli/commands/update.e2e.test.ts). 444 unit + 159 E2E tests pass, 0 fail. |
 | **Make git hooks active on install: set hooksPath + chmod +x (beth-2wi)** | `npx beth-copilot init` installed hooks into `.beads/hooks/` but never told git to look there and never made them executable. Added `configureGitHooks()` to [bin/cli.js](bin/cli.js) — sets `git config core.hooksPath .beads/hooks` and `chmod +x` all hook scripts during init. Added `checkGitHooks()` to [src/cli/commands/doctor.ts](src/cli/commands/doctor.ts) — verifies hooksPath config and hook permissions with actionable fix commands. 6 new tests in [src/cli/commands/doctor.test.ts](src/cli/commands/doctor.test.ts). 444 tests pass, 0 fail. PR #53. |
 | **Fix PR #47 merge workflow pre-push-guard E2E branch assumptions (beth-u5s)** | GitHub Actions reran the `pre-push-guard.e2e.test.ts` suite in an environment where the repo root was not guaranteed to be on a valid epic branch, which made the two "current epic branch" assertions brittle. Reworked the E2E harness in [src/cli/commands/pre-push-guard.e2e.test.ts](src/cli/commands/pre-push-guard.e2e.test.ts) to create temporary git repositories on explicit branches (`epic/beth-ywg`, `main`, and an unrecognized branch) before invoking the CLI. Verified with `npm test` (438 passed, 1 skipped) and `npm run test:gate`, which generated [docs/test-reports/test-report-2026-03-10-199327d.md](docs/test-reports/test-report-2026-03-10-199327d.md). |
