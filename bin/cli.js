@@ -854,6 +854,7 @@ ${COLORS.bright}Usage:${COLORS.reset}
   npx beth-copilot init [options]     Initialize Beth in current directory
   npx beth-copilot doctor             Check system health and dependencies
   npx beth-copilot close <id> [opts]   Close issue with dependency enforcement
+  npx beth-copilot land [opts]          Automated session completion (test, commit, push)
   npx beth-copilot pre-push-guard      Run branch discipline checks (used by git hook)
   npx beth-copilot quickstart         Run init + doctor + beads setup
   npx beth-copilot help               Show this help message
@@ -1207,14 +1208,14 @@ ${COLORS.cyan}"They broke my wings and forgot I had claws."${COLORS.reset}
 
 // Input validation constants
 const ALLOWED_COMMANDS = ['init', 'help', '--help', '-h', 'doctor', 'quickstart', 'close', 'pre-push-guard'];
-const ALLOWED_FLAGS = ['--force', '--skip-backlog', '--skip-mcp', '--skip-beads', '--verbose', '--reason', '-r', '-f'];
+const ALLOWED_FLAGS = ['--force', '--skip-backlog', '--skip-mcp', '--skip-beads', '--verbose', '--reason', '-r', '-f', '--skip-tests', '--skip-backup', '--message', '-m', '--dry-run'];
 const MAX_ARG_LENGTH = 50;
 
 // Validate and sanitize input
 function validateArgs(args) {
-  // The 'close' command handles its own arg validation (issue IDs with dots, --reason text)
+  // The 'close' and 'land' commands handle their own arg validation
   const command = args[0]?.toLowerCase();
-  if (command === 'close') return;
+  if (command === 'close' || command === 'land') return;
 
   for (const arg of args) {
     // Prevent excessively long arguments (log injection, DoS)
@@ -1248,8 +1249,8 @@ const options = {
 globalThis.VERBOSE = options.verbose;
 
 // Validate unknown flags (exclude --help which is handled as a command)
-// Skip for 'close' command which handles its own arg parsing
-if (command !== 'close') {
+// Skip for 'close' and 'land' commands which handle their own arg parsing
+if (command !== 'close' && command !== 'land') {
   const unknownFlags = args.filter(arg => arg.startsWith('--') && !ALLOWED_FLAGS.includes(arg) && arg !== '--help');
   if (unknownFlags.length > 0) {
     logError(`Unknown flag: ${unknownFlags[0].slice(0, MAX_ARG_LENGTH)}`);
@@ -1288,6 +1289,14 @@ switch (command) {
       // Pass raw args after 'close' — the command handles its own parsing
       const closeArgs = process.argv.slice(3);
       await close(closeArgs);
+    }
+    break;
+  case 'land':
+    {
+      const { land } = await loadTsCommand('land');
+      // Pass raw args after 'land' — the command handles its own parsing
+      const landArgs = process.argv.slice(3);
+      await land(landArgs);
     }
     break;
   case 'pre-push-guard':
