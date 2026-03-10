@@ -775,6 +775,77 @@ async function runBeadsDoctor() {
   });
 }
 
+const BETH_GUARD_BEGIN = '# --- BEGIN BETH GUARD ---';
+const BETH_GUARD_END = '# --- END BETH GUARD ---';
+
+/**
+ * Generate the shell script to append to the pre-push hook.
+ * Pure shell — no Node dependency at hook time for speed.
+ */
+function generateGuardScript() {
+  return `
+${BETH_GUARD_BEGIN}
+# Branch discipline enforcement — installed by beth-copilot
+# Bypass: BETH_SKIP_PUSH_GUARD=1 git push
+if [ "\$BETH_SKIP_PUSH_GUARD" = "1" ]; then
+  echo "⚠ Pre-push guard bypassed (BETH_SKIP_PUSH_GUARD=1)" >&2
+else
+  _beth_branch=\$(git branch --show-current 2>/dev/null)
+
+  # Block pushes from protected branches
+  case "\$_beth_branch" in
+    main|master)
+      echo "✗ Pushing from '\$_beth_branch' is blocked. Work on an epic branch." >&2
+      echo "  Set BETH_SKIP_PUSH_GUARD=1 to bypass." >&2
+      exit 1
+      ;;
+  esac
+
+  # Warn if not on an epic or release branch
+  case "\$_beth_branch" in
+    epic/*) ;;
+    release/*) ;;
+    "")
+      echo "⚠ Detached HEAD — no branch name. Proceeding anyway." >&2
+      ;;
+    *)
+      echo "⚠ Branch '\$_beth_branch' doesn't follow the epic/<id> convention." >&2
+      ;;
+  esac
+fi
+${BETH_GUARD_END}
+`;
+}
+
+/**
+ * Install the pre-push guard into .beads/hooks/pre-push.
+ * Appends the guard section after the beads integration section.
+ * Idempotent — skips if guard is already installed.
+ *
+ * @param {string} cwd - Project root directory
+ */
+function installPrePushGuard(cwd) {
+  const hookPath = join(cwd, '.beads', 'hooks', 'pre-push');
+
+  if (!existsSync(hookPath)) {
+    logWarning('Pre-push hook not found (.beads/hooks/pre-push). Skipping guard installation.');
+    return;
+  }
+
+  const content = readFileSync(hookPath, 'utf-8');
+
+  // Already installed?
+  if (content.includes(BETH_GUARD_BEGIN)) {
+    logSuccess('Pre-push branch guard already installed');
+    return;
+  }
+
+  // Append guard after existing content
+  const guardScript = generateGuardScript();
+  writeFileSync(hookPath, content.trimEnd() + '\n' + guardScript, 'utf-8');
+  logSuccess('Installed pre-push branch guard (blocks direct pushes to main)');
+}
+
 function showHelp() {
   showBethBannerStatic({ showQuickHelp: false });
   console.log(`${COLORS.bright}Beth${COLORS.reset} - AI Orchestrator for GitHub Copilot
@@ -783,6 +854,7 @@ ${COLORS.bright}Usage:${COLORS.reset}
   npx beth-copilot init [options]     Initialize Beth in current directory
   npx beth-copilot doctor             Check system health and dependencies
   npx beth-copilot close <id> [opts]   Close issue with dependency enforcement
+  npx beth-copilot pre-push-guard      Run branch discipline checks (used by git hook)
   npx beth-copilot quickstart         Run init + doctor + beads setup
   npx beth-copilot help               Show this help message
 
@@ -1096,6 +1168,11 @@ ${COLORS.yellow}╔════════════════════�
     await runBeadsDoctor();
   }
 
+  // Install pre-push guard hook
+  if (!skipBeads && isBeadsInitialized(cwd)) {
+    installPrePushGuard(cwd);
+  }
+
   // Final verification
   console.log('');
   log('Verifying installation...', COLORS.cyan);
@@ -1129,7 +1206,7 @@ ${COLORS.cyan}"They broke my wings and forgot I had claws."${COLORS.reset}
 }
 
 // Input validation constants
-const ALLOWED_COMMANDS = ['init', 'help', '--help', '-h', 'doctor', 'quickstart', 'close'];
+const ALLOWED_COMMANDS = ['init', 'help', '--help', '-h', 'doctor', 'quickstart', 'close', 'pre-push-guard'];
 const ALLOWED_FLAGS = ['--force', '--skip-backlog', '--skip-mcp', '--skip-beads', '--verbose', '--reason', '-r', '-f'];
 const MAX_ARG_LENGTH = 50;
 
@@ -1211,6 +1288,12 @@ switch (command) {
       // Pass raw args after 'close' — the command handles its own parsing
       const closeArgs = process.argv.slice(3);
       await close(closeArgs);
+    }
+    break;
+  case 'pre-push-guard':
+    {
+      const { prePushGuard } = await loadTsCommand('pre-push-guard');
+      await prePushGuard();
     }
     break;
   case 'help':
