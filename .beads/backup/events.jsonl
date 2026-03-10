@@ -116,3 +116,12 @@
 {"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T22:11:29Z","event_type":"closed","id":1628,"issue_id":"beth-f6n.1","new_value":"Closed","old_value":""}
 {"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T22:11:29Z","event_type":"closed","id":1629,"issue_id":"beth-f6n","new_value":"all steps complete","old_value":""}
 {"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T22:11:38Z","event_type":"closed","id":1630,"issue_id":"beth-f6n","new_value":"Closed","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T22:30:39Z","event_type":"closed","id":1631,"issue_id":"beth-ywg.1","new_value":"close.e2e.test.ts created, all tests passing","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T22:31:02Z","event_type":"closed","id":1632,"issue_id":"beth-ywg.2","new_value":"pre-push-guard.e2e.test.ts created, all tests passing","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T22:31:09Z","event_type":"closed","id":1633,"issue_id":"beth-ywg.3","new_value":"quickstart-expanded.e2e.test.ts created, all tests passing","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T22:31:18Z","event_type":"closed","id":1634,"issue_id":"beth-ywg.4","new_value":"cli-edge-cases.e2e.test.ts created, all tests passing","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T22:31:29Z","event_type":"closed","id":1635,"issue_id":"beth-ywg.5","new_value":"Version flag tests included in cli-edge-cases.e2e.test.ts","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T22:31:39Z","event_type":"closed","id":1636,"issue_id":"beth-ywg.6","new_value":"framework-isolation.test.ts created with 11 passing tests","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T22:31:50Z","event_type":"closed","id":1637,"issue_id":"beth-ywg.7","new_value":"init-logic.e2e.test.ts created, all tests passing","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T22:31:51Z","event_type":"closed","id":1638,"issue_id":"beth-ywg","new_value":"all steps complete","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-09T22:35:04Z","event_type":"closed","id":1639,"issue_id":"beth-ywg","new_value":"All 7 coverage gap subtasks completed — test audit epic, no security tests needed","old_value":""}
