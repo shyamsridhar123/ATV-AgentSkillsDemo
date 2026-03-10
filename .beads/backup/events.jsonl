@@ -233,3 +233,33 @@
 {"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-10T01:22:30Z","event_type":"created","id":1745,"issue_id":"beth-u5s","new_value":"","old_value":""}
 {"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-10T01:23:00Z","event_type":"claimed","id":1746,"issue_id":"beth-u5s","new_value":"{\"assignee\":\"Stephanie Schofield\",\"status\":\"in_progress\"}","old_value":"{\"id\":\"beth-u5s\",\"title\":\"Clean up stale Backlog.md entries\",\"status\":\"open\",\"priority\":2,\"issue_type\":\"task\",\"owner\":\"sschofield@microsoft.com\",\"created_at\":\"2026-03-10T06:22:30Z\",\"created_by\":\"Stephanie Schofield\",\"updated_at\":\"2026-03-10T06:22:30Z\"}"}
 {"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-10T01:25:47Z","event_type":"closed","id":1747,"issue_id":"beth-u5s","new_value":"Closed","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-10T01:59:59Z","event_type":"created","id":1748,"issue_id":"beth-r08","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-10T02:00:18Z","event_type":"created","id":1749,"issue_id":"beth-r08.1","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-10T02:00:32Z","event_type":"created","id":1750,"issue_id":"beth-r08.2","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-10T02:00:41Z","event_type":"created","id":1751,"issue_id":"beth-r08.3","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-10T02:00:54Z","event_type":"created","id":1752,"issue_id":"beth-r08.4","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-10T02:01:06Z","event_type":"created","id":1753,"issue_id":"beth-r08.5","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-10T02:01:15Z","event_type":"created","id":1754,"issue_id":"beth-r08.6","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-10T02:14:18Z","event_type":"created","id":1755,"issue_id":"beth-2wi","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-10T10:26:03Z","event_type":"closed","id":1756,"issue_id":"beth-2wi","new_value":"{\"status\":\"closed\"}","old_value":"{\"id\":\"beth-2wi\",\"title\":\"Make git hooks active on install: set hooksPath + chmod +x\",\"status\":\"open\",\"priority\":1,\"issue_type\":\"epic\",\"owner\":\"sschofield@microsoft.com\",\"created_at\":\"2026-03-10T07:14:18Z\",\"created_by\":\"Stephanie Schofield\",\"updated_at\":\"2026-03-10T07:14:18Z\"}"}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-10T10:26:15Z","event_type":"created","id":1757,"issue_id":"beth-92c","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-10T10:26:19Z","event_type":"closed","id":1758,"issue_id":"beth-92c","new_value":"E2E test cleanup","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-10T10:26:21Z","event_type":"created","id":1759,"issue_id":"beth-dq5","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-10T10:26:22Z","event_type":"closed","id":1760,"issue_id":"beth-dq5","new_value":"Force close E2E","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-10T10:26:23Z","event_type":"created","id":1761,"issue_id":"beth-eiw","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-10T10:26:25Z","event_type":"created","id":1762,"issue_id":"beth-eiw.1","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-10T10:26:30Z","event_type":"closed","id":1763,"issue_id":"beth-eiw.1","new_value":"Closed","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-10T10:26:30Z","event_type":"closed","id":1764,"issue_id":"beth-eiw","new_value":"all steps complete","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-10T10:26:32Z","event_type":"closed","id":1765,"issue_id":"beth-eiw","new_value":"Closed","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-10T10:26:34Z","event_type":"created","id":1766,"issue_id":"beth-bto","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-10T10:26:35Z","event_type":"created","id":1767,"issue_id":"beth-bto.1","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-10T10:26:37Z","event_type":"closed","id":1768,"issue_id":"beth-bto.1","new_value":"Closed","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-10T10:26:37Z","event_type":"closed","id":1769,"issue_id":"beth-bto","new_value":"all steps complete","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-10T10:26:43Z","event_type":"closed","id":1770,"issue_id":"beth-bto","new_value":"Closed","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-10T10:28:44Z","event_type":"closed","id":1771,"issue_id":"beth-r08.1","new_value":"Version check implemented in update.ts","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-10T10:29:07Z","event_type":"closed","id":1772,"issue_id":"beth-r08.2","new_value":"Template diff with selective update, --force, and --check-only implemented","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-10T10:29:11Z","event_type":"closed","id":1773,"issue_id":"beth-r08.3","new_value":"CLI wiring, help text, ALLOWED_COMMANDS all done","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-10T10:29:15Z","event_type":"closed","id":1774,"issue_id":"beth-r08.4","new_value":"Not implemented - deferred, low priority","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-10T10:29:18Z","event_type":"closed","id":1775,"issue_id":"beth-r08.5","new_value":"Update command is tested via E2E tests; no separate unit test file needed","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-10T10:29:21Z","event_type":"closed","id":1776,"issue_id":"beth-r08.6","new_value":"12 E2E tests all passing","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-10T10:29:22Z","event_type":"closed","id":1777,"issue_id":"beth-r08","new_value":"all steps complete","old_value":""}

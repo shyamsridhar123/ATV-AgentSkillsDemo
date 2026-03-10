@@ -2,7 +2,7 @@
 
 import { fileURLToPath } from 'url';
 import { dirname, join, relative } from 'path';
-import { existsSync, mkdirSync, readdirSync, statSync, copyFileSync, readFileSync, writeFileSync, unlinkSync } from 'fs';
+import { existsSync, mkdirSync, readdirSync, statSync, copyFileSync, readFileSync, writeFileSync, unlinkSync, chmodSync } from 'fs';
 import { createRequire } from 'module';
 import { execSync, spawn } from 'child_process';
 import { validateBeadsPath, validateBinaryPath } from './lib/pathValidation.js';
@@ -846,6 +846,58 @@ function installPrePushGuard(cwd) {
   logSuccess('Installed pre-push branch guard (blocks direct pushes to main)');
 }
 
+/**
+ * Configure git to use .beads/hooks and make all hooks executable.
+ *
+ * Git only runs hooks from its configured hooks path (.git/hooks by default).
+ * beads creates hooks in .beads/hooks/, so we must:
+ * 1. Set core.hooksPath to .beads/hooks
+ * 2. chmod +x all hook scripts in that directory
+ *
+ * Idempotent — safe to call multiple times.
+ *
+ * @param {string} cwd - Project root directory
+ */
+function configureGitHooks(cwd) {
+  const hooksDir = join(cwd, '.beads', 'hooks');
+
+  if (!existsSync(hooksDir)) {
+    logWarning('No .beads/hooks/ directory found. Skipping hook configuration.');
+    return;
+  }
+
+  // Set core.hooksPath so git looks in .beads/hooks/ instead of .git/hooks/
+  try {
+    execSync('git config core.hooksPath .beads/hooks', {
+      cwd,
+      stdio: ['pipe', 'pipe', 'pipe'],
+    });
+    logSuccess('Set git core.hooksPath → .beads/hooks');
+  } catch (err) {
+    logWarning(`Failed to set core.hooksPath: ${err.message || err}`);
+    logInfo('Run manually: git config core.hooksPath .beads/hooks');
+  }
+
+  // Make all hook scripts executable
+  const hookFiles = readdirSync(hooksDir).filter(f => {
+    const fullPath = join(hooksDir, f);
+    return statSync(fullPath).isFile();
+  });
+
+  for (const hookFile of hookFiles) {
+    const hookPath = join(hooksDir, hookFile);
+    try {
+      chmodSync(hookPath, 0o755);
+    } catch (err) {
+      logWarning(`Failed to chmod +x ${hookFile}: ${err.message || err}`);
+    }
+  }
+
+  if (hookFiles.length > 0) {
+    logSuccess(`Made ${hookFiles.length} hook(s) executable: ${hookFiles.join(', ')}`);
+  }
+}
+
 function showHelp() {
   showBethBannerStatic({ showQuickHelp: false });
   console.log(`${COLORS.bright}Beth${COLORS.reset} - AI Orchestrator for GitHub Copilot
@@ -856,6 +908,7 @@ ${COLORS.bright}Usage:${COLORS.reset}
   npx beth-copilot close <id> [opts]   Close issue with dependency enforcement
   npx beth-copilot land [opts]          Automated session completion (test, commit, push)
   npx beth-copilot pre-push-guard      Run branch discipline checks (used by git hook)
+  npx beth-copilot update [options]    Update project files to latest templates
   npx beth-copilot quickstart         Run init + doctor + beads setup
   npx beth-copilot help               Show this help message
 
@@ -865,6 +918,7 @@ ${COLORS.bright}Options:${COLORS.reset}
   --skip-mcp                          Don't create mcp.json.example
   --skip-beads                        Skip beads check (not recommended)
   --verbose                           Show detailed diagnostics on errors
+  --check-only                        Check for updates without modifying files
 
 ${COLORS.bright}Examples:${COLORS.reset}
   npx beth-copilot init               Set up Beth in current project
@@ -1169,9 +1223,10 @@ ${COLORS.yellow}╔════════════════════�
     await runBeadsDoctor();
   }
 
-  // Install pre-push guard hook
+  // Install pre-push guard hook and configure git to use .beads/hooks
   if (!skipBeads && isBeadsInitialized(cwd)) {
     installPrePushGuard(cwd);
+    configureGitHooks(cwd);
   }
 
   // Final verification
@@ -1207,15 +1262,15 @@ ${COLORS.cyan}"They broke my wings and forgot I had claws."${COLORS.reset}
 }
 
 // Input validation constants
-const ALLOWED_COMMANDS = ['init', 'help', '--help', '-h', 'doctor', 'quickstart', 'close', 'pre-push-guard'];
-const ALLOWED_FLAGS = ['--force', '--skip-backlog', '--skip-mcp', '--skip-beads', '--verbose', '--reason', '-r', '-f', '--skip-tests', '--skip-backup', '--message', '-m', '--dry-run'];
+const ALLOWED_COMMANDS = ['init', 'help', '--help', '-h', 'doctor', 'quickstart', 'close', 'pre-push-guard', 'update', 'land'];
+const ALLOWED_FLAGS = ['--force', '--skip-backlog', '--skip-mcp', '--skip-beads', '--verbose', '--reason', '-r', '-f', '--skip-tests', '--skip-backup', '--message', '-m', '--dry-run', '--check-only'];
 const MAX_ARG_LENGTH = 50;
 
 // Validate and sanitize input
 function validateArgs(args) {
-  // The 'close' and 'land' commands handle their own arg validation
+  // The 'close', 'land', and 'update' commands handle their own arg validation
   const command = args[0]?.toLowerCase();
-  if (command === 'close' || command === 'land') return;
+  if (command === 'close' || command === 'land' || command === 'update') return;
 
   for (const arg of args) {
     // Prevent excessively long arguments (log injection, DoS)
@@ -1250,7 +1305,7 @@ globalThis.VERBOSE = options.verbose;
 
 // Validate unknown flags (exclude --help which is handled as a command)
 // Skip for 'close' and 'land' commands which handle their own arg parsing
-if (command !== 'close' && command !== 'land') {
+if (command !== 'close' && command !== 'land' && command !== 'update') {
   const unknownFlags = args.filter(arg => arg.startsWith('--') && !ALLOWED_FLAGS.includes(arg) && arg !== '--help');
   if (unknownFlags.length > 0) {
     logError(`Unknown flag: ${unknownFlags[0].slice(0, MAX_ARG_LENGTH)}`);
@@ -1297,6 +1352,13 @@ switch (command) {
       // Pass raw args after 'land' — the command handles its own parsing
       const landArgs = process.argv.slice(3);
       await land(landArgs);
+    }
+    break;
+  case 'update':
+    {
+      const { update } = await loadTsCommand('update');
+      const updateArgs = process.argv.slice(3);
+      await update(updateArgs);
     }
     break;
   case 'pre-push-guard':

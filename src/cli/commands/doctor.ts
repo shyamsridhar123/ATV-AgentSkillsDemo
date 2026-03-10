@@ -11,7 +11,7 @@
  */
 
 import { execSync } from 'child_process';
-import { existsSync, readdirSync, readFileSync } from 'fs';
+import { existsSync, readdirSync, readFileSync, statSync } from 'fs';
 import { join } from 'path';
 import matter from 'gray-matter';
 
@@ -332,6 +332,92 @@ function checkDoltDatabases(cwd: string): CheckResult[] {
 }
 
 /**
+ * Check that git core.hooksPath is set and hooks are executable.
+ * Git only runs hooks from the configured hooksPath. beads installs hooks
+ * to .beads/hooks/, so core.hooksPath must point there and scripts must be +x.
+ */
+export function checkGitHooks(cwd: string): CheckResult[] {
+  const results: CheckResult[] = [];
+  const hooksDir = join(cwd, '.beads', 'hooks');
+
+  if (!existsSync(hooksDir)) {
+    // No hooks dir at all — nothing to check
+    return [];
+  }
+
+  // Check core.hooksPath
+  try {
+    const hooksPath = execSync('git config core.hooksPath', {
+      encoding: 'utf-8',
+      cwd,
+      stdio: ['pipe', 'pipe', 'pipe'],
+    }).trim();
+
+    if (hooksPath === '.beads/hooks') {
+      results.push({
+        name: 'Git hooksPath',
+        status: 'pass',
+        message: 'core.hooksPath → .beads/hooks',
+      });
+    } else {
+      results.push({
+        name: 'Git hooksPath',
+        status: 'warn',
+        message: `core.hooksPath is "${hooksPath}" (expected ".beads/hooks")`,
+        details: 'Fix: git config core.hooksPath .beads/hooks',
+      });
+    }
+  } catch {
+    results.push({
+      name: 'Git hooksPath',
+      status: 'fail',
+      message: 'core.hooksPath not set — git hooks will not run',
+      details: 'Fix: git config core.hooksPath .beads/hooks',
+    });
+  }
+
+  // Check hooks are executable
+  const expectedHooks = ['pre-push', 'pre-commit', 'post-checkout', 'post-merge', 'prepare-commit-msg'];
+  const nonExecutable: string[] = [];
+  const missing: string[] = [];
+
+  for (const hook of expectedHooks) {
+    const hookPath = join(hooksDir, hook);
+    if (!existsSync(hookPath)) {
+      missing.push(hook);
+      continue;
+    }
+    try {
+      const stats = statSync(hookPath);
+      // Check if owner-executable bit is set (0o100)
+      if ((stats.mode & 0o111) === 0) {
+        nonExecutable.push(hook);
+      }
+    } catch {
+      nonExecutable.push(hook);
+    }
+  }
+
+  if (nonExecutable.length > 0) {
+    results.push({
+      name: 'Hook permissions',
+      status: 'fail',
+      message: `${nonExecutable.length} hook(s) not executable: ${nonExecutable.join(', ')}`,
+      details: `Fix: chmod +x ${nonExecutable.map(h => `.beads/hooks/${h}`).join(' ')}`,
+    });
+  } else {
+    const presentHooks = expectedHooks.filter(h => !missing.includes(h));
+    results.push({
+      name: 'Hook permissions',
+      status: 'pass',
+      message: `${presentHooks.length} hook(s) executable`,
+    });
+  }
+
+  return results;
+}
+
+/**
  * Main doctor command
  * @param options - Command options
  * @param exitOnFailure - If false, returns result instead of calling process.exit
@@ -351,6 +437,7 @@ export async function doctor(options: DoctorOptions = {}, exitOnFailure = true):
     checkAgents(cwd),
     checkSkills(cwd),
     checkBeadsInit(cwd),
+    ...checkGitHooks(cwd),
     ...checkDoltDatabases(cwd),
   ];
   

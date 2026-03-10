@@ -305,10 +305,11 @@ cp mcp.json.example .vscode/mcp.json
 
 | Server | Purpose | Agent | Setup |
 |--------|---------|-------|-------|
-| **shadcn/ui** | Component browsing | Frontend Engineer | `npx shadcn@latest mcp init --client vscode` |
+| **shadcn/ui** | Component browsing | Developer | `npx shadcn@latest mcp init --client vscode` |
 | **Playwright** | Browser automation | Tester | Add to mcp.json |
 | **Azure** | Cloud management | Developer | `az login` first |
 | **Web Search** | Internet research | Researcher | Needs API key |
+| **DeepWiki** | Repo documentation | All | Add to mcp.json |
 
 ### shadcn/ui (Recommended)
 
@@ -413,7 +414,7 @@ Now let's put Beth to work:
 Beth will:
 1. Route to Product Manager for requirements
 2. Send to UX Designer for layout
-3. Deploy Frontend Engineer for implementation
+3. Deploy Developer for implementation
 4. Have Tester verify accessibility
 5. Get Security Reviewer sign-off
 

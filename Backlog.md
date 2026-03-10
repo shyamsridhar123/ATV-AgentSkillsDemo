@@ -2,7 +2,7 @@
 
 > *"I don't have time to explain things twice. Read this."*
 
-Last updated: 2026-03-10 (beth-u5s: Fix pre-push-guard E2E branch assumptions)
+Last updated: 2026-03-10 (beth-r08: CLI update command)
 
 ---
 
@@ -10,6 +10,8 @@ Last updated: 2026-03-10 (beth-u5s: Fix pre-push-guard E2E branch assumptions)
 
 | Task | Notes |
 |------|-------|
+| **CLI `update` command — update project templates in-place (beth-r08)** | New `npx beth-copilot update` command that compares installed project files against bundled templates and selectively updates them. New files always installed; user-modified files skipped (with warning) unless `--force`; `--check-only` reports status without modifying anything; `--verbose` for per-file detail. TypeScript implementation in [src/cli/commands/update.ts](src/cli/commands/update.ts), registered in [bin/cli.js](bin/cli.js) (ALLOWED_COMMANDS, switch/case, help text). Also removed ~150 lines of broken dead code from a prior session that crashed the entire CLI (non-async function with `await`). 12 E2E tests in [src/cli/commands/update.e2e.test.ts](src/cli/commands/update.e2e.test.ts). 444 unit + 159 E2E tests pass, 0 fail. |
+| **Make git hooks active on install: set hooksPath + chmod +x (beth-2wi)** | `npx beth-copilot init` installed hooks into `.beads/hooks/` but never told git to look there and never made them executable. Added `configureGitHooks()` to [bin/cli.js](bin/cli.js) — sets `git config core.hooksPath .beads/hooks` and `chmod +x` all hook scripts during init. Added `checkGitHooks()` to [src/cli/commands/doctor.ts](src/cli/commands/doctor.ts) — verifies hooksPath config and hook permissions with actionable fix commands. 6 new tests in [src/cli/commands/doctor.test.ts](src/cli/commands/doctor.test.ts). 444 tests pass, 0 fail. PR #53. |
 | **Fix PR #47 merge workflow pre-push-guard E2E branch assumptions (beth-u5s)** | GitHub Actions reran the `pre-push-guard.e2e.test.ts` suite in an environment where the repo root was not guaranteed to be on a valid epic branch, which made the two "current epic branch" assertions brittle. Reworked the E2E harness in [src/cli/commands/pre-push-guard.e2e.test.ts](src/cli/commands/pre-push-guard.e2e.test.ts) to create temporary git repositories on explicit branches (`epic/beth-ywg`, `main`, and an unrecognized branch) before invoking the CLI. Verified with `npm test` (438 passed, 1 skipped) and `npm run test:gate`, which generated [docs/test-reports/test-report-2026-03-10-199327d.md](docs/test-reports/test-report-2026-03-10-199327d.md). |
 | **Document `bd backup` parser failure repro and recovery (beth-ywg)** | Added [docs/BD-BACKUP-PARSER-FAILURE.md](docs/BD-BACKUP-PARSER-FAILURE.md) with the exact parser error, root cause, worktree caveat, deterministic repro steps, and three recovery paths. Added a pointer from AGENTS.md so the recovery sequence for beads failures links directly to the focused incident doc instead of burying the fix in chat history. |
 | **Fix PR #46 CI and E2E expectation drift (beth-z9n)** | PR #46 failed first on `framework-isolation.test.ts` because `node:test` was imported with an unsupported `beforeAll` symbol for the TypeScript environment used in CI. After fixing that build break, the rerun exposed 3 E2E expectation drifts: oversized-arg validation was asserting only `stderr` even though the CLI logs via `stdout`, `init-logic.e2e.test.ts` incorrectly treated `.vscode/settings.json` as strict JSON instead of JSONC, and `quickstart-expanded.e2e.test.ts` expected guidance output without providing a usable `bd` CLI in CI. Fixed by restoring the supported hook import pattern, updating the E2E assertions to match actual CLI behavior, and injecting a mock `bd` binary so quickstart reaches the guidance path under test. Verified locally with `npm run build`, `npm test` (438 passed, 1 skipped), and `npm run test:e2e` (147 passed). PR #46 checks all green. |
@@ -134,7 +136,7 @@ Last updated: 2026-03-10 (beth-u5s: Fix pre-push-guard E2E branch assumptions)
 
 **For Leadership:**
 
-Beth is fully operational — orchestrator, 6 specialist agents, 8 skills, CI/CD, quality gates, and comprehensive test infrastructure. 438 tests passing. All planned enforcement phases complete.
+Beth is fully operational — orchestrator, 6 specialist agents, 8 skills, CI/CD, quality gates, and comprehensive test infrastructure. 478 tests passing (v1.1.0). All planned enforcement phases complete.
 
 **What's Working:**
 

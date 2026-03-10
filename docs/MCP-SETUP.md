@@ -22,10 +22,11 @@ Then add servers as needed.
 
 | Server | Purpose | Used By |
 |--------|---------|---------|
-| **shadcn/ui** | Component browsing, installation | Frontend Engineer |
-| **Playwright** | Browser automation, E2E testing | Tester, Frontend Engineer |
+| **shadcn/ui** | Component browsing, installation | Developer |
+| **Playwright** | Browser automation, E2E testing | Tester, Developer |
 | **Azure** | Cloud resource management | Developer, Security Reviewer |
 | **Web Search** | Internet research | Researcher |
+| **DeepWiki** | Repository documentation lookup | All |
 
 ---
 
@@ -161,6 +162,30 @@ Internet search for competitive analysis and research.
 
 ---
 
+### DeepWiki (Repository Documentation)
+
+Look up documentation for any GitHub repository.
+
+```json
+{
+  "servers": {
+    "deepwiki": {
+      "type": "http",
+      "url": "https://mcp.deepwiki.com/mcp"
+    }
+  }
+}
+```
+
+**Capabilities:**
+- Repository documentation lookup
+- API reference browsing
+- Code pattern discovery
+
+**Without MCP:** Manually browse repository documentation.
+
+---
+
 ## Complete Configuration Example
 
 `.vscode/mcp.json`:
@@ -189,6 +214,10 @@ Internet search for competitive analysis and research.
       "env": {
         "BRAVE_API_KEY": "${env:BRAVE_API_KEY}"
       }
+    },
+    "deepwiki": {
+      "type": "http",
+      "url": "https://mcp.deepwiki.com/mcp"
     }
   }
 }
@@ -202,9 +231,8 @@ Every agent works without MCPs. Here's how they adapt:
 
 | Agent | With MCP | Without MCP |
 |-------|----------|-------------|
-| **Frontend Engineer** | Browses shadcn registry | Uses CLI commands |
+| **Developer** | Browses shadcn registry, manages Azure resources | Uses CLI commands |
 | **Tester** | Automates browser directly | Writes test files for you to run |
-| **Developer** | Manages Azure resources | Provides CLI commands |
 | **Researcher** | Searches the web | Asks you for information |
 | **Security Reviewer** | Queries Azure security | Reviews code and configs only |
 
