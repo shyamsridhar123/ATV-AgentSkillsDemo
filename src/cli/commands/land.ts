@@ -145,8 +145,12 @@ export function hasStagedChanges(): boolean {
       stdio: ['pipe', 'pipe', 'pipe'],
     });
     return false; // exit 0 means no diff
-  } catch {
-    return true; // exit 1 means there are diffs
+  } catch (err: unknown) {
+    // exit 1 means there are diffs; any other error is unexpected
+    if (err && typeof err === 'object' && 'status' in err && (err as { status: number }).status === 1) {
+      return true;
+    }
+    return false;
   }
 }
 
@@ -244,6 +248,37 @@ export function gitCommit(message: string): boolean {
 }
 
 /**
+ * Check if a remote tracking branch exists for the given branch.
+ */
+export function remoteBranchExists(branch: string): boolean {
+  try {
+    execFileSync('git', ['show-ref', '--verify', '--quiet', `refs/remotes/origin/${branch}`], {
+      encoding: 'utf-8',
+      timeout: 10000,
+      stdio: ['pipe', 'pipe', 'pipe'],
+    });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Abort an in-progress rebase.
+ */
+export function gitRebaseAbort(): void {
+  try {
+    execFileSync('git', ['rebase', '--abort'], {
+      encoding: 'utf-8',
+      timeout: 10000,
+      stdio: ['pipe', 'pipe', 'pipe'],
+    });
+  } catch {
+    // Best-effort — if there's no rebase in progress, this will fail harmlessly
+  }
+}
+
+/**
  * Pull with rebase from origin.
  */
 export function gitPullRebase(branch: string): { success: boolean; output: string } {
@@ -289,13 +324,20 @@ export function isUpToDateWithOrigin(branch: string): boolean {
       timeout: 30000,
       stdio: ['pipe', 'pipe', 'pipe'],
     });
-    const output = execFileSync('git', ['status', '--short', '--branch'], {
+    // Compare local HEAD with the fetched remote ref directly.
+    // Using git status --branch is unreliable when no upstream tracking is set
+    // (it omits ahead/behind, falsely appearing "up to date").
+    const localSha = execFileSync('git', ['rev-parse', 'HEAD'], {
       encoding: 'utf-8',
       timeout: 10000,
       stdio: ['pipe', 'pipe', 'pipe'],
-    });
-    // If the status line includes "ahead" or "behind", we're not in sync
-    return !output.includes('ahead') && !output.includes('behind');
+    }).trim();
+    const remoteSha = execFileSync('git', ['rev-parse', `origin/${branch}`], {
+      encoding: 'utf-8',
+      timeout: 10000,
+      stdio: ['pipe', 'pipe', 'pipe'],
+    }).trim();
+    return localSha === remoteSha;
   } catch {
     return false;
   }
@@ -530,6 +572,13 @@ export function executeLanding(options: LandOptions = {}): LandResult {
 
   // Step 7: Pull with rebase
   const pullStep = executeStep('Pull rebase', !!dryRun, () => {
+    if (!remoteBranchExists(branch)) {
+      return {
+        step: 'Pull rebase',
+        status: 'warn',
+        message: `No remote branch origin/${branch} yet (new branch, will be created on push)`,
+      };
+    }
     const { success, output } = gitPullRebase(branch);
     if (success) {
       return {
@@ -538,14 +587,21 @@ export function executeLanding(options: LandOptions = {}): LandResult {
         message: `Rebased on origin/${branch}`,
       };
     }
+    // Remote exists but rebase failed — likely a conflict. Abort the rebase to restore clean state.
+    gitRebaseAbort();
     return {
       step: 'Pull rebase',
-      status: 'warn',
-      message: 'Pull rebase failed (new branch or conflict)',
-      details: output.split('\n').slice(0, 3).join('\n'),
+      status: 'fail',
+      message: `Rebase conflict with origin/${branch} — landing aborted. Resolve conflicts manually.`,
+      details: output.split('\n').slice(0, 5).join('\n'),
     };
   });
   steps.push(pullStep);
+
+  if (pullStep.status === 'fail') {
+    console.log(`\n${COLORS.red}✗ Rebase conflict detected. Resolve conflicts and retry: git pull origin ${branch} --rebase${COLORS.reset}\n`);
+    return { success: false, steps, branch, epicId: epicId ?? undefined };
+  }
 
   // Step 8: Push
   const pushStep = executeStep('Push', !!dryRun, () => {

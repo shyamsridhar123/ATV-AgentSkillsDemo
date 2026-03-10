@@ -34,6 +34,8 @@ import {
   runBeadsBackup,
   gitAddAll,
   gitCommit,
+  remoteBranchExists,
+  gitRebaseAbort,
   gitPullRebase,
   gitPush,
   isUpToDateWithOrigin,
@@ -193,9 +195,20 @@ describe('hasStagedChanges', () => {
 
   it('returns true when there are staged changes (exit 1)', () => {
     mockedExecFileSync.mockImplementation(() => {
-      throw new Error('diff found');
+      const err = new Error('diff found');
+      (err as NodeJS.ErrnoException & { status: number }).status = 1;
+      throw err;
     });
     expect(hasStagedChanges()).toBe(true);
+  });
+
+  it('returns false on unexpected git errors (not exit 1)', () => {
+    mockedExecFileSync.mockImplementation(() => {
+      const err = new Error('not a git repo');
+      (err as NodeJS.ErrnoException & { status: number }).status = 128;
+      throw err;
+    });
+    expect(hasStagedChanges()).toBe(false);
   });
 });
 
@@ -314,6 +327,48 @@ describe('gitCommit', () => {
   });
 });
 
+// ─── remoteBranchExists ─────────────────────────────────────────────────────
+
+describe('remoteBranchExists', () => {
+  it('returns true when remote branch exists', () => {
+    mockedExecFileSync.mockReturnValue('');
+    expect(remoteBranchExists('epic/beth-z9n')).toBe(true);
+    expect(mockedExecFileSync).toHaveBeenCalledWith(
+      'git',
+      ['show-ref', '--verify', '--quiet', 'refs/remotes/origin/epic/beth-z9n'],
+      expect.any(Object),
+    );
+  });
+
+  it('returns false when remote branch does not exist', () => {
+    mockedExecFileSync.mockImplementation(() => {
+      throw new Error('not found');
+    });
+    expect(remoteBranchExists('epic/beth-z9n')).toBe(false);
+  });
+});
+
+// ─── gitRebaseAbort ─────────────────────────────────────────────────────────
+
+describe('gitRebaseAbort', () => {
+  it('calls git rebase --abort', () => {
+    mockedExecFileSync.mockReturnValue('');
+    gitRebaseAbort();
+    expect(mockedExecFileSync).toHaveBeenCalledWith(
+      'git',
+      ['rebase', '--abort'],
+      expect.any(Object),
+    );
+  });
+
+  it('does not throw when no rebase in progress', () => {
+    mockedExecFileSync.mockImplementation(() => {
+      throw new Error('No rebase in progress');
+    });
+    expect(() => gitRebaseAbort()).not.toThrow();
+  });
+});
+
 // ─── gitPullRebase ──────────────────────────────────────────────────────────
 
 describe('gitPullRebase', () => {
@@ -370,21 +425,24 @@ describe('isUpToDateWithOrigin', () => {
   it('returns true when branch is in sync', () => {
     mockedExecFileSync
       .mockReturnValueOnce('') // fetch
-      .mockReturnValueOnce('## epic/beth-z9n...origin/epic/beth-z9n\n'); // status
+      .mockReturnValueOnce('abc123\n') // rev-parse HEAD
+      .mockReturnValueOnce('abc123\n'); // rev-parse origin/branch
     expect(isUpToDateWithOrigin('epic/beth-z9n')).toBe(true);
   });
 
-  it('returns false when branch is ahead', () => {
+  it('returns false when local is ahead', () => {
     mockedExecFileSync
       .mockReturnValueOnce('') // fetch
-      .mockReturnValueOnce('## epic/beth-z9n...origin/epic/beth-z9n [ahead 2]\n');
+      .mockReturnValueOnce('abc123\n') // rev-parse HEAD
+      .mockReturnValueOnce('def456\n'); // rev-parse origin/branch
     expect(isUpToDateWithOrigin('epic/beth-z9n')).toBe(false);
   });
 
-  it('returns false when branch is behind', () => {
+  it('returns false when remote ref does not exist', () => {
     mockedExecFileSync
       .mockReturnValueOnce('') // fetch
-      .mockReturnValueOnce('## epic/beth-z9n...origin/epic/beth-z9n [behind 1]\n');
+      .mockReturnValueOnce('abc123\n') // rev-parse HEAD
+      .mockImplementationOnce(() => { throw new Error('unknown revision'); }); // rev-parse origin/branch fails
     expect(isUpToDateWithOrigin('epic/beth-z9n')).toBe(false);
   });
 
@@ -547,10 +605,11 @@ describe('executeLanding', () => {
       .mockImplementationOnce(() => { throw new Error('no remote'); }) // hasUnpushedCommits: show-ref fails
       .mockReturnValueOnce('') // git add -A
       .mockReturnValueOnce('') // git commit
-      .mockReturnValueOnce('') // git pull rebase (may fail for new branch)
+      .mockImplementationOnce(() => { throw new Error('no remote'); }) // remoteBranchExists: show-ref fails (new branch)
       .mockReturnValueOnce('') // git push
       .mockReturnValueOnce('') // isUpToDateWithOrigin: fetch
-      .mockReturnValueOnce('## epic/beth-z9n...origin/epic/beth-z9n\n'); // isUpToDateWithOrigin: status
+      .mockReturnValueOnce('abc123\n') // isUpToDateWithOrigin: rev-parse HEAD
+      .mockReturnValueOnce('abc123\n'); // isUpToDateWithOrigin: rev-parse origin/branch
     executeLanding({ message: 'custom: my changes' });
     const commitCall = mockedExecFileSync.mock.calls.find(
       (c) => c[0] === 'git' && (c[1] as string[])[0] === 'commit',
@@ -568,7 +627,7 @@ describe('executeLanding', () => {
       .mockImplementationOnce(() => { throw new Error('no remote'); }) // hasUnpushedCommits
       .mockReturnValueOnce('') // git add -A
       .mockReturnValueOnce('') // git commit
-      .mockReturnValueOnce('') // git pull rebase
+      .mockImplementationOnce(() => { throw new Error('no remote'); }) // remoteBranchExists: no remote
       .mockReturnValueOnce('') // git push
       .mockReturnValueOnce('') // fetch
       .mockReturnValueOnce('## epic/beth-z9n...origin/epic/beth-z9n\n'); // status
@@ -580,7 +639,7 @@ describe('executeLanding', () => {
     expect((commitCall![1] as string[])[2]).toBe('beth-z9n: session work');
   });
 
-  it('full successful landing sequence', () => {
+  it('full successful landing sequence (new branch, no remote)', () => {
     mockedExecFileSync
       .mockReturnValueOnce('epic/beth-z9n\n') // getCurrentBranch
       .mockReturnValueOnce('Tests: 361 passed, 1 skipped\n') // npm test
@@ -589,7 +648,7 @@ describe('executeLanding', () => {
       .mockImplementationOnce(() => { throw new Error('no remote'); }) // hasUnpushedCommits
       .mockReturnValueOnce('') // git add -A
       .mockReturnValueOnce('') // git commit
-      .mockReturnValueOnce('Already up to date.\n') // git pull rebase
+      .mockImplementationOnce(() => { throw new Error('no remote'); }) // remoteBranchExists: no remote
       .mockReturnValueOnce('') // git push
       .mockReturnValueOnce('') // fetch
       .mockReturnValueOnce('## epic/beth-z9n...origin/epic/beth-z9n\n'); // status
@@ -639,11 +698,65 @@ describe('executeLanding', () => {
       .mockImplementationOnce(() => { throw new Error('no remote'); }) // hasUnpushedCommits
       .mockReturnValueOnce('') // git add
       .mockReturnValueOnce('') // git commit
-      .mockReturnValueOnce('') // git pull rebase
+      .mockImplementationOnce(() => { throw new Error('no remote'); }) // remoteBranchExists: no remote
       .mockImplementationOnce(() => { throw pushError; }); // git push fails
     const result = executeLanding({ message: 'test' });
     expect(result.success).toBe(false);
     const pushStep = result.steps.find((s) => s.step === 'Push');
     expect(pushStep?.status).toBe('fail');
+  });
+
+  it('full successful landing with existing remote branch', () => {
+    mockedExecFileSync
+      .mockReturnValueOnce('epic/beth-z9n\n') // getCurrentBranch
+      .mockReturnValueOnce('Tests passed\n') // npm test
+      .mockReturnValueOnce('Backup ok\n') // bd backup
+      .mockReturnValueOnce(' M foo.ts\n') // hasUncommittedChanges
+      .mockReturnValueOnce('') // hasUnpushedCommits: show-ref succeeds (remote exists)
+      .mockReturnValueOnce('abc123 commit msg\n') // hasUnpushedCommits: git log (has unpushed)
+      .mockReturnValueOnce('') // git add -A
+      .mockReturnValueOnce('') // git commit
+      .mockReturnValueOnce('') // remoteBranchExists: show-ref succeeds
+      .mockReturnValueOnce('Already up to date.\n') // gitPullRebase succeeds
+      .mockReturnValueOnce('') // git push
+      .mockReturnValueOnce('') // isUpToDateWithOrigin: fetch
+      .mockReturnValueOnce('abc123\n') // isUpToDateWithOrigin: rev-parse HEAD
+      .mockReturnValueOnce('abc123\n'); // isUpToDateWithOrigin: rev-parse origin/branch
+    const result = executeLanding({ message: 'beth-z9n: new work' });
+    expect(result.success).toBe(true);
+    const pullStep = result.steps.find((s) => s.step === 'Pull rebase');
+    expect(pullStep?.status).toBe('pass');
+  });
+
+  it('rebase conflict aborts landing and cleans up', () => {
+    const rebaseError = new Error('conflict') as Error & { stderr: string };
+    rebaseError.stderr = 'CONFLICT (content): Merge conflict in src/foo.ts\nAutomatic merge failed; fix conflicts and then commit.';
+    mockedExecFileSync
+      .mockReturnValueOnce('epic/beth-z9n\n') // getCurrentBranch
+      .mockReturnValueOnce('Tests passed\n') // npm test
+      .mockReturnValueOnce('Backup ok\n') // bd backup
+      .mockReturnValueOnce(' M foo.ts\n') // hasUncommittedChanges
+      .mockReturnValueOnce('') // hasUnpushedCommits: show-ref succeeds (remote exists)
+      .mockReturnValueOnce('abc123 commit msg\n') // hasUnpushedCommits: git log (has unpushed)
+      .mockReturnValueOnce('') // git add -A
+      .mockReturnValueOnce('') // git commit
+      .mockReturnValueOnce('') // remoteBranchExists: show-ref succeeds (remote exists)
+      .mockImplementationOnce(() => { throw rebaseError; }) // gitPullRebase fails (conflict)
+      .mockReturnValueOnce(''); // gitRebaseAbort
+    const result = executeLanding({ message: 'test' });
+    expect(result.success).toBe(false);
+    const pullStep = result.steps.find((s) => s.step === 'Pull rebase');
+    expect(pullStep?.status).toBe('fail');
+    expect(pullStep?.message).toContain('Rebase conflict');
+    // Verify git rebase --abort was called
+    const abortCall = mockedExecFileSync.mock.calls.find(
+      (c) => c[0] === 'git' && (c[1] as string[])[0] === 'rebase' && (c[1] as string[])[1] === '--abort',
+    );
+    expect(abortCall).toBeDefined();
+    // Verify push was NOT attempted
+    const pushCall = mockedExecFileSync.mock.calls.find(
+      (c) => c[0] === 'git' && (c[1] as string[])[0] === 'push',
+    );
+    expect(pushCall).toBeUndefined();
   });
 });
