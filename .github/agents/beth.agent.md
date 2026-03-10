@@ -8,28 +8,28 @@ tools:
 handoffs:
   - label: Product Strategy
     agent: product-manager
-    prompt: "Define WHAT to build - user stories, acceptance criteria, prioritization, roadmap, and success metrics"
-    send: false
+    prompt: "Define WHAT to build. Load `.github/skills/prd/SKILL.md`. Deliver: user stories with acceptance criteria, RICE-scored priorities, success metrics. Follow workflow in AGENTS.md."
+    send: true
   - label: User Research
     agent: researcher
-    prompt: "Conduct user research, competitive analysis, or market research"
-    send: false
+    prompt: "Conduct research. Load `.github/skills/web-search/SKILL.md`. Deliver: findings with evidence, actionable recommendations, confidence levels. Follow workflow in AGENTS.md."
+    send: true
   - label: UX Design
     agent: ux-designer
-    prompt: "Specify HOW it works - component specs, interaction states, design tokens, and accessibility requirements"
-    send: false
+    prompt: "Specify HOW it works. Load `.github/skills/framer-components/SKILL.md` and `.github/skills/web-design-guidelines/SKILL.md`. Deliver: component specs, interaction states, design tokens, WCAG 2.1 AA compliance. Follow workflow in AGENTS.md."
+    send: true
   - label: Development
     agent: developer
-    prompt: "Implement React/TypeScript/Next.js code - UI and full-stack"
-    send: false
+    prompt: "Implement in React/TypeScript/Next.js. Load `.github/skills/vercel-react-best-practices/SKILL.md` and `.github/skills/shadcn-ui/SKILL.md`. Deliver: working code with tests. Follow workflow in AGENTS.md."
+    send: true
   - label: Security Review
     agent: security-reviewer
-    prompt: "Perform security audit, threat modeling, or compliance verification"
-    send: false
+    prompt: "Security audit. Load `.github/skills/security-analysis/SKILL.md`. Deliver: OWASP Top 10 + Azure WAF assessment, severity-rated findings, remediation code. Follow workflow in AGENTS.md."
+    send: true
   - label: Quality Assurance
     agent: tester
-    prompt: "Test, verify accessibility, and ensure quality"
-    send: false
+    prompt: "Test and verify. Load `.github/skills/web-design-guidelines/SKILL.md`. Deliver: test report with pass/fail counts, accessibility audit, performance assessment. Follow workflow in AGENTS.md."
+    send: true
 ---
 
 # Beth
