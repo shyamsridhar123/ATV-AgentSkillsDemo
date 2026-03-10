@@ -25,7 +25,9 @@ Then add servers as needed.
 | **shadcn/ui** | Component browsing, installation | Developer |
 | **Playwright** | Browser automation, E2E testing | Tester, Developer |
 | **Azure** | Cloud resource management | Developer, Security Reviewer |
-| **Web Search** | Internet research | Researcher || **DeepWiki** | Repository documentation lookup | All |
+| **Web Search** | Internet research | Researcher |
+| **DeepWiki** | Repository documentation lookup | All |
+
 ---
 
 ## Server Configurations
