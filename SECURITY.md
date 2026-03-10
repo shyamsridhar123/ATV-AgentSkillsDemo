@@ -94,8 +94,8 @@ The CLI uses `child_process.spawn()` with `shell:true` in specific cases. This s
 4. **Allowlist pattern**: Only known commands and flags are accepted:
 
    ```javascript
-   const ALLOWED_COMMANDS = ['init', 'help', 'doctor', 'quickstart', 'close', 'land', 'pre-push-guard', '--help', '-h'];
-   const ALLOWED_FLAGS = ['--force', '--skip-backlog', '--skip-mcp', '--skip-beads', '--verbose', '--skip-tests', '--skip-backup', '--message', '-m', '--dry-run', '--reason'];
+   const ALLOWED_COMMANDS = ['init', 'help', '--help', '-h', 'doctor', 'quickstart', 'close', 'pre-push-guard', 'update', 'land'];
+   const ALLOWED_FLAGS = ['--force', '--skip-backlog', '--skip-mcp', '--skip-beads', '--verbose', '--reason', '-r', '-f', '--skip-tests', '--skip-backup', '--message', '-m', '--dry-run', '--check-only'];
    ```
 
 #### Guidelines for Contributors
