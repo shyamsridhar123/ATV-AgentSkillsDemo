@@ -4,9 +4,10 @@
  * Tests for parsing .agent.md files into typed AgentDefinition objects.
  */
 
-import { describe, it } from 'node:test';
+import { describe, it, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert';
 import { join } from 'node:path';
+import { writeFileSync, mkdirSync, rmSync, existsSync } from 'node:fs';
 import {
   loadAgents,
   loadAgent,
@@ -55,7 +56,8 @@ describe('Agent Loader', () => {
       assert.strictEqual(agent.frontmatter.name, 'Beth');
       assert.ok(agent.frontmatter.description?.includes('orchestrator'));
       assert.strictEqual(agent.frontmatter.model, 'Claude Opus 4.6');
-      assert.strictEqual(agent.frontmatter.infer, true);
+      // infer: true is deprecated — agents are inferable by default
+      assert.ok(agent.frontmatter.infer === undefined || agent.frontmatter.infer === true);
       assert.ok(Array.isArray(agent.frontmatter.tools));
       assert.ok(Array.isArray(agent.frontmatter.handoffs));
       assert.ok(agent.body.length > 100, 'Should have substantial body content');
@@ -123,19 +125,66 @@ describe('Agent Loader', () => {
   });
 
   describe('getInferableAgents', () => {
-    it('should return only agents with infer: true', () => {
+    it('should return agents that are inferable (all by default, since infer: true is deprecated)', () => {
       const result = loadAgents(TEMPLATES_AGENTS_DIR);
       const inferable = getInferableAgents(result);
 
       assert.ok(inferable.length > 0, 'Should have at least one inferable agent');
 
       for (const agent of inferable) {
-        assert.strictEqual(agent.frontmatter.infer, true, `${agent.id} should have infer: true`);
+        assert.ok(
+          agent.frontmatter.infer !== false,
+          `${agent.id} should not have infer: false`
+        );
       }
 
       // Beth should be inferable
       const bethInferable = inferable.find((a) => a.id === 'beth');
       assert.ok(bethInferable, 'Beth should be inferable');
+    });
+
+    const INFER_TEST_DIR = join(process.cwd(), '.test-agents-infer');
+
+    beforeEach(() => {
+      if (!existsSync(INFER_TEST_DIR)) {
+        mkdirSync(INFER_TEST_DIR, { recursive: true });
+      }
+    });
+
+    afterEach(() => {
+      if (existsSync(INFER_TEST_DIR)) {
+        rmSync(INFER_TEST_DIR, { recursive: true, force: true });
+      }
+    });
+
+    it('should exclude agents with infer: false', () => {
+      writeFileSync(join(INFER_TEST_DIR, 'visible.agent.md'), [
+        '---',
+        'name: Visible Agent',
+        'description: Should be inferable',
+        '---',
+        'A normal agent.',
+      ].join('\n'));
+
+      writeFileSync(join(INFER_TEST_DIR, 'hidden.agent.md'), [
+        '---',
+        'name: Hidden Agent',
+        'description: Should be excluded',
+        'infer: false',
+        '---',
+        'An agent that opts out of inferability.',
+      ].join('\n'));
+
+      const result = loadAgents(INFER_TEST_DIR);
+      assert.strictEqual(result.agents.length, 2, 'Should load both agents');
+
+      const inferable = getInferableAgents(result);
+      assert.strictEqual(inferable.length, 1, 'Only one agent should be inferable');
+      assert.strictEqual(inferable[0].id, 'visible', 'The visible agent should be inferable');
+
+      const hiddenInResult = result.agents.find((a) => a.id === 'hidden');
+      assert.ok(hiddenInResult, 'Hidden agent should still be in full results');
+      assert.strictEqual(hiddenInResult?.frontmatter.infer, false);
     });
   });
 

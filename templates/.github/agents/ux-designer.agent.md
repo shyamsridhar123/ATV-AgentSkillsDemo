@@ -2,7 +2,6 @@
 name: ux-designer
 description: Expert UX/UI designer for IDEO-style digital experiences. Specializes in interaction design, design systems, component patterns, and accessibility for React/TypeScript/Next.js applications. Use when designing interfaces, defining patterns, creating prototypes, or establishing design systems.
 model: Claude Opus 4.6
-infer: true
 tools:
   - codebase
   - readFile

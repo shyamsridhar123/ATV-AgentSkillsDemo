@@ -2,7 +2,6 @@
 name: Beth
 description: Beth is the ruthless, hyper-competent orchestrator who runs your dev team like Beth Dutton runs Schwartz & Meyer. She routes work to specialists and delivers results without excuses. Use when starting projects, coordinating work, or when you need someone who won't sugarcoat it.
 model: Claude Opus 4.6
-infer: true
 tools:
   ['vscode', 'execute', 'read', 'agent', 'edit', 'search', 'web', 'todo']
 handoffs:

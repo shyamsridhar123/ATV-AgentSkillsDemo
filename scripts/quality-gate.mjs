@@ -94,9 +94,16 @@ function generateReport(results, gitInfo) {
     rows.push({ label: r.label, ...counts, elapsed: r.elapsed });
   }
 
+  const totalSkipped = rows.reduce((sum, r) => sum + r.skipped, 0);
+  const resultLabel = allPassed
+    ? totalSkipped > 0
+      ? `✅ All passed (${totalSkipped} skipped)`
+      : '✅ ALL PASSED'
+    : '❌ FAILURES DETECTED';
+
   let report = `# Test Report — ${date}\n\n`;
   report += `## Commit: ${gitInfo.commit} (${gitInfo.branch})\n`;
-  report += `## Result: ${allPassed ? '✅ ALL PASSED' : '❌ FAILURES DETECTED'}\n\n`;
+  report += `## Result: ${resultLabel}\n\n`;
 
   report += `## Summary\n\n`;
   report += `| Suite | Total | Passed | Failed | Skipped | Time |\n`;

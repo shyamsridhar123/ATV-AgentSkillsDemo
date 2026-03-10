@@ -2,7 +2,6 @@
 name: security-reviewer
 description: Enterprise security specialist applying Azure Well-Architected Framework and OWASP standards. Performs threat modeling, vulnerability assessment, compliance verification, and security architecture review. Use for security audits, penetration testing guidance, secure code review, or compliance validation.
 model: GPT 5.3-codex
-infer: true
 tools:
   - codebase
   - readFile

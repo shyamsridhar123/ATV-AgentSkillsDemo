@@ -9,7 +9,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert';
 import { join } from 'node:path';
 import type { AgentTool, AgentFrontmatter } from './types.js';
-import { loadAgents, loadAgent } from './loader.js';
+import { loadAgents, loadAgent, getInferableAgents } from './loader.js';
 
 // Test against templates directory for actual agent file tests
 const TEMPLATES_AGENTS_DIR = join(process.cwd(), 'templates', '.github', 'agents');
@@ -320,23 +320,24 @@ describe('Actual agent files tool configurations', () => {
 });
 
 describe('runSubagent capability validation', () => {
-  it('agents with runSubagent tool should have infer: true', () => {
+  it('agents with runSubagent tool should be inferable or have handoffs', () => {
     const result = loadAgents(TEMPLATES_AGENTS_DIR);
 
     for (const agent of result.agents) {
       const tools = agent.frontmatter.tools ?? [];
       const hasRunSubagent = tools.includes('runSubagent');
-      const hasInfer = agent.frontmatter.infer === true;
+      // infer: true is deprecated — agents are inferable by default (infer !== false)
+      const isInferable = agent.frontmatter.infer !== false;
 
       if (hasRunSubagent) {
         // An agent with runSubagent should either:
-        // 1. Have infer: true (can be spawned as subagent itself), OR
+        // 1. Be inferable (default unless infer: false), OR
         // 2. Have handoffs (can delegate to other agents)
         const hasHandoffs = (agent.frontmatter.handoffs?.length ?? 0) > 0;
 
         assert.ok(
-          hasInfer || hasHandoffs,
-          `${agent.id} has runSubagent but no infer:true or handoffs - may not be able to participate in multi-agent workflows`
+          isInferable || hasHandoffs,
+          `${agent.id} has runSubagent but is not inferable and has no handoffs - may not be able to participate in multi-agent workflows`
         );
       }
     }
@@ -347,7 +348,8 @@ describe('runSubagent capability validation', () => {
     const beth = result.agents.find((a) => a.id === 'beth');
 
     assert.ok(beth, 'Beth agent should exist');
-    assert.ok(beth?.frontmatter.infer === true, 'Beth should be inferable');
+    // infer: true is deprecated — agents are inferable by default
+    assert.ok(beth?.frontmatter.infer !== false, 'Beth should be inferable');
 
     // Beth should have handoffs to all specialist agents
     const handoffs = beth?.frontmatter.handoffs ?? [];
@@ -364,7 +366,7 @@ describe('runSubagent capability validation', () => {
 
   it('all inferable agents can be spawned as subagents', () => {
     const result = loadAgents(TEMPLATES_AGENTS_DIR);
-    const inferableAgents = result.agents.filter((a) => a.frontmatter.infer === true);
+    const inferableAgents = getInferableAgents(result);
 
     assert.ok(inferableAgents.length > 0, 'Should have at least one inferable agent');
 

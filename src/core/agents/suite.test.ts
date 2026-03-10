@@ -113,13 +113,13 @@ describe('Agent Suite Integration Tests', () => {
   });
 
   describe('Beth Agent Specifics', () => {
-    it('4. Beth agent has infer: true (can be invoked as subagent)', () => {
+    it('4. Beth agent is inferable (can be invoked as subagent)', () => {
       const beth = getAgentById(result, 'beth');
       assert.ok(beth, 'Beth agent must exist');
-      assert.strictEqual(
-        beth.frontmatter.infer,
-        true,
-        'Beth must have infer: true to be invokable as subagent'
+      // infer: true is deprecated — agents are inferable by default
+      assert.ok(
+        beth.frontmatter.infer !== false,
+        'Beth must be inferable (not explicitly set to infer: false)'
       );
     });
 
@@ -208,21 +208,20 @@ describe('Agent Suite Integration Tests', () => {
   });
 
   describe('Subagent Configuration', () => {
-    it('10. All agents that can be invoked as subagents have infer: true', () => {
+    it('10. All agents returned by getInferableAgents are not explicitly disabled', () => {
       const inferableAgents = getInferableAgents(result);
 
-      // Verify all returned agents actually have infer: true
+      // Verify all returned agents are not explicitly set to infer: false
       for (const agent of inferableAgents) {
-        assert.strictEqual(
-          agent.frontmatter.infer,
-          true,
-          `Agent ${agent.id} returned by getInferableAgents but doesn't have infer: true`
+        assert.ok(
+          agent.frontmatter.infer !== false,
+          `Agent ${agent.id} returned by getInferableAgents but has infer: false`
         );
       }
 
       // Beth should be in the list
       const bethInferable = inferableAgents.some((a) => a.id === 'beth');
-      assert.ok(bethInferable, 'Beth must be inferable (have infer: true)');
+      assert.ok(bethInferable, 'Beth must be inferable');
     });
   });
 

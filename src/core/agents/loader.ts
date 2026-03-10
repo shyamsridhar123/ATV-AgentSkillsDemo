@@ -257,11 +257,13 @@ export function getAgentById(
 }
 
 /**
- * Get agents that can be used as subagents (infer: true).
+ * Get agents that can be used as subagents.
+ * Since `infer: true` is deprecated, all agents are inferable by default
+ * unless explicitly set to `infer: false`.
  *
  * @param result - The result from loadAgents()
- * @returns Array of agents with infer: true
+ * @returns Array of inferable agents
  */
 export function getInferableAgents(result: AgentLoadResult): AgentDefinition[] {
-  return result.agents.filter((agent) => agent.frontmatter.infer === true);
+  return result.agents.filter((agent) => agent.frontmatter.infer !== false);
 }
