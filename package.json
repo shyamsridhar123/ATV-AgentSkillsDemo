@@ -1,6 +1,6 @@
 {
   "name": "beth-copilot",
-  "version": "1.0.15",
+  "version": "1.1.0",
   "description": "Beth - A ruthless, hyper-competent AI orchestrator for GitHub Copilot multi-agent workflows",
   "keywords": [
     "github-copilot",
@@ -23,7 +23,7 @@
     "url": "https://github.com/stephschofield/beth/issues"
   },
   "bin": {
-    "beth": "./bin/cli.js"
+    "beth": "bin/cli.js"
   },
   "files": [
     "bin/",

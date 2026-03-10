@@ -6,13 +6,43 @@ All notable changes to Beth are documented here. Format based on [Keep a Changel
 
 ---
 
-## [Unreleased]
+## [1.1.0] - 2026-03-10
 
 ### Added
-- **Session startup drift-prevention** — AGENTS.md now includes a mandatory 4-step session startup checklist: check uncommitted changes, check unpushed commits, spot-check closed work, sync beads state. Includes the March 7, 2026 war story and the principle "Trust the code, not the tracker."
+- **`npx beth-copilot land` command** — Automates session completion: verifies epic branch, runs tests, backs up beads, stages/commits/pushes, verifies sync. Options: `--skip-tests`, `--skip-backup`, `--message/-m`, `--force`, `--dry-run`. Protected branch blocking, epic ID extraction for commit prefixes, non-blocking beads backup, structured step results.
+- **`npx beth-copilot close` enforcement** — 3-layer close enforcement: (1) open blocker dependencies via `bd dep list`, (2) open children via `bd children`, (3) mandatory test subtasks (unit/e2e/security) for epics. `--force` bypasses all checks.
+- **Pre-push hook** — Git pre-push hook enforcing branch discipline: blocks pushes from `main`/`master` (exit 1), warns on non-epic branch names. Pure shell hook (no Node overhead). Auto-installed during `npx beth-copilot init`. Bypass with `BETH_SKIP_PUSH_GUARD=1`.
+- **Quality gate infrastructure** — `npm run test:gate` generates markdown test reports to `docs/test-reports/`. `scripts/quality-gate.mjs` runs vitest + legacy tests, parses results, generates report, exits non-zero on failure.
+- **Comprehensive CLI test suite** — 7 new test files: `close.e2e.test.ts`, `pre-push-guard.e2e.test.ts`, `quickstart-expanded.e2e.test.ts`, `cli-edge-cases.e2e.test.ts`, `framework-isolation.test.ts`, `init-logic.e2e.test.ts`, `doctor.e2e.test.ts`. 438 tests total (up from 485).
+- **Doctor: Dolt database hygiene** — `checkDoltDatabases()` detects orphaned `*test*` databases and warns when user DB count exceeds threshold. Extracted `parseDoltDatabases()` with 18 unit tests.
+- **Session startup drift-prevention** — Mandatory 4-step session startup checklist in AGENTS.md: check uncommitted changes, unpushed commits, spot-check closed work, sync beads state.
+- **Beads disaster recovery docs** — `docs/BD-BACKUP-PARSER-FAILURE.md` with exact parser error, root cause, repro steps, and 3 recovery paths.
+- **Mandatory test subtask rules** — Epic creation patterns now require unit/E2E/security test subtasks across all agent files.
 
 ### Changed
-- **Beth agent drift checks** — Rewrote "Before You Do Anything" in beth.agent.md from a simple numbered list into a structured 4-step procedure with explicit git commands, drift-type handling (formatter reverts vs. user edits vs. auto-generated files), and spot-check verification. Both source and template files updated.
+- **Hub-and-spoke agent coordination** — Replaced 15 lateral handoffs across 6 agents with single "Escalate to Beth" handoff per agent. Before: 15-edge mesh where agents bypassed orchestration. After: all agents report to Beth.
+- **Skill routing optimization** — Added Skill Routing Table to Beth agent. Subagent templates restructured with explicit skill loading instructions. All 8 skills wired to agents (zero orphaned).
+- **Shared boilerplate extraction** — Replaced ~120 lines of duplicated Work Tracking + Team Coordination across 12 files with compact AGENTS.md reference. Net -260 lines.
+- **Areas of Expertise** migrated to compact on-demand pointers — net -135 lines across 6 agents.
+- **Landing command hardening** — `isUpToDateWithOrigin` rewritten to compare SHA refs directly, `remoteBranchExists()` helper, `gitRebaseAbort()` for conflict recovery.
+- **Simplified architecture diagrams** — All mermaid diagrams in README.md and SYSTEM-FLOW.md rewritten for accuracy. Removed fake component references that don't exist in src/.
+- **Standardized on npm** — Removed `pnpm-lock.yaml`, regenerated `package-lock.json`, added `packageManager` field.
+
+### Fixed
+- **Pre-push-guard E2E branch assumptions** — Reworked E2E harness to create temporary git repos on explicit branches instead of assuming CI branch state.
+- **Framework isolation** — Fixed `beforeAll`/`afterAll` imports from `node:test` (doesn't export those names; vitest alias masked the problem).
+- **hasStagedChanges false positives** — Now distinguishes exit-1 (diffs) from unexpected errors.
+- **Rebase conflict handling** — Land command now aborts cleanly on rebase conflicts instead of proceeding to push.
+- **Beads E2E test pollution** — `beforeAll` safety net batch-deletes stale test issues from previous failed runs.
+- **Beads database recovery** — Documented recovery from Dolt server database loss after orphaned test DBs overloaded server.
+
+---
+
+## [1.0.18] - 2026-03-06
+
+### Changed
+- **Simplified architecture diagrams** — Cleaned up README mermaid charts, removed A2A branding
+- **Session branch workflow** — Automatic epic branch creation and PR-on-landing patterns
 
 ---
 
@@ -44,33 +74,6 @@ All notable changes to Beth are documented here. Format based on [Keep a Changel
 
 ### Fixed
 - **ENOTDIR crash during init** — Fixed `copyDirRecursive` crashing when destination path exists as a file instead of a directory. Now properly detects the conflict and provides a clear error message (or removes the file with `--force`).
-
----
-
-## [Unreleased]
-
-### Added
-- **CLI TypeScript foundation** — Migrated CLI to TypeScript with proper build system
-- **Doctor command** — `beth doctor` validates installation and configuration
-- **Quickstart command** — `beth quickstart` for guided setup
-- **Agent schema types** — TypeScript types for agent definitions
-- **Unit tests** — 86 tests passing for CLI commands and path validation
-- **Architecture diagrams** — Interactive mermaid diagrams with zoom in README
-
-### Changed
-- **DEMO.md** — Rewritten with Beth's personality and beads integration
-- **P2 backlog completed** — Beth orchestrator references added to all agents, MCP skills updated, documentation fixes
-
-### Fixed
-- Security-reviewer agent format — Removed obsolete `chatagent` wrapper to match standard YAML frontmatter format used by all other agents
-- Removed unnecessary backlog.md CLI dependency
-- Fixed security-reviewer.agent.md syntax errors
-- Corrected agent/skill counts in help output
-- Allowlisted security documentation examples in Gitleaks config
-
-### Documentation
-- CLI Architecture guide (docs/CLI-ARCHITECTURE.md)
-- CLI Implementation Plan (docs/CLI-IMPLEMENTATION-PLAN.md)
 
 ---
 
