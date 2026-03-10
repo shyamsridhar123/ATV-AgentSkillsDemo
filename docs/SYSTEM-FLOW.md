@@ -184,4 +184,3 @@ beth/
 │       └── copilot-instructions.md
 └── docs/
 ```
-```
