@@ -126,15 +126,16 @@ describe('update command E2E', () => {
       const result = runCli('update --check-only', { cwd: testDir });
 
       // The command should either succeed or fail for a reason
-      // OTHER than "unknown command". If it fails with "Unknown command",
-      // the command hasn't been wired into ALLOWED_COMMANDS yet.
-      const isUnknownCommand =
-        result.stdout.includes('Unknown command') ||
-        result.stderr.includes('Unknown command');
+      // OTHER than "unknown command" or "unknown flag". Without this
+      // dual check, the test passes vacuously when the CLI rejects
+      // --check-only as an unknown flag before it ever dispatches.
+      const combined = result.stdout + result.stderr;
+      const isRejected =
+        /unknown (command|flag)/i.test(combined);
       assert.strictEqual(
-        isUnknownCommand,
+        isRejected,
         false,
-        '"update" should be recognized as a valid command, not rejected as unknown'
+        '"update --check-only" should be recognized — not rejected as unknown command or unknown flag'
       );
     });
   });
