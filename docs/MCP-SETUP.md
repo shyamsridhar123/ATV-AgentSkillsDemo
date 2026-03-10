@@ -170,7 +170,7 @@ Look up documentation for any GitHub repository.
 {
   "servers": {
     "deepwiki": {
-      "type": "sse",
+      "type": "http",
       "url": "https://mcp.deepwiki.com/mcp"
     }
   }
@@ -216,7 +216,7 @@ Look up documentation for any GitHub repository.
       }
     },
     "deepwiki": {
-      "type": "sse",
+      "type": "http",
       "url": "https://mcp.deepwiki.com/mcp"
     }
   }
