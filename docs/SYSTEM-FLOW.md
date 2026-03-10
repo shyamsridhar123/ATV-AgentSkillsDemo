@@ -99,21 +99,22 @@ sequenceDiagram
 
 ---
 
-## Agent Delegation Graph
+## Agent Delegation Graph (Hub-and-Spoke)
 
 ```mermaid
 flowchart TB
     Beth["@Beth"] -->|subagent| PM["PM"] & Res["Research"] & UX["UX"] & Dev["Dev"] & Sec["Sec"] & Test["Test"]
-    PM -.-> UX & Dev
-    UX -.-> Dev
-    Dev -.-> Test & UX
-    Sec -.-> Dev
-    Test -.-> Dev
+    PM -.->|escalate| Beth
+    Res -.->|escalate| Beth
+    UX -.->|escalate| Beth
+    Dev -.->|escalate| Beth
+    Sec -.->|escalate| Beth
+    Test -.->|escalate| Beth
 
     style Beth fill:#1e3a5f,color:#fff
 ```
 
-Solid lines = Beth delegates. Dashed lines = agents can hand off to each other.
+Solid lines = Beth delegates. Dashed lines = agents escalate back to Beth. No lateral handoffs.
 
 ---
 
@@ -131,7 +132,9 @@ flowchart LR
 | "security review" | Sec | security-analysis/ |
 | "shadcn button" | Dev | shadcn-ui/ |
 | React/Next.js perf | Dev | vercel-react-best-practices/ |
-| "review my UI" | UX | web-design-guidelines/ |
+| "review my UI" | UX, Test | web-design-guidelines/ |
+| "web search", "competitive analysis" | Research | web-search/ |
+| "azure resource", "cloud ops" | Dev | azure-operations/ |
 
 ---
 
@@ -170,14 +173,15 @@ flowchart LR
 beth/
 ├── bin/cli.js                          # CLI entry point
 ├── src/
-│   ├── cli/commands/                   # doctor, quickstart
+│   ├── cli/commands/                   # close, doctor, land, pre-push-guard, quickstart
 │   ├── core/agents/                    # types.ts, loader.ts
 │   ├── core/skills/                    # types.ts, loader.ts
 │   └── lib/                            # pathValidation
 ├── templates/
 │   └── .github/
 │       ├── agents/                     # 7 .agent.md files
-│       ├── skills/                     # 8 SKILL.md modules
+│       ├── skills/                     # 6 SKILL.md modules
 │       └── copilot-instructions.md
 └── docs/
+```
 ```

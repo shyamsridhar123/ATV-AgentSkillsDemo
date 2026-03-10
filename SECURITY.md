@@ -34,7 +34,7 @@ The following are in scope for security reports:
 
 ### Supply Chain
 
-- This package has **zero runtime dependencies** to minimize attack surface
+- This package has **2 runtime dependencies** (`gray-matter`, `bs-buster`) to minimize attack surface
 - Always verify you're installing from the official npm registry
 - Check `package-lock.json` is present and matches expected checksums
 
@@ -94,8 +94,8 @@ The CLI uses `child_process.spawn()` with `shell:true` in specific cases. This s
 4. **Allowlist pattern**: Only known commands and flags are accepted:
 
    ```javascript
-   const ALLOWED_COMMANDS = ['init', 'help', '--help', '-h'];
-   const ALLOWED_FLAGS = ['--force', '--skip-backlog', '--skip-mcp', '--skip-beads', '--verbose'];
+   const ALLOWED_COMMANDS = ['init', 'help', 'doctor', 'quickstart', 'close', 'land', 'pre-push-guard', '--help', '-h'];
+   const ALLOWED_FLAGS = ['--force', '--skip-backlog', '--skip-mcp', '--skip-beads', '--verbose', '--skip-tests', '--skip-backup', '--message', '-m', '--dry-run', '--reason'];
    ```
 
 #### Guidelines for Contributors

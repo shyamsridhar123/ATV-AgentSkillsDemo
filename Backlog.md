@@ -134,7 +134,7 @@ Last updated: 2026-03-10 (beth-u5s: Fix pre-push-guard E2E branch assumptions)
 
 **For Leadership:**
 
-Beth is fully operational — orchestrator, 6 specialist agents, 8 skills, CI/CD, quality gates, and comprehensive test infrastructure. 438 tests passing. All planned enforcement phases complete.
+Beth is fully operational — orchestrator, 6 specialist agents, 8 skills, CI/CD, quality gates, and comprehensive test infrastructure. 478 tests passing (v1.1.0). All planned enforcement phases complete.
 
 **What's Working:**
 

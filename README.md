@@ -21,12 +21,12 @@ She commands seven specialized agents, each with their own expertise, tools, and
 | Layer | What It Does | Status |
 |-------|-------------|--------|
 | **Copilot Agents** | `.agent.md` definitions running in VS Code Agent Mode | Live |
-| **CLI Toolchain** | `beth init`, `beth doctor`, `beth quickstart` — TypeScript commands | Live |
+| **CLI Toolchain** | `beth init`, `beth doctor`, `beth close`, `beth land` — TypeScript commands | Live |
 | **Orchestration Engine** | Fan-out routing, tool calling loop, subagent spawning, handoffs | Live |
 | **Tool Abstraction** | 6 CLI tools + MCP bridge — uniform interface for all agent capabilities | Live |
 | **LLM Provider** | Azure OpenAI with Entra ID auth, streaming, retry, tool calling | Live |
 
-**814 tests.** 813 pass, 1 skip, 0 fail.
+**478 tests.** 477 pass, 1 skip, 0 fail.
 
 ---
 
@@ -55,11 +55,11 @@ flowchart LR
 | **LLM Provider** | Azure OpenAI via `openai` SDK | Entra ID auth (no API keys), streaming + tool calling |
 | **Auth** | `@azure/identity` DefaultAzureCredential | az login, managed identity, VS Code creds |
 | **Frontmatter** | `gray-matter` | Parses `.agent.md` and `SKILL.md` YAML |
-| **Testing** | Node.js built-in test runner | 814 tests — unit, integration, E2E |
+| **Testing** | vitest + Node.js test runner | 478 tests — unit, integration, E2E |
 | **Task Tracking** | beads (`bd` CLI) | Dependency-aware issue tracking for agents |
-| **Package Manager** | pnpm | Lockfile committed |
+| **Package Manager** | npm | Lockfile committed |
 
-**Production dependencies:** 1 (`gray-matter`). That's it. Minimal attack surface by design.
+**Production dependencies:** 2 (`gray-matter`, `bs-buster`). Minimal attack surface by design.
 
 ---
 
@@ -92,13 +92,15 @@ For detailed setup (prerequisites, task tracking, MCP servers): [docs/INSTALLATI
 
 | Command | What It Does |
 |---------|-------------|
-| `beth init` | Install agents, skills, VS Code settings, beads tracking |
+| `beth init` | Install agents, skills, VS Code settings, beads tracking, pre-push hook |
 | `beth init --force` | Overwrite existing files |
-| `beth doctor` | Validate Node.js ≥18, beads CLI, agents frontmatter, skills directories |
+| `beth doctor` | Validate Node.js ≥18, beads CLI, agents frontmatter, skills, Dolt hygiene |
 | `beth quickstart` | Run init + doctor + beads init in one shot |
+| `beth close <id>` | Close a beads issue with 3-layer enforcement (deps, children, test subtasks) |
+| `beth land` | Automate session completion: tests, backup, commit, push, verify sync |
 | `beth help` | Show all commands and options |
 
-**Flags:** `--force`, `--skip-backlog`, `--skip-mcp`, `--skip-beads`, `--verbose`
+**Flags:** `--force`, `--skip-backlog`, `--skip-mcp`, `--skip-beads`, `--verbose`, `--skip-tests`, `--skip-backup`, `--message/-m`, `--dry-run`
 
 ---
 
@@ -118,16 +120,22 @@ Beth doesn't micromanage. She delegates to specialists over **subagent** and **h
 | **@tester** | The Enforcer | Quality assurance, accessibility, performance |
 | **@security-reviewer** | The Bodyguard | OWASP, compliance, threat modeling |
 
-### Delegation Model
+### Delegation Model (Hub-and-Spoke)
 
 ```mermaid
 flowchart LR
     Beth["@Beth"] -->|subagent| PM["PM"] & UX["UX"] & Dev["Dev"] & Sec["Sec"] & Test["Test"] & Res["Research"]
-    PM -.->|handoff| UX & Dev
-    Dev -.->|handoff| Test & UX
+    PM -.->|escalate| Beth
+    UX -.->|escalate| Beth
+    Dev -.->|escalate| Beth
+    Sec -.->|escalate| Beth
+    Test -.->|escalate| Beth
+    Res -.->|escalate| Beth
 
     style Beth fill:#1e3a5f,color:#fff
 ```
+
+All agents escalate exclusively to Beth — no lateral handoffs. Beth routes, agents execute.
 
 ### Subagent vs Handoff
 

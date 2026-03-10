@@ -51,7 +51,7 @@ Before creating a PR, ensure ALL of these pass:
 npm test
 ```
 
-All 33 tests must pass. If you add new functionality, add corresponding tests.
+All tests must pass (478 across vitest + legacy suites). If you add new functionality, add corresponding tests.
 
 ### 2. Security Scans Pass
 
