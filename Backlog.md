@@ -2,7 +2,7 @@
 
 > *"I don't have time to explain things twice. Read this."*
 
-Last updated: 2026-03-10 (beth-0c2: Azure skills integration — Phase 1)
+Last updated: 2026-03-10 (beth-ajg: No-DB migration planning)
 
 ---
 
@@ -10,6 +10,7 @@ Last updated: 2026-03-10 (beth-0c2: Azure skills integration — Phase 1)
 
 | Task | Epic | Status |
 |------|------|--------|
+| **Migrate beads to no-db mode + Backlog.md tool** | beth-ajg | Epic created with 8 subtasks. Assessment complete: no-db mode verified working (list, ready, show, dep tree, create, close). 5 caveats identified (MCP config BEADS_DB must be removed, concurrent write risk, doctor.ts Dolt checks need update, `bd --json` broken in v0.59.0, beads MCP tools failing). Dependency chain: `.1` (enable no-db) → `.2`/`.3`/`.5` (parallel: concurrency, Backlog.md, doctor) → `.4` (agent instructions) → `.7`/`.8` (tests) → `.6` (Dolt cleanup after burn-in). |
 | **Integrate Microsoft Azure Skills into Beth agent system** | beth-0c2 | `.1` complete (clone + extract). `.2`-`.6` open (install verification, agent routing, docs update, old skill cleanup). |
 
 ## Completed
