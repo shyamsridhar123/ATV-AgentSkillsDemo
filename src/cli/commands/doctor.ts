@@ -279,7 +279,7 @@ export function checkBeadsNoDb(cwd: string): CheckResult[] {
       results.push({
         name: 'Beads no-db',
         status: 'warn',
-        message: 'no-db mode not enabled — Dolt server may be required',
+        message: 'no-db mode not enabled — set no-db: true in .beads/config.yaml',
         details: 'Add "no-db: true" to .beads/config.yaml to use JSONL-native mode',
       });
     }
