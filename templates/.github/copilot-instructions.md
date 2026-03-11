@@ -71,6 +71,7 @@ Skills are domain-knowledge modules in `.github/skills/<name>/SKILL.md`. Agents 
 | Vercel React Best Practices | `skills/vercel-react-best-practices/` | React/Next.js performance work |
 | Web Design Guidelines | `skills/web-design-guidelines/` | "review my UI", "check accessibility" |
 | shadcn/ui Components | `skills/shadcn-ui/` | "shadcn", "ui component", component installation |
+| UI UX Pro Max | `prompts/ui-ux-pro-max/` | "design system", "color palette", "style guide", UI/UX design work |
 | Security Analysis | `skills/security-analysis/` | "security review", "OWASP", "threat model", "compliance" |
 
 ## Development Conventions

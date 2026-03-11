@@ -75,18 +75,7 @@ grep -r "import.*ComponentName" src/
 ```
 If beads says "done" but the code disagrees, reopen the issue and re-apply the fix.
 
-### 4. Check Dolt database hygiene
-```bash
-npx beth-copilot doctor        # Detects orphaned test DBs and excessive DB count
-```
-If doctor reports orphaned `*test*` databases or more than 5 user databases, clean them up before proceeding:
-```bash
-cd .beads/dolt && dolt sql -q "SHOW DATABASES;"
-# Drop any test/orphaned databases:
-cd .beads/dolt && dolt sql -q "DROP DATABASE <name>;"
-```
-
-### 5. Sync beads state
+### 4. Sync beads state
 ```bash
 bd list
 bd ready
@@ -101,29 +90,15 @@ This can happen to ANY file touched by agents. The most vulnerable are files tou
 
 ### Beads known issues
 
-> **War story (March 9, 2026): Test pollution.** E2E tests for `bd` commands create real issues in the Dolt database. If `afterAll` cleanup doesn't run (crash, timeout, process kill), orphan "E2E test:" issues pollute `bd list` and `bd ready`, hiding real work behind 30+ garbage entries. **Fix:** `beads.e2e.test.ts` now runs a `beforeAll` safety net that searches for stale "E2E test:" issues and batch-deletes them before creating new ones. Cleanup also uses `bd delete --from-file` for speed instead of per-issue `execSync` loops.
+> **War story (March 9, 2026): Test pollution.** E2E tests for `bd` commands create real issues in the beads JSONL store. If `afterAll` cleanup doesn't run (crash, timeout, process kill), orphan "E2E test:" issues pollute `bd list` and `bd ready`, hiding real work behind 30+ garbage entries. **Fix:** `beads.e2e.test.ts` now runs a `beforeAll` safety net that searches for stale "E2E test:" issues and batch-deletes them before creating new ones. Cleanup also uses `bd delete --from-file` for speed instead of per-issue `execSync` loops.
 
-> **War story (March 9, 2026): Tracking drift.** An epic (beth-gau) was planned in Backlog.md with 7 detailed subtasks but never created in beads. A new session saw the Backlog.md entry, tried `bd show beth-gau`, got "not found" (intermittent ID resolution), and created a duplicate epic. The duplicate was a phantom (Dolt transaction didn't persist). **Fix:** When checking for existing work, always use `bd list --json` as the source of truth — not `bd show`, which has intermittent resolution failures. And ALWAYS create beads issues before (or simultaneously with) Backlog.md entries.
+> **War story (March 9, 2026): Tracking drift.** An epic was planned in Backlog.md with 7 detailed subtasks but never created in beads. A new session saw the Backlog.md entry, tried `bd show`, got "not found", and created a duplicate epic. **Fix:** When checking for existing work, always use `bd list --json` as the source of truth — not `bd show`, which has intermittent resolution failures. And ALWAYS create beads issues before (or simultaneously with) Backlog.md entries.
 
 > **Rule: beads and Backlog.md must be created together.** If it's in Backlog.md, it must be in beads. If it's in beads, the summary must be in Backlog.md. One system without the other is a lie waiting to cause damage.
 
-> **War story (March 9, 2026): Database loss from bd init --force.** `bd list` failed with "database 'beth' not found". Running `bd init --force` nuked the tables. `bd backup restore` consumed the JSONL backup files (truncated them to 0 bytes) but imported 0 rows because the files were already damaged. Recovery was only possible because JSONL backups were committed to git.
+> **War story (March 10, 2026): Concurrent write duplication in no-db mode.** With `no-db: true`, beads stores everything in JSONL files. When 5 parallel `bd create` commands ran simultaneously, the result was 10 issues — every create duplicated due to a classic read-then-write race condition. Each process reads the same JSONL state, generates its own ID, and writes back — the last writer wins, but they all "win" by appending. Concurrent `bd close` operations were safe (all 5 persisted correctly), and JSONL file integrity was maintained (no corruption, no duplicate IDs). **Fix:** Agents must execute beads write operations (`bd create`, `bd close`, `bd update`) sequentially — never in parallel. Reads (`bd list`, `bd show`, `bd ready`) are safe to run concurrently.
 
-### Recovery sequence: Never trust `bd init --force`
-
-For the `bd backup` parser failure (`failed to parse backup state`), see
-`docs/BD-BACKUP-PARSER-FAILURE.md` for exact repro and recovery steps.
-
-When `bd list` fails with "database not found", follow this exact sequence:
-
-1. **Check backup first** — `wc -l .beads/backup/issues.jsonl` — if non-zero, you have a lifeline
-2. **Try `bd doctor --fix`** — let it attempt repair without destroying data
-3. **Restart the server** — kill the Dolt server, restart it, try `bd list` again
-4. **Only as last resort** — `bd init --force` then immediately `bd backup restore`
-5. **ALWAYS verify** backup JSONLs have data before ANY destructive operation
-6. **If backups are gone** — check git history: `git log --all -- .beads/backup/issues.jsonl`
-
-> **Rule:** `bd init --force` is a nuclear option. It does not preserve data. Treat it like `rm -rf` — verify you have a recovery path before pulling the trigger.
+> **Rule: Never run beads write commands in parallel.** `bd create` and `bd close` must be executed one at a time. Parallel writes in no-db mode produce duplicate issues. This applies to subagents — if two subagents need to create or close beads issues, they must do so sequentially, not via `Promise.all`.
 
 ## Workflow
 
@@ -176,14 +151,7 @@ When `bd list` fails with "database not found", follow this exact sequence:
    ```bash
    npm run test:gate           # Runs tests + generates docs/test-reports/ report
    ```
-6. **Backup beads data** (CRITICAL for disaster recovery):
-   ```bash
-   bd backup                   # Export JSONL backups
-   git add .beads/backup/      # Commit backups to git — this is your lifeline
-   ```
-   > **Why:** Git-committed JSONL backups are the ONLY reason we recovered from the March 9 database loss. If the Dolt server loses the database, `bd init --force` nukes it, and backup files get consumed on restore. Without the git-committed copies, the data is gone forever.
-
-7. **PUSH TO EPIC BRANCH** - This is MANDATORY:
+6. **PUSH TO EPIC BRANCH** - This is MANDATORY:
 
    ```bash
    git add -A
@@ -193,7 +161,7 @@ When `bd list` fails with "database not found", follow this exact sequence:
    git status  # MUST show "up to date with origin"
    ```
 
-8. **CREATE A PR TO `main`** - Use GitHub MCP to create a pull request:
+7. **CREATE A PR TO `main`** - Use GitHub MCP to create a pull request:
 
    ```text
    mcp_github2_create_pull_request(
@@ -207,8 +175,8 @@ When `bd list` fails with "database not found", follow this exact sequence:
    )
    ```
 
-9. **Share the PR link** with the user
-10. **Hand off** - Provide context for next session including the epic ID, branch, and PR URL
+8. **Share the PR link** with the user
+9. **Hand off** - Provide context for next session including the epic ID, branch, and PR URL
 
 **CRITICAL RULES:**
 
@@ -218,126 +186,3 @@ When `bd list` fails with "database not found", follow this exact sequence:
 - If push fails, resolve and retry until it succeeds
 - The PR is how humans review your work. No PR = no review = no trust.
 
-<!-- BEGIN BEADS INTEGRATION -->
-## Issue Tracking with bd (beads)
-
-**IMPORTANT**: This project uses **bd (beads)** for ALL issue tracking. Do NOT use markdown TODOs, task lists, or other tracking methods.
-
-### Why bd?
-
-- Dependency-aware: Track blockers and relationships between issues
-- Git-friendly: Dolt-powered version control with native sync
-- Agent-optimized: JSON output, ready work detection, discovered-from links
-- Prevents duplicate tracking systems and confusion
-
-### Quick Start
-
-**Check for ready work:**
-
-```bash
-bd ready --json
-```
-
-**Create new issues:**
-
-```bash
-bd create "Issue title" --description="Detailed context" --type bug|feature|task -p 0-4 --json
-bd create "Issue title" --description="What this issue is about" --type task -p 1 --deps discovered-from:bd-123 --json
-```
-
-**Claim and update:**
-
-```bash
-bd update <id> --claim --json
-bd update bd-42 --priority 1 --json
-```
-
-**Complete work:**
-
-```bash
-npx beth-copilot close bd-42 --reason "Completed"
-```
-
-### Issue Types
-
-- `bug` - Something broken
-- `feature` - New functionality
-- `task` - Work item (tests, docs, refactoring)
-- `epic` - Large feature with subtasks
-- `chore` - Maintenance (dependencies, tooling)
-
-### Priorities
-
-- `0` - Critical (security, data loss, broken builds)
-- `1` - High (major features, important bugs)
-- `2` - Medium (default, nice-to-have)
-- `3` - Low (polish, optimization)
-- `4` - Backlog (future ideas)
-
-### Workflow for AI Agents
-
-1. **Check ready work**: `bd ready` shows unblocked issues
-2. **Claim your task atomically**: `bd update <id> --claim`
-3. **Work on it**: Implement, test, document
-4. **Discover new work?** Create linked issue:
-   - `bd create "Found bug" --description="Details about what was found" -p 1 --deps discovered-from:<parent-id>`
-5. **Complete**: `npx beth-copilot close <id> --reason "Done"`
-
-### Auto-Sync
-
-bd automatically syncs via Dolt:
-
-- Each write auto-commits to Dolt history
-- Use `bd dolt push`/`bd dolt pull` for remote sync
-- No manual export/import needed!
-
-### Important Rules
-
-- ✅ Use bd for ALL task tracking
-- ✅ Always use `--json` flag for programmatic use
-- ✅ Link discovered work with `discovered-from` dependencies
-- ✅ Check `bd ready` before asking "what should I work on?"
-- ❌ Do NOT create markdown TODO lists
-- ❌ Do NOT use external issue trackers
-- ❌ Do NOT duplicate tracking systems
-
-For more details, see README.md.
-
-## Landing the Plane (Session Completion)
-
-**When ending a work session**, you MUST complete ALL steps below. Work is NOT complete until `git push` succeeds.
-
-**MANDATORY WORKFLOW:**
-
-1. **File issues for remaining work** - Create issues for anything that needs follow-up
-2. **Run quality gates** (if code changed) - ALL tests must pass:
-   ```bash
-   npm test                   # Unit + integration tests
-   npm run test:gate           # Generate test report
-   # If failures: create follow-up issues, DO NOT close parent issue
-   ```
-3. **Update issue status** - Close finished work, update in-progress items
-4. **Backup beads data** (CRITICAL for disaster recovery):
-   ```bash
-   bd backup                   # Export JSONL backups
-   git add .beads/backup/      # Commit backups to git — this is your lifeline
-   ```
-   > **Why:** Git-committed JSONL backups are the ONLY reason we recovered from the March 9 database loss. If the Dolt server loses the database, `bd init --force` nukes it, and backup files get consumed on restore. Without the git-committed copies, the data is gone forever.
-5. **PUSH TO REMOTE** - This is MANDATORY:
-   ```bash
-   git pull --rebase
-   bd sync
-   git push
-   git status  # MUST show "up to date with origin"
-   ```
-6. **Clean up** - Clear stashes, prune remote branches
-7. **Verify** - All changes committed AND pushed
-8. **Hand off** - Provide context for next session
-
-**CRITICAL RULES:**
-- Work is NOT complete until `git push` succeeds
-- NEVER stop before pushing - that leaves work stranded locally
-- NEVER say "ready to push when you are" - YOU must push
-- If push fails, resolve and retry until it succeeds
-
-<!-- END BEADS INTEGRATION -->

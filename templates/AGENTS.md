@@ -90,11 +90,15 @@ This can happen to ANY file touched by agents. The most vulnerable are files tou
 
 ### Beads known issues
 
-> **War story (March 9, 2026): Test pollution.** E2E tests for `bd` commands create real issues in the Dolt database. If `afterAll` cleanup doesn't run (crash, timeout, process kill), orphan "E2E test:" issues pollute `bd list` and `bd ready`, hiding real work behind 30+ garbage entries. **Fix:** `beads.e2e.test.ts` now runs a `beforeAll` safety net that searches for stale "E2E test:" issues and batch-deletes them before creating new ones. Cleanup also uses `bd delete --from-file` for speed instead of per-issue `execSync` loops.
+> **War story (March 9, 2026): Test pollution.** E2E tests for `bd` commands create real issues in the beads JSONL store. If `afterAll` cleanup doesn't run (crash, timeout, process kill), orphan "E2E test:" issues pollute `bd list` and `bd ready`, hiding real work behind 30+ garbage entries. **Fix:** `beads.e2e.test.ts` now runs a `beforeAll` safety net that searches for stale "E2E test:" issues and batch-deletes them before creating new ones. Cleanup also uses `bd delete --from-file` for speed instead of per-issue `execSync` loops.
 
-> **War story (March 9, 2026): Tracking drift.** An epic (beth-gau) was planned in Backlog.md with 7 detailed subtasks but never created in beads. A new session saw the Backlog.md entry, tried `bd show beth-gau`, got "not found" (intermittent ID resolution), and created a duplicate epic. The duplicate was a phantom (Dolt transaction didn't persist). **Fix:** When checking for existing work, always use `bd list --json` as the source of truth — not `bd show`, which has intermittent resolution failures. And ALWAYS create beads issues before (or simultaneously with) Backlog.md entries.
+> **War story (March 9, 2026): Tracking drift.** An epic was planned in Backlog.md with 7 detailed subtasks but never created in beads. A new session saw the Backlog.md entry, tried `bd show`, got "not found", and created a duplicate epic. **Fix:** When checking for existing work, always use `bd list --json` as the source of truth — not `bd show`, which has intermittent resolution failures. And ALWAYS create beads issues before (or simultaneously with) Backlog.md entries.
 
 > **Rule: beads and Backlog.md must be created together.** If it's in Backlog.md, it must be in beads. If it's in beads, the summary must be in Backlog.md. One system without the other is a lie waiting to cause damage.
+
+> **War story (March 10, 2026): Concurrent write duplication in no-db mode.** With `no-db: true`, beads stores everything in JSONL files. When 5 parallel `bd create` commands ran simultaneously, the result was 10 issues — every create duplicated due to a read-then-write race condition. Concurrent closes were safe; JSONL integrity was maintained. **Fix:** Agents must execute beads write operations (`bd create`, `bd close`, `bd update`) sequentially — never in parallel.
+
+> **Rule: Never run beads write commands in parallel.** `bd create` and `bd close` must be executed one at a time. Parallel writes in no-db mode produce duplicate issues.
 
 ## Workflow
 

@@ -7,7 +7,8 @@
  * - backlog.md CLI available
  * - .github/agents/ exists with valid frontmatter
  * - .github/skills/ exists
- * - Dolt database hygiene (orphaned test databases, database count)
+ * - beads no-db mode (JSONL health)
+ * - backlog.md initialization
  */
 
 import { execSync } from 'child_process';
@@ -252,102 +253,92 @@ function checkBeadsInit(cwd: string): CheckResult {
   };
 }
 
-/** System databases that should be excluded from user database counts */
-export const SYSTEM_DBS = new Set(['information_schema', 'mysql', 'dolt']);
-
-/** Maximum number of user databases before we warn */
-export const DB_COUNT_THRESHOLD = 5;
-
 /**
- * Parse user database names from Dolt SHOW DATABASES output.
- *
- * Dolt outputs a table like:
- * ```
- * +--------------------+
- * | Database           |
- * +--------------------+
- * | information_schema |
- * | mysql              |
- * | beth               |
- * +--------------------+
- * ```
- *
- * This function strips separator lines (`+---+`), the header row (`Database`),
- * pipe characters, and system database names — returning only user databases.
+ * Check beads no-db mode: verify config has no-db: true and JSONL files are healthy.
  */
-export function parseDoltDatabases(output: string): string[] {
-  return output
-    .split('\n')
-    .map(line => line.replace(/^\|\s*|\s*\|$/g, '').trim())
-    .filter(line => line && !line.startsWith('+') && !line.startsWith('-') && line !== 'Database')
-    .filter(name => !SYSTEM_DBS.has(name));
-}
-
-/**
- * Check Dolt for orphaned test databases and excessive database count.
- * E2E tests can leave behind *_test_* databases if cleanup doesn't run.
- * More than 5 databases usually indicates test pollution or forgotten experiments.
- */
-function checkDoltDatabases(cwd: string): CheckResult[] {
+export function checkBeadsNoDb(cwd: string): CheckResult[] {
   const results: CheckResult[] = [];
-  const doltDir = join(cwd, '.beads', 'dolt');
-  
-  if (!existsSync(doltDir)) {
+  const configPath = join(cwd, '.beads', 'config.yaml');
+
+  if (!existsSync(configPath)) {
+    // No config — can't check no-db mode
     return [];
   }
-  
+
   try {
-    const output = execSync('dolt sql -q "SHOW DATABASES;"', {
-      encoding: 'utf-8',
-      cwd: doltDir,
-      stdio: ['pipe', 'pipe', 'pipe'],
-    });
-    
-    const databases = parseDoltDatabases(output);
-    
-    // Check for orphaned test databases
-    const testDbs = databases.filter(name => /test/i.test(name));
-    if (testDbs.length > 0) {
+    const config = readFileSync(configPath, 'utf-8');
+    const hasNoDb = /^no-db:\s*true/m.test(config);
+
+    if (hasNoDb) {
       results.push({
-        name: 'Dolt Test DBs',
-        status: 'warn',
-        message: `${testDbs.length} orphaned test database(s) found`,
-        details: `Orphaned: ${testDbs.join(', ')}. Clean up with: dolt sql -q "DROP DATABASE <name>;" from .beads/dolt/`,
+        name: 'Beads no-db',
+        status: 'pass',
+        message: 'no-db mode enabled',
       });
     } else {
       results.push({
-        name: 'Dolt Test DBs',
-        status: 'pass',
-        message: 'no orphaned test databases',
-      });
-    }
-    
-    // Check total database count (user databases only)
-    if (databases.length > DB_COUNT_THRESHOLD) {
-      results.push({
-        name: 'Dolt DB Count',
+        name: 'Beads no-db',
         status: 'warn',
-        message: `${databases.length} user databases (expected ≤${DB_COUNT_THRESHOLD})`,
-        details: `Databases: ${databases.join(', ')}. Investigate and drop unused databases.`,
-      });
-    } else {
-      results.push({
-        name: 'Dolt DB Count',
-        status: 'pass',
-        message: `${databases.length} user database(s) (≤${DB_COUNT_THRESHOLD})`,
+        message: 'no-db mode not enabled — set no-db: true in .beads/config.yaml',
+        details: 'Add "no-db: true" to .beads/config.yaml to use JSONL-native mode',
       });
     }
   } catch {
-    // Dolt not running or not accessible — skip these checks silently
     results.push({
-      name: 'Dolt Hygiene',
+      name: 'Beads no-db',
       status: 'warn',
-      message: 'could not query Dolt databases',
-      details: 'Dolt server may not be running. Start with: cd .beads/dolt && dolt sql-server &',
+      message: 'could not read .beads/config.yaml',
     });
   }
-  
+
+  // Check JSONL health
+  const issuesPath = join(cwd, '.beads', 'issues.jsonl');
+  const backupIssuesPath = join(cwd, '.beads', 'backup', 'issues.jsonl');
+
+  const jsonlPath = existsSync(issuesPath) ? issuesPath : existsSync(backupIssuesPath) ? backupIssuesPath : null;
+
+  if (jsonlPath) {
+    try {
+      const content = readFileSync(jsonlPath, 'utf-8').trim();
+      const lines = content ? content.split('\n').length : 0;
+      results.push({
+        name: 'JSONL data',
+        status: lines > 0 ? 'pass' : 'warn',
+        message: lines > 0 ? `${lines} issue(s) in JSONL` : 'JSONL file is empty',
+        details: lines === 0 ? 'Run bd list to verify beads state' : undefined,
+      });
+    } catch {
+      results.push({
+        name: 'JSONL data',
+        status: 'warn',
+        message: 'could not read JSONL file',
+      });
+    }
+  }
+
   return results;
+}
+
+/**
+ * Check backlog.md initialization
+ */
+function checkBacklogInit(cwd: string): CheckResult {
+  const configPath = join(cwd, 'backlog', 'config.yml');
+
+  if (existsSync(configPath)) {
+    return {
+      name: 'Backlog.md Init',
+      status: 'pass',
+      message: 'backlog/ directory present',
+    };
+  }
+
+  return {
+    name: 'Backlog.md Init',
+    status: 'warn',
+    message: 'backlog/ not initialized',
+    details: 'Run: backlog init',
+  };
 }
 
 /**
@@ -453,11 +444,13 @@ export async function doctor(options: DoctorOptions = {}, exitOnFailure = true):
   const results: CheckResult[] = [
     checkNodeVersion(cwd),
     checkCli('beads', 'bd', 'curl -fsSL https://raw.githubusercontent.com/steveyegge/beads/main/scripts/install.sh | bash'),
+    checkCli('backlog.md', 'backlog', 'npm i -g backlog.md'),
     checkAgents(cwd),
     checkSkills(cwd),
     checkBeadsInit(cwd),
+    checkBacklogInit(cwd),
     ...checkGitHooks(cwd),
-    ...checkDoltDatabases(cwd),
+    ...checkBeadsNoDb(cwd),
   ];
   
   // Display results

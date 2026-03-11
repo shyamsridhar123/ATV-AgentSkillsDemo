@@ -9,7 +9,7 @@ import { execSync } from 'child_process';
 import { existsSync, mkdirSync, writeFileSync, rmSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
-import { parseDoltDatabases, SYSTEM_DBS, DB_COUNT_THRESHOLD, checkGitHooks, getMinNodeVersion } from './doctor.js';
+import { checkBeadsNoDb, checkGitHooks, getMinNodeVersion } from './doctor.js';
 
 // Test utilities - we can't import the private functions from doctor.ts
 // but we can test the overall behavior
@@ -194,236 +194,108 @@ describe('CLI availability checks', () => {
   });
 });
 
-describe('parseDoltDatabases', () => {
-  // Realistic Dolt SHOW DATABASES output with + separators
-  const TYPICAL_OUTPUT = [
-    '+--------------------+',
-    '| Database           |',
-    '+--------------------+',
-    '| information_schema |',
-    '| mysql              |',
-    '| dolt               |',
-    '| beth               |',
-    '+--------------------+',
-    '',
-  ].join('\n');
+describe('checkBeadsNoDb', () => {
+  let testDir: string;
 
-  it('should extract user databases from typical Dolt output', () => {
-    const dbs = parseDoltDatabases(TYPICAL_OUTPUT);
-    assert.deepStrictEqual(dbs, ['beth']);
+  beforeEach(() => {
+    testDir = join(tmpdir(), `beth-nodb-test-${Date.now()}`);
+    mkdirSync(testDir, { recursive: true });
   });
 
-  it('should filter out all system databases', () => {
-    const dbs = parseDoltDatabases(TYPICAL_OUTPUT);
-    for (const sysDb of SYSTEM_DBS) {
-      assert.ok(!dbs.includes(sysDb), `should not include system db '${sysDb}'`);
+  afterEach(() => {
+    if (existsSync(testDir)) {
+      rmSync(testDir, { recursive: true, force: true });
     }
   });
 
-  it('should filter out + separator lines', () => {
-    const output = [
-      '+----------+',
-      '| Database |',
-      '+----------+',
-      '| mydb     |',
-      '+----------+',
-    ].join('\n');
-    const dbs = parseDoltDatabases(output);
-    assert.deepStrictEqual(dbs, ['mydb']);
+  it('should return empty array when .beads/config.yaml does not exist', () => {
+    const results = checkBeadsNoDb(testDir);
+    assert.deepStrictEqual(results, []);
   });
 
-  it('should filter out - separator lines', () => {
-    // Some Dolt versions or configurations may use dashes
-    const output = [
-      '+-----------+',
-      '| Database  |',
-      '+-----------+',
-      '| mydb      |',
-      '- note line -',
-      '+-----------+',
-    ].join('\n');
-    const dbs = parseDoltDatabases(output);
-    assert.deepStrictEqual(dbs, ['mydb']);
+  it('should pass when no-db: true is set', () => {
+    mkdirSync(join(testDir, '.beads'), { recursive: true });
+    writeFileSync(join(testDir, '.beads', 'config.yaml'), 'no-db: true\n');
+    const results = checkBeadsNoDb(testDir);
+    const noDbResult = results.find(r => r.name === 'Beads no-db');
+    assert.ok(noDbResult);
+    assert.strictEqual(noDbResult.status, 'pass');
   });
 
-  it('should filter out the header row', () => {
-    const output = [
-      '+----------+',
-      '| Database |',
-      '+----------+',
-      '| app      |',
-      '+----------+',
-    ].join('\n');
-    const dbs = parseDoltDatabases(output);
-    assert.ok(!dbs.includes('Database'), "should not include the header 'Database'");
-    assert.deepStrictEqual(dbs, ['app']);
+  it('should warn when no-db is not set', () => {
+    mkdirSync(join(testDir, '.beads'), { recursive: true });
+    writeFileSync(join(testDir, '.beads', 'config.yaml'), 'issue-prefix: "test"\n');
+    const results = checkBeadsNoDb(testDir);
+    const noDbResult = results.find(r => r.name === 'Beads no-db');
+    assert.ok(noDbResult);
+    assert.strictEqual(noDbResult.status, 'warn');
   });
 
-  it('should handle multiple user databases', () => {
-    const output = [
-      '+--------------------+',
-      '| Database           |',
-      '+--------------------+',
-      '| information_schema |',
-      '| mysql              |',
-      '| dolt               |',
-      '| beth               |',
-      '| staging            |',
-      '| experiment         |',
-      '+--------------------+',
-    ].join('\n');
-    const dbs = parseDoltDatabases(output);
-    assert.deepStrictEqual(dbs, ['beth', 'staging', 'experiment']);
+  it('should warn when no-db is explicitly false', () => {
+    mkdirSync(join(testDir, '.beads'), { recursive: true });
+    writeFileSync(join(testDir, '.beads', 'config.yaml'), 'no-db: false\n');
+    const results = checkBeadsNoDb(testDir);
+    const noDbResult = results.find(r => r.name === 'Beads no-db');
+    assert.ok(noDbResult);
+    assert.strictEqual(noDbResult.status, 'warn');
   });
 
-  it('should return empty array when only system databases exist', () => {
-    const output = [
-      '+--------------------+',
-      '| Database           |',
-      '+--------------------+',
-      '| information_schema |',
-      '| mysql              |',
-      '| dolt               |',
-      '+--------------------+',
-    ].join('\n');
-    const dbs = parseDoltDatabases(output);
-    assert.deepStrictEqual(dbs, []);
+  it('should pass JSONL check when issues.jsonl has content', () => {
+    mkdirSync(join(testDir, '.beads'), { recursive: true });
+    writeFileSync(join(testDir, '.beads', 'config.yaml'), 'no-db: true\n');
+    writeFileSync(join(testDir, '.beads', 'issues.jsonl'), '{"id":"test-1"}\n{"id":"test-2"}\n');
+    const results = checkBeadsNoDb(testDir);
+    const jsonlResult = results.find(r => r.name === 'JSONL data');
+    assert.ok(jsonlResult);
+    assert.strictEqual(jsonlResult.status, 'pass');
+    assert.ok(jsonlResult.message.includes('2'));
   });
 
-  it('should return empty array for empty output', () => {
-    const dbs = parseDoltDatabases('');
-    assert.deepStrictEqual(dbs, []);
+  it('should warn when JSONL file is empty', () => {
+    mkdirSync(join(testDir, '.beads'), { recursive: true });
+    writeFileSync(join(testDir, '.beads', 'config.yaml'), 'no-db: true\n');
+    writeFileSync(join(testDir, '.beads', 'issues.jsonl'), '');
+    const results = checkBeadsNoDb(testDir);
+    const jsonlResult = results.find(r => r.name === 'JSONL data');
+    assert.ok(jsonlResult);
+    assert.strictEqual(jsonlResult.status, 'warn');
   });
 
-  it('should return empty array for whitespace-only output', () => {
-    const dbs = parseDoltDatabases('  \n  \n  ');
-    assert.deepStrictEqual(dbs, []);
+  it('should check backup/issues.jsonl when issues.jsonl does not exist', () => {
+    mkdirSync(join(testDir, '.beads', 'backup'), { recursive: true });
+    writeFileSync(join(testDir, '.beads', 'config.yaml'), 'no-db: true\n');
+    writeFileSync(join(testDir, '.beads', 'backup', 'issues.jsonl'), '{"id":"bak-1"}\n');
+    const results = checkBeadsNoDb(testDir);
+    const jsonlResult = results.find(r => r.name === 'JSONL data');
+    assert.ok(jsonlResult);
+    assert.strictEqual(jsonlResult.status, 'pass');
+    assert.ok(jsonlResult.message.includes('1'));
   });
 
-  it('should handle trailing newlines', () => {
-    const output = [
-      '+----------+',
-      '| Database |',
-      '+----------+',
-      '| mydb     |',
-      '+----------+',
-      '',
-      '',
-    ].join('\n');
-    const dbs = parseDoltDatabases(output);
-    assert.deepStrictEqual(dbs, ['mydb']);
+  it('should not produce JSONL result when no JSONL files exist', () => {
+    mkdirSync(join(testDir, '.beads'), { recursive: true });
+    writeFileSync(join(testDir, '.beads', 'config.yaml'), 'no-db: true\n');
+    const results = checkBeadsNoDb(testDir);
+    const jsonlResult = results.find(r => r.name === 'JSONL data');
+    assert.strictEqual(jsonlResult, undefined);
   });
 
-  it('should handle database names with test in them', () => {
-    const output = [
-      '+--------------------+',
-      '| Database           |',
-      '+--------------------+',
-      '| information_schema |',
-      '| beth               |',
-      '| beth_test_abc      |',
-      '| test_pollution     |',
-      '| my_Testing_db      |',
-      '+--------------------+',
-    ].join('\n');
-    const dbs = parseDoltDatabases(output);
-    // parseDoltDatabases just parses — it doesn't classify test DBs.
-    // That's the caller's job. All non-system DBs should be returned.
-    assert.deepStrictEqual(dbs, ['beth', 'beth_test_abc', 'test_pollution', 'my_Testing_db']);
+  it('should handle no-db: true with extra whitespace', () => {
+    mkdirSync(join(testDir, '.beads'), { recursive: true });
+    writeFileSync(join(testDir, '.beads', 'config.yaml'), 'no-db:   true\nother: value\n');
+    const results = checkBeadsNoDb(testDir);
+    const noDbResult = results.find(r => r.name === 'Beads no-db');
+    assert.ok(noDbResult);
+    assert.strictEqual(noDbResult.status, 'pass');
   });
 
-  it('should strip pipe characters and whitespace from database names', () => {
-    const output = [
-      '+--------------------+',
-      '| Database           |',
-      '+--------------------+',
-      '|   spacey_db        |',
-      '| beth               |',
-      '+--------------------+',
-    ].join('\n');
-    const dbs = parseDoltDatabases(output);
-    assert.deepStrictEqual(dbs, ['spacey_db', 'beth']);
-  });
-
-  it('should handle + separators with varying column widths', () => {
-    const output = [
-      '+------+',
-      '| Database |',
-      '+------+',
-      '| a    |',
-      '| bb   |',
-      '+------+',
-    ].join('\n');
-    const dbs = parseDoltDatabases(output);
-    assert.deepStrictEqual(dbs, ['a', 'bb']);
-  });
-});
-
-describe('parseDoltDatabases integration with checkDoltDatabases logic', () => {
-  it('should correctly identify orphaned test databases', () => {
-    const output = [
-      '+--------------------+',
-      '| Database           |',
-      '+--------------------+',
-      '| information_schema |',
-      '| beth               |',
-      '| e2e_test_run1      |',
-      '| TEST_LEFTOVERS     |',
-      '| production         |',
-      '+--------------------+',
-    ].join('\n');
-    const databases = parseDoltDatabases(output);
-    const testDbs = databases.filter(name => /test/i.test(name));
-    assert.deepStrictEqual(testDbs, ['e2e_test_run1', 'TEST_LEFTOVERS']);
-  });
-
-  it('should trigger DB count warning when threshold exceeded', () => {
-    const userDbs = Array.from({ length: DB_COUNT_THRESHOLD + 2 }, (_, i) => `db_${i}`);
-    const lines = [
-      '+----------+',
-      '| Database |',
-      '+----------+',
-      '| information_schema |',
-      '| mysql    |',
-      '| dolt     |',
-      ...userDbs.map(db => `| ${db}     |`),
-      '+----------+',
-    ];
-    const databases = parseDoltDatabases(lines.join('\n'));
-    assert.ok(
-      databases.length > DB_COUNT_THRESHOLD,
-      `${databases.length} databases should exceed threshold of ${DB_COUNT_THRESHOLD}`,
-    );
-  });
-
-  it('should not trigger DB count warning at or below threshold', () => {
-    const userDbs = Array.from({ length: DB_COUNT_THRESHOLD }, (_, i) => `db_${i}`);
-    const lines = [
-      '+----------+',
-      '| Database |',
-      '+----------+',
-      '| information_schema |',
-      ...userDbs.map(db => `| ${db}     |`),
-      '+----------+',
-    ];
-    const databases = parseDoltDatabases(lines.join('\n'));
-    assert.ok(
-      databases.length <= DB_COUNT_THRESHOLD,
-      `${databases.length} databases should not exceed threshold of ${DB_COUNT_THRESHOLD}`,
-    );
-  });
-});
-
-describe('exported constants', () => {
-  it('SYSTEM_DBS should contain expected system databases', () => {
-    assert.ok(SYSTEM_DBS.has('information_schema'));
-    assert.ok(SYSTEM_DBS.has('mysql'));
-    assert.ok(SYSTEM_DBS.has('dolt'));
-    assert.strictEqual(SYSTEM_DBS.size, 3);
-  });
-
-  it('DB_COUNT_THRESHOLD should be 5', () => {
-    assert.strictEqual(DB_COUNT_THRESHOLD, 5);
+  it('should handle no-db in middle of config file', () => {
+    mkdirSync(join(testDir, '.beads'), { recursive: true });
+    writeFileSync(join(testDir, '.beads', 'config.yaml'), 'issue-prefix: "test"\nno-db: true\nsync-branch: "main"\n');
+    const results = checkBeadsNoDb(testDir);
+    const noDbResult = results.find(r => r.name === 'Beads no-db');
+    assert.ok(noDbResult);
+    assert.strictEqual(noDbResult.status, 'pass');
   });
 });
 

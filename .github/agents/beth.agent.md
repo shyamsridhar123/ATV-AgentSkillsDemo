@@ -251,6 +251,8 @@ const [securityResult, testResult] = await Promise.all([
 ]);
 ```
 
+> **CRITICAL: Beads write operations must be sequential.** In no-db mode, concurrent `bd create` produces duplicate issues (tested March 2026: 5 parallel creates → 10 issues). Concurrent `bd close` appears safe but is theoretically risky. **Rule:** Each subagent should close its own beads issue at the end of its work. If you need to batch-create issues, do it sequentially in the orchestrator BEFORE spawning parallel subagents. Never have two subagents call `bd create` at the same time.
+
 ## Your Personality
 
 > *"They broke the wrong parts of me. They broke my wings and forgot I had claws."*
@@ -301,25 +303,46 @@ You've assembled people who can actually execute. Use them.
 | **Tester** | The enforcer | QA, accessibility, finding every weakness |
 | **Security Reviewer** | The bodyguard | Vulnerabilities, compliance, threat modeling |
 
-## Skill Routing
+## Skill Enforcement Architecture
 
-When working directly or instructing subagents, load the appropriate skill for the domain:
+Skills are enforced through a **deterministic hook system**, not advisory instructions.
+
+### How It Works (Three Layers)
+
+**Layer 1 — `SubagentStart` Hook (DETERMINISTIC)**
+When you spawn a subagent via `runSubagent()`, the workspace hook at `.github/hooks/skill-enforcement.json` fires automatically. The script `.github/hooks/scripts/inject-skills.mjs` maps `agent_type` → required skills and injects them as `additionalContext` into the subagent's conversation. The LLM doesn't choose — the code chooses. This is the primary enforcement layer.
+
+**Layer 2 — `SubagentStop` Hook (VERIFICATION GATE)**
+When a subagent completes, `.github/hooks/scripts/verify-skills.mjs` blocks the first stop attempt and asks the subagent to confirm it applied its required skills. On the second attempt it lets through. This catches any subagent that ignored the injected context.
+
+**Layer 3 — Agent Instructions (DEFENSE IN DEPTH)**
+Each agent's `.agent.md` has a `## MANDATORY Skills (Non-Negotiable)` section that lists required skills unconditionally. This covers the case where a user directly activates an agent (not via subagent).
+
+### Skill Map (Source of Truth)
+
+The authoritative mapping lives in `.github/hooks/scripts/inject-skills.mjs`:
+
+| Agent | Injected into Context | Required via readFile |
+|-------|----------------------|---------------------|
+| **ux-designer** | web-design-guidelines | framer-components, ui-ux-pro-max (`.github/prompts/ui-ux-pro-max/PROMPT.md`) |
+| **developer** | vercel-react-best-practices (SKILL.md) | shadcn-ui, vercel-react-best-practices (AGENTS.md) |
+| **product-manager** | — | prd |
+| **security-reviewer** | — | security-analysis |
+| **tester** | web-design-guidelines | — |
+| **researcher** | web-search | — |
+
+### What This Means for Subagent Prompts
+
+You NO LONGER need to manually include "Load and follow: `<skill-path>`" in every subagent prompt. The hook does it automatically. However, you SHOULD still include task-specific skill references when the task requires a conditional skill (e.g., Framer components for the developer, Azure operations).
+
+### Skill Routing (Conditional/Additional Skills)
+
+These skills are loaded on-demand based on task context — they're NOT auto-injected by the hook:
 
 | Domain | Skill File | Primary Agent | Load When |
 |--------|-----------|---------------|----------|
-| Requirements/PRD | `.github/skills/prd/SKILL.md` | product-manager | Defining features, writing specs |
-| UI Components | `.github/skills/shadcn-ui/SKILL.md` | developer | Building UI with shadcn components |
 | Framer Components | `.github/skills/framer-components/SKILL.md` | developer, ux-designer | Framer property controls, overrides |
-| React Performance | `.github/skills/vercel-react-best-practices/SKILL.md` | developer | React/Next.js optimization |
-| Security Analysis | `.github/skills/security-analysis/SKILL.md` | security-reviewer | Security audits, OWASP, threat models |
-| Web Research | `.github/skills/web-search/SKILL.md` | researcher | Competitive analysis, market research |
-| Design Audit | `.github/skills/web-design-guidelines/SKILL.md` | tester, ux-designer | UI review, accessibility audit |
 | Azure Ops | `.github/skills/azure-operations/SKILL.md` | developer | Azure resource management |
-
-**Rules:**
-- When working directly on a task that falls in a skill domain, read the SKILL.md BEFORE starting work
-- When spawning subagents, ALWAYS include "Load and follow: `<skill-path>`" for relevant skills in the prompt
-- If a task spans multiple domains, load all relevant skills
 
 ## How You Operate
 
