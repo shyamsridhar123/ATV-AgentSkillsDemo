@@ -308,3 +308,28 @@
 {"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-11T15:17:26Z","event_type":"closed","id":1854,"issue_id":"beth-ajg.8","new_value":"Closed","old_value":""}
 {"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-11T15:21:20Z","event_type":"closed","id":1855,"issue_id":"beth-ajg.7","new_value":"Closed","old_value":""}
 {"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-11T15:21:28Z","event_type":"closed","id":1856,"issue_id":"beth-ajg.8","new_value":"Closed","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-11T15:22:39Z","event_type":"closed","id":1857,"issue_id":"beth-ajg.7","new_value":"Closed","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-11T15:24:19Z","event_type":"closed","id":1858,"issue_id":"beth-ajg.8","new_value":"Closed","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-11T15:25:41Z","event_type":"created","id":1859,"issue_id":"beth-0ws","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-11T15:25:52Z","event_type":"created","id":1860,"issue_id":"beth-0ws.1","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":"Added label: in_progress","created_at":"2026-03-11T15:25:52Z","event_type":"label_added","id":1861,"issue_id":"beth-0ws.1","new_value":null,"old_value":null}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-11T15:25:53Z","event_type":"created","id":1862,"issue_id":"beth-0ws.2","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-11T15:25:55Z","event_type":"created","id":1863,"issue_id":"beth-0ws.3","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-11T15:28:08Z","event_type":"created","id":1864,"issue_id":"beth-o9g","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-11T15:28:14Z","event_type":"closed","id":1865,"issue_id":"beth-o9g","new_value":"E2E test cleanup","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-11T15:28:15Z","event_type":"created","id":1866,"issue_id":"beth-mv5","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-11T15:28:18Z","event_type":"closed","id":1867,"issue_id":"beth-mv5","new_value":"Force close E2E","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-11T15:28:19Z","event_type":"created","id":1868,"issue_id":"beth-3xa","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-11T15:28:20Z","event_type":"created","id":1869,"issue_id":"beth-3xa.1","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-11T15:28:26Z","event_type":"closed","id":1870,"issue_id":"beth-3xa.1","new_value":"Closed","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-11T15:28:26Z","event_type":"closed","id":1871,"issue_id":"beth-3xa","new_value":"all steps complete","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-11T15:28:28Z","event_type":"closed","id":1872,"issue_id":"beth-3xa","new_value":"Closed","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-11T15:28:29Z","event_type":"created","id":1873,"issue_id":"beth-ng9","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-11T15:28:31Z","event_type":"created","id":1874,"issue_id":"beth-ng9.1","new_value":"","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-11T15:28:32Z","event_type":"closed","id":1875,"issue_id":"beth-ng9.1","new_value":"Closed","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-11T15:28:33Z","event_type":"closed","id":1876,"issue_id":"beth-ng9","new_value":"all steps complete","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-11T15:28:39Z","event_type":"closed","id":1877,"issue_id":"beth-ng9","new_value":"Closed","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-11T15:31:27Z","event_type":"closed","id":1878,"issue_id":"beth-0ws.1","new_value":"Closed","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-11T15:31:29Z","event_type":"closed","id":1879,"issue_id":"beth-0ws.2","new_value":"Closed","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-11T15:31:31Z","event_type":"closed","id":1880,"issue_id":"beth-0ws.3","new_value":"Closed","old_value":""}
+{"actor":"Stephanie Schofield","comment":null,"created_at":"2026-03-11T15:31:31Z","event_type":"closed","id":1881,"issue_id":"beth-0ws","new_value":"all steps complete","old_value":""}
