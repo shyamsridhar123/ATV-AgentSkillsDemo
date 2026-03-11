@@ -54,29 +54,23 @@ Then instruct them to restart VS Code and click "Start" next to the shadcn serve
 
 **If user declines**, proceed normally using CLI-based workflows.
 
-## Skills
+## MANDATORY Skills (Non-Negotiable)
 
-### shadcn/ui Components
-When working with UI components:
-1. Read and follow the instructions in `.github/skills/shadcn-ui/SKILL.md`
-2. **If MCP is configured**: Use the shadcn MCP server to browse, search, and install components
-3. **If MCP is not configured**: Use CLI commands (`npx shadcn@latest add`)
-4. Prefer shadcn/ui patterns over custom implementations
+**BEFORE doing ANY work**, you MUST load your required skills. This is not optional.
+Skills are also injected by the `SubagentStart` hook when you are spawned as a subagent.
 
-### Framer Components
-When working with Framer components, code components, property controls, or code overrides:
-1. Read and follow the instructions in `.github/skills/framer-components/SKILL.md`
-2. Apply the ControlType patterns and best practices defined there
+**Required skills — load ALL of these before responding to any request:**
 
-### React Performance
-When optimizing React/Next.js code:
-1. Reference `.github/skills/vercel-react-best-practices/SKILL.md`
-2. Apply the prioritized rules (waterfalls, bundle size, server-side first)
+1. **Read** `.github/skills/shadcn-ui/SKILL.md` — UI component patterns, installation, composition
+2. **Read** `.github/skills/vercel-react-best-practices/SKILL.md` — Performance rules (waterfalls, bundle size, server-side first)
+3. **Read** `.github/skills/vercel-react-best-practices/AGENTS.md` — Full Vercel engineering guidelines
 
-### Azure Operations
-When deploying to Azure or managing Azure resources:
-1. Read and follow the instructions in `.github/skills/azure-operations/SKILL.md`
-2. Verify Azure MCP extension and authentication before proceeding
+After reading, confirm which key patterns you will apply before proceeding with work.
+
+### Conditional Skills (load when relevant)
+
+- **Framer Components**: When working with Framer, also read `.github/skills/framer-components/SKILL.md`
+- **Azure Operations**: When deploying to Azure, also read `.github/skills/azure-operations/SKILL.md`
 
 ## Working Without MCP (Graceful Degradation)
 

@@ -162,6 +162,26 @@ describe('init logic: copyDirRecursive behavior', () => {
         'copilot-instructions.md should reference Beth'
       );
     });
+
+    it('should create hooks directory with skill enforcement', () => {
+      runInit(testDir);
+      const hooksDir = join(testDir, '.github', 'hooks');
+      assert.ok(existsSync(hooksDir), '.github/hooks should exist');
+      assert.ok(
+        existsSync(join(hooksDir, 'skill-enforcement.json')),
+        'skill-enforcement.json should be created'
+      );
+      const scriptsDir = join(hooksDir, 'scripts');
+      assert.ok(existsSync(scriptsDir), '.github/hooks/scripts should exist');
+      assert.ok(
+        existsSync(join(scriptsDir, 'inject-skills.mjs')),
+        'inject-skills.mjs should be created'
+      );
+      assert.ok(
+        existsSync(join(scriptsDir, 'verify-skills.mjs')),
+        'verify-skills.mjs should be created'
+      );
+    });
   });
 
   describe('overwrite protection (no --force)', () => {
