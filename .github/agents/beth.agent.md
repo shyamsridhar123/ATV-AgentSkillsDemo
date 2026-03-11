@@ -324,7 +324,7 @@ The authoritative mapping lives in `.github/hooks/scripts/inject-skills.mjs`:
 
 | Agent | Injected into Context | Required via readFile |
 |-------|----------------------|---------------------|
-| **ux-designer** | web-design-guidelines | framer-components |
+| **ux-designer** | web-design-guidelines | framer-components, ui-ux-pro-max (`.github/prompts/ui-ux-pro-max/PROMPT.md`) |
 | **developer** | vercel-react-best-practices (SKILL.md) | shadcn-ui, vercel-react-best-practices (AGENTS.md) |
 | **product-manager** | — | prd |
 | **security-reviewer** | — | security-analysis |
