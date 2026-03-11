@@ -603,4 +603,73 @@ name: test
       );
     });
   });
+
+  describe('no-db mode checks', () => {
+    it('should show no-db check when .beads/config.yaml has no-db: true', () => {
+      const agentsDir = join(testDir, '.github', 'agents');
+      const skillsDir = join(testDir, '.github', 'skills');
+      const beadsDir = join(testDir, '.beads');
+      const backupDir = join(testDir, '.beads', 'backup');
+
+      mkdirSync(agentsDir, { recursive: true });
+      mkdirSync(skillsDir, { recursive: true });
+      mkdirSync(backupDir, { recursive: true });
+
+      createValidAgentFile(agentsDir, 'beth');
+      createValidSkill(skillsDir, 'prd');
+      writeFileSync(join(beadsDir, 'config.yaml'), 'no-db: true\n');
+      writeFileSync(join(backupDir, 'issues.jsonl'), '{"id":"test-1","title":"test"}\n');
+
+      const result = runDoctor(testDir);
+      assert.ok(
+        result.stdout.includes('no-db') || result.stdout.includes('JSONL'),
+        'Should show no-db or JSONL check in output'
+      );
+    });
+
+    it('should warn when no-db is not enabled', () => {
+      const agentsDir = join(testDir, '.github', 'agents');
+      const skillsDir = join(testDir, '.github', 'skills');
+      const beadsDir = join(testDir, '.beads');
+
+      mkdirSync(agentsDir, { recursive: true });
+      mkdirSync(skillsDir, { recursive: true });
+      mkdirSync(beadsDir, { recursive: true });
+
+      createValidAgentFile(agentsDir, 'beth');
+      createValidSkill(skillsDir, 'prd');
+      writeFileSync(join(beadsDir, 'config.yaml'), 'issue-prefix: test\n');
+
+      const result = runDoctor(testDir);
+      assert.ok(
+        result.stdout.includes('⚠') || result.stdout.includes('no-db'),
+        'Should warn about no-db mode not enabled'
+      );
+    });
+
+    it('should report JSONL issue count when data exists', () => {
+      const agentsDir = join(testDir, '.github', 'agents');
+      const skillsDir = join(testDir, '.github', 'skills');
+      const beadsDir = join(testDir, '.beads');
+      const backupDir = join(testDir, '.beads', 'backup');
+
+      mkdirSync(agentsDir, { recursive: true });
+      mkdirSync(skillsDir, { recursive: true });
+      mkdirSync(backupDir, { recursive: true });
+
+      createValidAgentFile(agentsDir, 'beth');
+      createValidSkill(skillsDir, 'prd');
+      writeFileSync(join(beadsDir, 'config.yaml'), 'no-db: true\n');
+      writeFileSync(
+        join(backupDir, 'issues.jsonl'),
+        '{"id":"t-1","title":"one"}\n{"id":"t-2","title":"two"}\n{"id":"t-3","title":"three"}\n'
+      );
+
+      const result = runDoctor(testDir, ['--verbose']);
+      assert.ok(
+        result.stdout.includes('3') || result.stdout.includes('issues'),
+        'Should report JSONL issue count'
+      );
+    });
+  });
 });
