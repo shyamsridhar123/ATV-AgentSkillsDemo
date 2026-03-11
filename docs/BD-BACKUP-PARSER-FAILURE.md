@@ -1,5 +1,7 @@
 # bd Backup Parser Failure
 
+> **⚠️ ARCHIVED (March 2026):** This document describes a Dolt-era failure mode. Since migrating to `no-db: true` mode, beads uses JSONL files directly as the source of truth — there is no Dolt server or `bd backup` command involved. This document is preserved for historical reference only.
+
 This documents the `bd backup` / `bd backup status` failure:
 
 ```text
