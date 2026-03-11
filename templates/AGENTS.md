@@ -96,6 +96,10 @@ This can happen to ANY file touched by agents. The most vulnerable are files tou
 
 > **Rule: beads and Backlog.md must be created together.** If it's in Backlog.md, it must be in beads. If it's in beads, the summary must be in Backlog.md. One system without the other is a lie waiting to cause damage.
 
+> **War story (March 10, 2026): Concurrent write duplication in no-db mode.** With `no-db: true`, beads stores everything in JSONL files. When 5 parallel `bd create` commands ran simultaneously, the result was 10 issues — every create duplicated due to a read-then-write race condition. Concurrent closes were safe; JSONL integrity was maintained. **Fix:** Agents must execute beads write operations (`bd create`, `bd close`, `bd update`) sequentially — never in parallel.
+
+> **Rule: Never run beads write commands in parallel.** `bd create` and `bd close` must be executed one at a time. Parallel writes in no-db mode produce duplicate issues.
+
 ## Workflow
 
 ### Simple Tasks

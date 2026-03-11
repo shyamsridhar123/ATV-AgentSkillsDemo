@@ -107,6 +107,10 @@ This can happen to ANY file touched by agents. The most vulnerable are files tou
 
 > **Rule: beads and Backlog.md must be created together.** If it's in Backlog.md, it must be in beads. If it's in beads, the summary must be in Backlog.md. One system without the other is a lie waiting to cause damage.
 
+> **War story (March 10, 2026): Concurrent write duplication in no-db mode.** With `no-db: true`, beads stores everything in JSONL files. When 5 parallel `bd create` commands ran simultaneously, the result was 10 issues — every create duplicated due to a classic read-then-write race condition. Each process reads the same JSONL state, generates its own ID, and writes back — the last writer wins, but they all "win" by appending. Concurrent `bd close` operations were safe (all 5 persisted correctly), and JSONL file integrity was maintained (no corruption, no duplicate IDs). **Fix:** Agents must execute beads write operations (`bd create`, `bd close`, `bd update`) sequentially — never in parallel. Reads (`bd list`, `bd show`, `bd ready`) are safe to run concurrently.
+
+> **Rule: Never run beads write commands in parallel.** `bd create` and `bd close` must be executed one at a time. Parallel writes in no-db mode produce duplicate issues. This applies to subagents — if two subagents need to create or close beads issues, they must do so sequentially, not via `Promise.all`.
+
 > **War story (March 9, 2026): Database loss from bd init --force.** `bd list` failed with "database 'beth' not found". Running `bd init --force` nuked the tables. `bd backup restore` consumed the JSONL backup files (truncated them to 0 bytes) but imported 0 rows because the files were already damaged. Recovery was only possible because JSONL backups were committed to git.
 
 ### Recovery sequence: Never trust `bd init --force`

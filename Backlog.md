@@ -2,7 +2,7 @@
 
 > *"I don't have time to explain things twice. Read this."*
 
-Last updated: 2026-03-10 (beth-ajg.1: No-DB mode enabled)
+Last updated: 2026-03-10 (beth-ajg.2: Concurrent write safety verified)
 
 ---
 
@@ -10,13 +10,14 @@ Last updated: 2026-03-10 (beth-ajg.1: No-DB mode enabled)
 
 | Task | Epic | Status |
 |------|------|--------|
-| **Migrate beads to no-db mode + Backlog.md tool** | beth-ajg | `.1` complete (no-db enabled + verified). `.2`/`.3`/`.5` now unblocked (parallel: concurrency, Backlog.md tool, doctor). `.4` (agent instructions) → `.7`/`.8` (tests) → `.6` (Dolt cleanup). |
+| **Migrate beads to no-db mode + Backlog.md tool** | beth-ajg | `.1` complete (no-db enabled). `.2` complete (concurrent write safety — found duplication race, documented). `.3`/`.4`/`.5` unblocked. `.7`/`.8` (tests) → `.6` (Dolt cleanup). |
 | **Integrate Microsoft Azure Skills into Beth agent system** | beth-0c2 | `.1` complete (clone + extract). `.2`-`.6` open (install verification, agent routing, docs update, old skill cleanup). |
 
 ## Completed
 
 | Task | Notes |
 |------|-------|
+| **Verify concurrent write safety in no-db mode (beth-ajg.2)** | Tested sequential and concurrent JSONL writes. Sequential: 10 rapid `bd create` all persisted correctly. Concurrent: 5 simultaneous `bd create` produced 10 issues (duplicates) — classic read-then-write race condition. Concurrent `bd close`: all 5 persisted correctly. Mixed create+close: creates duplicated, closes safe. JSONL integrity maintained in all cases (no corruption, no duplicate IDs). Root cause: `flock` in beads binary doesn't cover the full read-write cycle for creates. Documented war story in AGENTS.md and templates/AGENTS.md. Added concurrency warning to beth.agent.md Parallel Execution section. **Rule: beads write operations must be sequential — never parallel.** |
 | **Enable beads no-db mode (beth-ajg.1)** | Switched beads from Dolt-backed storage to JSONL-native no-db mode. Set `no-db: true` in `.beads/config.yaml`, removed `BEADS_DB` env var from `.vscode/mcp.json`. Verified all CRUD operations (list/ready/show/create/close/delete) work. MCP tools (show, ready, context) functional — `list` still fails due to pre-existing `bd --json` bug in v0.59.0 (not caused by no-db). No new Dolt processes spawned by bd commands. 51 orphan Dolt servers from previous sessions still running (cleanup is beth-ajg.6). 451 tests pass, 0 fail. |
 | **Azure Skills Phase 1: Clone 20 skills from microsoft/azure-skills (beth-0c2.1)** | Cloned 20 Azure skill folders (SKILL.md + references/) from `microsoft/azure-skills` into `.github/skills/`. Skills: appinsights-instrumentation, azure-ai, azure-aigateway, azure-cloud-migrate, azure-compliance, azure-compute, azure-cost-optimization, azure-deploy, azure-diagnostics, azure-hosted-copilot-sdk, azure-kusto, azure-messaging, azure-prepare, azure-rbac, azure-resource-lookup, azure-resource-visualizer, azure-storage, azure-validate, entra-app-registration, microsoft-foundry. No MCP server config included — skills-only approach. Decision: use Azure Skills plugin knowledge layer instead of Azure MCP extension (which was installed but non-functional). Removed `azure-mcp/search` from Beth's frontmatter in prior session work (beth-r08). 450 tests pass, 0 fail. |
 | **PR triage + beth-r08 review fixes** | Closed duplicate PR #57. Merged sub-PRs #54/#55/#56/#58 into epic/beth-2wi, then merged #53 (beth-2wi) into main. Rebased beth-r08 onto updated main, resolved 4 merge conflicts (3 beads backups, 1 doctor.test.ts import merge). Fixed Copilot code review issues on PR #52: (1) vacuous command recognition test now rejects both "Unknown command" and "Unknown flag" via regex, (2) entire update E2E suite marked `describe.skip` since CLI `update` command not yet wired. 450 tests pass, 0 fail. |

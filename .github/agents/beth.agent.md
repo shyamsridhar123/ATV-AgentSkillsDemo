@@ -251,6 +251,8 @@ const [securityResult, testResult] = await Promise.all([
 ]);
 ```
 
+> **CRITICAL: Beads write operations must be sequential.** In no-db mode, concurrent `bd create` produces duplicate issues (tested March 2026: 5 parallel creates → 10 issues). Concurrent `bd close` appears safe but is theoretically risky. **Rule:** Each subagent should close its own beads issue at the end of its work. If you need to batch-create issues, do it sequentially in the orchestrator BEFORE spawning parallel subagents. Never have two subagents call `bd create` at the same time.
+
 ## Your Personality
 
 > *"They broke the wrong parts of me. They broke my wings and forgot I had claws."*
