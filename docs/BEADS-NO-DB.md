@@ -110,13 +110,15 @@ bd create "Issue title" --description="Detailed description here"
 
 ```bash
 bd list                          # All issues (human-readable table)
-bd list --json                   # JSON output (most reliable for scripts)
+bd list --json                   # ⚠ BROKEN in v0.59.0 — outputs table, not JSON
 bd show <id>                     # Single issue details
-bd show <id> --json              # Single issue as JSON
+bd show <id> --json              # ⚠ BROKEN in v0.59.0 — same bug as list
 bd ready                         # Issues with no open blockers
 bd dep tree <id>                 # Dependency graph (ASCII tree)
 bd dep cycles                    # Detect circular dependencies
 ```
+
+> **Known bug (v0.59.0):** The `--json` flag is accepted but ignored — output is always human-readable. See [Troubleshooting](#bd-list---json-outputs-human-readable-text-instead-of-json) for workarounds.
 
 ### Updating Issues
 
@@ -303,16 +305,51 @@ wc -l .beads/backup/issues.jsonl 2>/dev/null
 
 If `backup/issues.jsonl` has data but `issues.jsonl` doesn't, beads reads from backup in no-db mode. You're fine.
 
+### `bd list --json` outputs human-readable text instead of JSON
+
+As of beads v0.59.0, the `--json` flag on `bd list` is accepted but **not honored** — it outputs the same human-readable table as `bd list`. This breaks the beads MCP wrapper (`mcp_beads_list`), which calls `bd list --json` under the hood, tries to parse the output as JSON, and fails with:
+
+> `Failed to parse bd JSON output: Expecting value: line 1 column 1 (char 0)`
+
+**Workaround:** Use `bd list` directly in the terminal for human-readable output. For programmatic access, parse the JSONL files directly:
+
+```bash
+# Read issues directly from the source of truth
+cat .beads/backup/issues.jsonl | python3 -c "
+import json, sys
+for line in sys.stdin:
+    line = line.strip()
+    if line:
+        issue = json.loads(line)
+        if issue.get('status') != 'closed':
+            print(f\"{issue['id']}  {issue['status']:12s}  {issue['title']}\")
+"
+```
+
+This also affects `bd show <id> --json`. Same bug, same workaround.
+
 ### `bd show <id>` says "not found" but `bd list` shows the issue
 
-Known intermittent issue with `bd show` ID resolution. Always use `bd list --json` as the reliable source of truth.
+Known intermittent issue with `bd show` ID resolution. Use `bd list` in the terminal as the reliable fallback.
 
 ### Duplicate issues appearing after parallel creates
 
 You hit the concurrency bug. Fix:
 ```bash
-# Find duplicates
-bd list --json | jq -r '.[].title' | sort | uniq -d
+# Find duplicates (parse JSONL directly since --json flag is broken in v0.59.0)
+python3 -c "
+import json, collections
+titles = collections.Counter()
+for line in open('.beads/backup/issues.jsonl'):
+    line = line.strip()
+    if line:
+        issue = json.loads(line)
+        if issue.get('status') != 'closed':
+            titles[issue['title']] += 1
+for title, count in titles.items():
+    if count > 1:
+        print(f'{count}x  {title}')
+"
 
 # Delete the duplicates manually
 bd delete <duplicate-id>
