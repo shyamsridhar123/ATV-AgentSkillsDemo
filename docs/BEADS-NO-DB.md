@@ -41,11 +41,13 @@ This single flag tells `bd` to:
 
 ## File Structure
 
+Beads stores JSONL data in `.beads/backup/`. Some repos may also have root-level `.beads/*.jsonl` files from older versions.
+
 ```
 .beads/
 ├── config.yaml              # Configuration (must have no-db: true)
 ├── backup/
-│   ├── issues.jsonl         # SOURCE OF TRUTH — all issues
+│   ├── issues.jsonl         # All issues (primary read/write location)
 │   ├── dependencies.jsonl   # Dependency relationships
 │   ├── events.jsonl         # Audit trail / history
 │   ├── comments.jsonl       # Issue comments
@@ -56,6 +58,12 @@ This single flag tells `bd` to:
 ```
 
 The **only files that matter** are `config.yaml` and the `backup/*.jsonl` files. Everything else (dolt/, daemon.log, .db files) is legacy cruft from the database era. Ignore it or `.gitignore` it.
+
+### Git Tracking Strategy
+
+The `backup/*.jsonl` files **should be tracked in git** so issue state survives across clones and sessions. If your root `.gitignore` has an entry ignoring `.beads/backup/`, but the files are already tracked, git continues tracking them (tracked files override `.gitignore`). This is the correct behavior — if you need to recover issue data, `git show <commit>:.beads/backup/issues.jsonl` is your safety net.
+
+> **Note:** In the `beth` repo, `.beads/backup/` was force-added to git before a `.gitignore` rule was introduced. The files remain tracked despite the ignore rule. If you're setting up a new project, ensure backup files are tracked by either not ignoring them or by running `git add -f .beads/backup/` after `bd init`.
 
 ## JSONL Record Format
 
@@ -112,13 +120,13 @@ bd create "Issue title" --description="Detailed description here"
 bd list                          # All issues (human-readable table)
 bd list --json                   # ⚠ BROKEN in v0.59.0 — outputs table, not JSON
 bd show <id>                     # Single issue details
-bd show <id> --json              # ⚠ BROKEN in v0.59.0 — same bug as list
+bd show <id> --json              # JSON output (works correctly)
 bd ready                         # Issues with no open blockers
 bd dep tree <id>                 # Dependency graph (ASCII tree)
 bd dep cycles                    # Detect circular dependencies
 ```
 
-> **Known bug (v0.59.0):** The `--json` flag is accepted but ignored — output is always human-readable. See [Troubleshooting](#bd-list---json-outputs-human-readable-text-instead-of-json) for workarounds.
+> **Known bug (v0.59.0):** `bd list --json` is accepted but ignored — output is always human-readable. `bd show <id> --json` works correctly and is used by `npx beth-copilot close` for epic validation. See [Troubleshooting](#bd-list---json-outputs-human-readable-text-instead-of-json) for workarounds.
 
 ### Updating Issues
 
@@ -235,7 +243,9 @@ no-db: true
 
 ## .gitignore for .beads/
 
-Keep config and JSONL data in git. Ignore everything else:
+Keep config and JSONL data in git. Ignore everything else.
+
+Recommended `.beads/.gitignore`:
 
 ```gitignore
 # .beads/.gitignore
@@ -252,11 +262,13 @@ daemon.log
 *.log
 .local_version
 
-# Intended to be kept (tracked in git) when not ignored by your root .gitignore:
+# Keep these (tracked in git):
 # config.yaml
-# backup/*.jsonl   # If your repo-level .gitignore ignores `.beads/backup/`, remove/override that rule to track backups
+# backup/*.jsonl
 # hooks/
 ```
+
+> **Important:** Do NOT add `.beads/backup/` to your root `.gitignore`. The backup JSONL files are issue data, not throwaway runtime state. If they're already tracked and your `.gitignore` has a rule ignoring them, git still tracks them — but new `backup/*.jsonl` files won't be picked up automatically. When in doubt, `git add -f .beads/backup/` after writes.
 
 ## Migration from Dolt Mode
 
@@ -297,17 +309,17 @@ If you have an existing beads setup with Dolt:
 
 ### `bd list` returns nothing but I had issues
 
-Check both JSONL locations:
+Beads reads from `.beads/backup/issues.jsonl` in no-db mode. Some older setups also have `.beads/issues.jsonl` at the root level. Check both:
 ```bash
 wc -l .beads/issues.jsonl 2>/dev/null
 wc -l .beads/backup/issues.jsonl 2>/dev/null
 ```
 
-If `backup/issues.jsonl` has data but `issues.jsonl` doesn't, beads reads from backup in no-db mode. You're fine.
+If `backup/issues.jsonl` has data, that's the active file — you're fine. If only `.beads/issues.jsonl` has data, beads may be reading from there instead (version-dependent). Run `bd list` to confirm which one is live.
 
 ### `bd list --json` outputs human-readable text instead of JSON
 
-As of beads v0.59.0, the `--json` flag on `bd list` is accepted but **not honored** — it outputs the same human-readable table as `bd list`. This breaks the beads MCP wrapper (`mcp_beads_list`), which calls `bd list --json` under the hood, tries to parse the output as JSON, and fails with:
+As of beads v0.59.0, the `--json` flag on `bd list` is accepted but **not honored** — it outputs the same human-readable table as `bd list`. This breaks any tooling that shells out to `bd list --json` and tries to parse the output as JSON, failing with:
 
 > `Failed to parse bd JSON output: Expecting value: line 1 column 1 (char 0)`
 
@@ -326,7 +338,7 @@ for line in sys.stdin:
 "
 ```
 
-This also affects `bd show <id> --json`. Same bug, same workaround.
+**Note:** `bd show <id> --json` works correctly — this bug only affects `bd list --json`. The `npx beth-copilot close` command relies on `bd show --json` for epic validation (see `src/cli/commands/close.ts`).
 
 ### `bd show <id>` says "not found" but `bd list` shows the issue
 
@@ -388,7 +400,7 @@ git show <good-commit>:.beads/backup/issues.jsonl > .beads/backup/issues.jsonl
 | Do I need SQLite? | **No.** |
 | Do I need a database server? | **No.** |
 | What do I need? | `bd` CLI + `no-db: true` in config |
-| Where is the data? | `.beads/backup/issues.jsonl` (one JSON per line) |
+| Where is the data? | `.beads/backup/issues.jsonl` (primary); some setups also use `.beads/issues.jsonl` |
 | Can I read it with any text editor? | **Yes.** It's plain text. |
 | Can agents write in parallel? | **No.** Sequential writes only. |
 | Can agents read in parallel? | **Yes.** Reads are always safe. |
