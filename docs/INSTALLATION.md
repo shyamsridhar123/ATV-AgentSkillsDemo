@@ -335,6 +335,23 @@ See [docs/MCP-SETUP.md](MCP-SETUP.md) for detailed setup of all servers.
 
 ---
 
+## Optional: UI UX Pro Max Skill
+
+The UX Designer agent uses [UI UX Pro Max](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill) for design intelligence — 67 styles, 161 color palettes, 57 font pairings, and industry-specific design system generation.
+
+```bash
+# Install CLI
+npm install -g uipro-cli
+
+# Install for GitHub Copilot
+cd /path/to/your/project
+uipro init --ai copilot
+```
+
+This installs the skill to `.github/prompts/ui-ux-pro-max/` where the UX Designer agent expects it. Requires Python 3.
+
+---
+
 ## Verify Installation
 
 Run through this checklist:
