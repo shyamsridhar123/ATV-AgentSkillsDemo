@@ -120,13 +120,13 @@ bd create "Issue title" --description="Detailed description here"
 bd list                          # All issues (human-readable table)
 bd list --json                   # ⚠ BROKEN in v0.59.0 — outputs table, not JSON
 bd show <id>                     # Single issue details
-bd show <id> --json              # ⚠ BROKEN in v0.59.0 — same bug as list
+bd show <id> --json              # JSON output (works correctly)
 bd ready                         # Issues with no open blockers
 bd dep tree <id>                 # Dependency graph (ASCII tree)
 bd dep cycles                    # Detect circular dependencies
 ```
 
-> **Known bug (v0.59.0):** The `--json` flag is accepted but ignored — output is always human-readable. See [Troubleshooting](#bd-list---json-outputs-human-readable-text-instead-of-json) for workarounds.
+> **Known bug (v0.59.0):** `bd list --json` is accepted but ignored — output is always human-readable. `bd show <id> --json` works correctly and is used by `npx beth-copilot close` for epic validation. See [Troubleshooting](#bd-list---json-outputs-human-readable-text-instead-of-json) for workarounds.
 
 ### Updating Issues
 
@@ -338,7 +338,7 @@ for line in sys.stdin:
 "
 ```
 
-This also affects `bd show <id> --json`. Same bug, same workaround.
+**Note:** `bd show <id> --json` works correctly — this bug only affects `bd list --json`. The `npx beth-copilot close` command relies on `bd show --json` for epic validation (see `src/cli/commands/close.ts`).
 
 ### `bd show <id>` says "not found" but `bd list` shows the issue
 
