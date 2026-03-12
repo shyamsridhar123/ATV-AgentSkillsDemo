@@ -319,7 +319,7 @@ If `backup/issues.jsonl` has data, that's the active file — you're fine. If on
 
 ### `bd list --json` outputs human-readable text instead of JSON
 
-As of beads v0.59.0, the `--json` flag on `bd list` is accepted but **not honored** — it outputs the same human-readable table as `bd list`. This breaks the beads MCP wrapper (`mcp_beads_list`), which calls `bd list --json` under the hood, tries to parse the output as JSON, and fails with:
+As of beads v0.59.0, the `--json` flag on `bd list` is accepted but **not honored** — it outputs the same human-readable table as `bd list`. This breaks any tooling that shells out to `bd list --json` and tries to parse the output as JSON, failing with:
 
 > `Failed to parse bd JSON output: Expecting value: line 1 column 1 (char 0)`
 
