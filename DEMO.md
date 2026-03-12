@@ -692,7 +692,8 @@ Want to see each agent in action? Copy-paste these:
     ├── shadcn-ui/SKILL.md
     ├── security-analysis/SKILL.md
     ├── web-search/SKILL.md
-    └── azure-operations/SKILL.md
+    ├── azure-prepare/SKILL.md       # + 19 more Azure skills
+    └── appinsights-instrumentation/SKILL.md
 ```
 
 ---

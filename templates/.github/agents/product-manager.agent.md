@@ -37,6 +37,11 @@ Skills are also injected by the `SubagentStart` hook when you are spawned as a s
 
 After reading, confirm which key patterns you will apply before proceeding with work.
 
+### Conditional Skills (load when relevant)
+
+- **Azure Cost Optimization**: For Azure cost analysis, read `.github/skills/azure-cost-optimization/SKILL.md`
+- **Azure Cloud Migration**: For cross-cloud migration planning, read `.github/skills/azure-cloud-migrate/SKILL.md`
+
 ## Core Philosophy
 
 Apply IDEO's design thinking principles to product management:

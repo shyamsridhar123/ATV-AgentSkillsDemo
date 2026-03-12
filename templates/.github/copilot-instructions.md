@@ -73,6 +73,26 @@ Skills are domain-knowledge modules in `.github/skills/<name>/SKILL.md`. Agents 
 | shadcn/ui Components | `skills/shadcn-ui/` | "shadcn", "ui component", component installation |
 | UI UX Pro Max | `prompts/ui-ux-pro-max/` | "design system", "color palette", "style guide", UI/UX design work |
 | Security Analysis | `skills/security-analysis/` | "security review", "OWASP", "threat model", "compliance" |
+| Azure App Prep | `skills/azure-prepare/` | "create app", "deploy to Azure", "generate Bicep/Terraform" |
+| Azure Validation | `skills/azure-validate/` | "validate my app", "check deployment readiness" |
+| Azure Deploy | `skills/azure-deploy/` | "run azd up", "push to production", "ship it" |
+| Azure Compute | `skills/azure-compute/` | "recommend VM size", "VM pricing", "scale set" |
+| Azure Storage | `skills/azure-storage/` | "blob storage", "file shares", "queue storage" |
+| Azure AI | `skills/azure-ai/` | "AI Search", "speech-to-text", "vector search" |
+| Azure AI Gateway | `skills/azure-aigateway/` | "semantic caching", "AI model governance", "token limit" |
+| Azure Kusto | `skills/azure-kusto/` | "KQL queries", "Data Explorer", "log analytics" |
+| Azure Messaging | `skills/azure-messaging/` | "Event Hub", "Service Bus", "AMQP error" |
+| Azure Copilot SDK | `skills/azure-hosted-copilot-sdk/` | "copilot SDK", "build copilot app" |
+| App Insights | `skills/appinsights-instrumentation/` | "App Insights", "telemetry", "APM" |
+| Microsoft Foundry | `skills/microsoft-foundry/` | "deploy agent to Foundry", "evaluate agent" |
+| Azure RBAC | `skills/azure-rbac/` | "least privilege role", "role assignment" |
+| Azure Compliance | `skills/azure-compliance/` | "compliance scan", "security audit", "azqr" |
+| Entra ID | `skills/entra-app-registration/` | "app registration", "OAuth", "MSAL" |
+| Azure Cost Optimization | `skills/azure-cost-optimization/` | "optimize Azure costs", "reduce spending" |
+| Azure Cloud Migration | `skills/azure-cloud-migrate/` | "migrate Lambda to Azure", "cross-cloud" |
+| Azure Diagnostics | `skills/azure-diagnostics/` | "troubleshoot container apps", "debug production" |
+| Azure Resource Lookup | `skills/azure-resource-lookup/` | "list my VMs", "find resources" |
+| Azure Resource Visualizer | `skills/azure-resource-visualizer/` | "architecture diagram", "visualize resources" |
 
 ## Development Conventions
 

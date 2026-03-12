@@ -94,7 +94,7 @@ For detailed setup (prerequisites, task tracking, MCP servers): [docs/INSTALLATI
 |---------|-------------|
 | `beth init` | Install agents, skills, VS Code settings, beads tracking, pre-push hook |
 | `beth init --force` | Overwrite existing files |
-| `beth doctor` | Validate Node.js ≥18, beads CLI, agents frontmatter, skills, Dolt hygiene |
+| `beth doctor` | Validate Node.js ≥18, beads CLI, agents frontmatter, skills |
 | `beth quickstart` | Run init + doctor + beads init in one shot |
 | `beth close <id>` | Close a beads issue with 3-layer enforcement (deps, children, test subtasks) |
 | `beth land` | Automate session completion: tests, backup, commit, push, verify sync |
@@ -516,24 +516,10 @@ Is it magic? No. It's just competence with very good hair.
 curl -fsSL https://raw.githubusercontent.com/steveyegge/beads/main/scripts/install.sh | bash
 ```
 
-**CGO Troubleshooting (Linux/WSL):** Beads uses Dolt (a Git-for-data database) which requires CGO. If `bd init` or `bd doctor` fails with CGO-related errors:
-
-```bash
-# Install C compiler toolchain (required for CGO)
-sudo apt-get update && sudo apt-get install -y build-essential gcc
-
-# Verify CGO is available
-export CGO_ENABLED=1
-go env CGO_ENABLED  # should print 1
-
-# Re-install beads
-curl -fsSL https://raw.githubusercontent.com/steveyegge/beads/main/scripts/install.sh | bash
-```
-
 **Common beads issues:**
 - `bd: command not found` — Add `~/.local/bin` to your PATH: `export PATH="$HOME/.local/bin:$PATH"`
 - `bd doctor` warnings about metadata — Run `bd doctor --fix` to auto-repair
-- Dolt migration errors — Delete `.beads/` and re-initialize with `bd init`
+- JSONL corruption — Delete `.beads/` and re-initialize with `bd init`
 
 ```bash
 # Verify beads is working
