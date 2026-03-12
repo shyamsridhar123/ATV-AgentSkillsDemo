@@ -2,7 +2,7 @@
 
 > *"I don't have time to explain things twice. Read this."*
 
-Last updated: 2026-03-11 (beth-0c2: Azure Skills integration complete)
+Last updated: 2026-03-12 (beth-3uo: BEADS-NO-DB.md cleanup epic planned — 14 subtasks)
 
 ---
 
@@ -11,11 +11,13 @@ Last updated: 2026-03-11 (beth-0c2: Azure Skills integration complete)
 | Task | Epic | Status |
 |------|------|--------|
 | **Migrate beads to no-db mode + Backlog.md tool** | beth-ajg | `.1` complete (no-db enabled). `.2` complete (concurrent write safety — found duplication race, documented). `.3`/`.4`/`.5` unblocked. `.7`/`.8` (tests) → `.6` (Dolt cleanup). |
+| **BEADS-NO-DB.md cleanup: fix inconsistencies, fill gaps, deduplicate, codify processes** | beth-3uo | 14 subtasks planned. 5 inconsistency fixes (config path, .gitignore, close command, version pins, doctor output). 3 gap fills (close enforcement, backup/restore, JSONL formats). 1 dedup pass. 4 code-as-process tasks (doctor --deep, init safety, migrate-to-nodb cmd, init --no-db flag). 1 structural restructure (target ≤250 lines from ~395). |
 
 ## Completed
 
 | Task | Notes |
 |------|-------|
+| **Install UI UX Pro Max skill for GitHub Copilot (beth-3xw)** | Installed [UI UX Pro Max](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill) v2.5.0 via `uipro init --ai copilot`. Fills the ghost reference wired into 8 places (inject-skills.mjs, ux-designer.agent.md, beth.agent.md, copilot-instructions.md + templates) that had no actual file. Fixed 12 script path references in PROMPT.md (`prompts/` → `.github/prompts/`). Added `.gitignore` for Python `__pycache__`. Updated `docs/INSTALLATION.md` with optional setup section. Skill provides 67 styles, 161 color palettes, 57 font pairings, 161 industry-specific reasoning rules, 25 chart types across 13 tech stacks. 471 tests pass, 0 fail. PR #63. |
 | **Integrate Microsoft Azure Skills EPIC COMPLETE (beth-0c2)** | All 6/6 subtasks done. (1) Cloned 20 Azure skills from microsoft/azure-skills. (2) Verified 20 skill folders installed with SKILL.md + references/. (3) Updated agent skill routing: developer gets 12 Azure skills (prepare/validate/deploy/compute/storage/ai/aigateway/kusto/messaging/copilot-sdk/appinsights/foundry), security-reviewer gets 3 (rbac/compliance/entra), product-manager gets 2 (cost-optimization/cloud-migrate), tester gets 2 (diagnostics/appinsights), Beth gets 2 (resource-lookup/resource-visualizer). Updated 12 agent files (6 source + 6 templates) + inject hook Skill Map + copilot-instructions.md. (4) Updated copilot-instructions.md Skills System table with all 26 skills (source + template). Updated SYSTEM-FLOW.md and DEMO.md references. (5) Spot-checked 3 skills (azure-prepare, azure-rbac, azure-diagnostics) — all valid. Zero remaining azure-operations refs in routing files. (6) Removed stale `.github/skills/azure-operations/` and `azure-mcp/search` from Beth's tools. 460 tests pass, 0 fail. |
 | **Verify concurrent write safety in no-db mode (beth-ajg.2)** | Tested sequential and concurrent JSONL writes. Sequential: 10 rapid `bd create` all persisted correctly. Concurrent: 5 simultaneous `bd create` produced 10 issues (duplicates) — classic read-then-write race condition. Concurrent `bd close`: all 5 persisted correctly. Mixed create+close: creates duplicated, closes safe. JSONL integrity maintained in all cases (no corruption, no duplicate IDs). Root cause: `flock` in beads binary doesn't cover the full read-write cycle for creates. Documented war story in AGENTS.md and templates/AGENTS.md. Added concurrency warning to beth.agent.md Parallel Execution section. **Rule: beads write operations must be sequential — never parallel.** |
 | **Enable beads no-db mode (beth-ajg.1)** | Switched beads from Dolt-backed storage to JSONL-native no-db mode. Set `no-db: true` in `.beads/config.yaml`, removed `BEADS_DB` env var from `.vscode/mcp.json`. Verified all CRUD operations (list/ready/show/create/close/delete) work. MCP tools (show, ready, context) functional — `list` still fails due to pre-existing `bd --json` bug in v0.59.0 (not caused by no-db). No new Dolt processes spawned by bd commands. 51 orphan Dolt servers from previous sessions still running (cleanup is beth-ajg.6). 451 tests pass, 0 fail. |

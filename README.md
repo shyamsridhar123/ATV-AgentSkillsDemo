@@ -224,18 +224,31 @@ Full details: [docs/MCP-SETUP.md](docs/MCP-SETUP.md)
 
 ## Skills (On-Demand Knowledge)
 
-Skills are domain-knowledge modules that agents load automatically when trigger phrases match. Each skill lives in `.github/skills/<name>/SKILL.md`.
+Skills are domain-knowledge modules that agents load automatically when trigger phrases match. Each skill lives in `.github/skills/<name>/SKILL.md` or `.github/prompts/<name>/PROMPT.md`.
 
 | Skill | Triggers On | Used By |
 |-------|------------|---------|
 | **PRD Generation** | "create a prd", "product requirements" | Product Manager |
-| **Framer Components** | "framer component", "property controls" | UX Designer |
+| **UI UX Pro Max** | "design system", "color palette", "style guide" | UX Designer, Developer |
+| **Web Design Guidelines** | "review my UI", "check accessibility" | UX Designer, Tester |
+| **Framer Components** | "framer component", "property controls" | UX Designer, Developer |
 | **React/Next.js Best Practices** | React performance, Next.js patterns | Developer |
-| **Web Design Guidelines** | "review my UI", "check accessibility" | UX Designer |
 | **shadcn/ui** | "shadcn", "ui component" | Developer |
 | **Security Analysis** | "security review", "OWASP", "threat model" | Security Reviewer |
 | **Azure Operations** | Azure resource management | Developer |
 | **Web Search** | Internet research via Brave | Researcher |
+
+### Design & UI Skills
+
+Three complementary skills cover the full design-to-code pipeline. They don't overlap — each solves a different problem.
+
+| Skill | What It Does | When You Need It |
+|-------|-------------|------------------|
+| **[UI UX Pro Max](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill)** | Design system generator — picks styles, colors, typography, and layout patterns from a searchable database of 67 styles, 161 color palettes, 57 font pairings, and 161 industry-specific reasoning rules. | Starting a new project or page. "What should this look like?" |
+| **Web Design Guidelines** | Code auditor — fetches live [Vercel Web Interface Guidelines](https://github.com/vercel-labs/web-interface-guidelines) and checks your actual files for accessibility, focus, form, and performance violations with `file:line` output. | Reviewing implemented code. "Is this built correctly?" |
+| **Framer Components** | Framer platform SDK reference — `addPropertyControls`, `ControlType`, code overrides, `RenderTarget`, auto-sizing, and Framer Motion integration. | Building custom components inside Framer. "How do I make this work in Framer?" |
+
+**Typical flow:** UI UX Pro Max generates the design system → Developer builds it → Web Design Guidelines audits the result. Framer Components is loaded only when targeting the Framer platform.
 
 ---
 
