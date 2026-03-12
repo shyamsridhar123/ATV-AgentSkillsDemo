@@ -42,6 +42,11 @@ Skills are also injected by the `SubagentStart` hook when you are spawned as a s
 
 After reading, fetch the latest guidelines from the source URL and confirm which key rules you will apply.
 
+### Conditional Skills (load when relevant)
+
+- **Azure Diagnostics**: For production debugging and log analysis, read `.github/skills/azure-diagnostics/SKILL.md`
+- **App Insights**: For telemetry and APM verification, read `.github/skills/appinsights-instrumentation/SKILL.md`
+
 ## Core Philosophy
 
 Quality is not a phase, it's a mindset:

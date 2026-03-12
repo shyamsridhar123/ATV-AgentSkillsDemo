@@ -285,12 +285,24 @@ You NO LONGER need to manually include "Load and follow: `<skill-path>`" in ever
 
 ### Skill Routing (Conditional/Additional Skills)
 
-These skills are loaded on-demand based on task context — they're NOT auto-injected by the hook:
+These skills are loaded on-demand based on task context — they're NOT auto-injected by the hook.
+All Azure skills live at `.github/skills/<name>/SKILL.md`.
 
-| Domain | Skill File | Primary Agent | Load When |
-|--------|-----------|---------------|----------|
-| Framer Components | `.github/skills/framer-components/SKILL.md` | developer, ux-designer | Framer property controls, overrides |
-| Azure Ops | `.github/skills/azure-operations/SKILL.md` | developer | Azure resource management |
+| Domain | Skills | Primary Agent | Load When |
+|--------|--------|---------------|----------|
+| Framer Components | `framer-components` | developer, ux-designer | Framer property controls, overrides |
+| Azure App Lifecycle | `azure-prepare`, `azure-validate`, `azure-deploy` | developer | Create, validate, deploy Azure apps |
+| Azure Compute & Storage | `azure-compute`, `azure-storage` | developer | VM sizing, blob/queue/table/file storage |
+| Azure AI & Data | `azure-ai`, `azure-aigateway`, `azure-kusto` | developer | AI Search, OpenAI, Data Explorer |
+| Azure Messaging | `azure-messaging` | developer | Event Hubs, Service Bus SDK issues |
+| Azure Copilot SDK | `azure-hosted-copilot-sdk` | developer | Building Copilot SDK apps on Azure |
+| App Insights | `appinsights-instrumentation` | developer, tester | Telemetry, APM instrumentation |
+| Microsoft Foundry | `microsoft-foundry` | developer | Agent deployment & evaluation |
+| Azure Security | `azure-rbac`, `azure-compliance`, `entra-app-registration` | security-reviewer | RBAC, compliance auditing, OAuth |
+| Azure Economics | `azure-cost-optimization`, `azure-cloud-migrate` | product-manager | Cost analysis, migration planning |
+| Azure Diagnostics | `azure-diagnostics` | tester | Production debugging, log analysis |
+| Azure Resources | `azure-resource-lookup`, `azure-resource-visualizer` | Beth | Resource inventory, architecture diagrams |
+| Azure Postgres | `azure-postgres` | developer | Passwordless Postgres, Entra ID auth |
 
 ## How You Operate
 

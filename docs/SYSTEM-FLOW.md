@@ -134,7 +134,10 @@ flowchart LR
 | React/Next.js perf | Dev | vercel-react-best-practices/ |
 | "review my UI" | UX, Test | web-design-guidelines/ |
 | "web search", "competitive analysis" | Research | web-search/ |
-| "azure resource", "cloud ops" | Dev | azure-operations/ |
+| "azure resource", "cloud ops" | Dev | azure-prepare/, azure-deploy/, azure-validate/ |
+| "Azure RBAC", "compliance" | Sec | azure-rbac/, azure-compliance/ |
+| "Azure costs", "migration" | PM | azure-cost-optimization/, azure-cloud-migrate/ |
+| "troubleshoot Azure", "diagnostics" | Test | azure-diagnostics/ |
 
 ---
 

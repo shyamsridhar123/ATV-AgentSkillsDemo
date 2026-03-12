@@ -41,6 +41,12 @@ Skills are also injected by the `SubagentStart` hook when you are spawned as a s
 
 After reading, confirm which key patterns you will apply before proceeding with work.
 
+### Conditional Skills (load when relevant)
+
+- **Azure RBAC**: For role assignments and least-privilege, read `.github/skills/azure-rbac/SKILL.md`
+- **Azure Compliance**: For compliance auditing and best practices, read `.github/skills/azure-compliance/SKILL.md`
+- **Entra ID**: For app registration, OAuth, and MSAL, read `.github/skills/entra-app-registration/SKILL.md`
+
 ## Core Philosophy: Zero Trust
 
 Every review operates on Zero Trust principles:

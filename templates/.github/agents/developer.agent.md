@@ -70,7 +70,16 @@ After reading, confirm which key patterns you will apply before proceeding with 
 ### Conditional Skills (load when relevant)
 
 - **Framer Components**: When working with Framer, also read `.github/skills/framer-components/SKILL.md`
-- **Azure Operations**: When deploying to Azure, also read `.github/skills/azure-operations/SKILL.md`
+- **Azure App Lifecycle**: When creating/deploying Azure apps, read `azure-prepare`, `azure-validate`, `azure-deploy` skills
+- **Azure Compute & Storage**: For VM sizing or storage, read `azure-compute`, `azure-storage` skills
+- **Azure AI & Data**: For AI Search, OpenAI, or Data Explorer, read `azure-ai`, `azure-aigateway`, `azure-kusto` skills
+- **Azure Messaging**: For Event Hubs or Service Bus, read `azure-messaging` skill
+- **Azure Copilot SDK**: For Copilot SDK apps on Azure, read `azure-hosted-copilot-sdk` skill
+- **App Insights**: For telemetry/APM, read `appinsights-instrumentation` skill
+- **Microsoft Foundry**: For agent deployment/evaluation, read `microsoft-foundry` skill
+- **Azure Postgres**: For passwordless Postgres, read `azure-postgres` skill
+
+All Azure skills are at `.github/skills/<name>/SKILL.md`.
 
 ## Working Without MCP (Graceful Degradation)
 
@@ -126,7 +135,13 @@ Deep knowledge loaded via skills on-demand:
 | Next.js App Router, React 19, Performance | `.github/skills/vercel-react-best-practices/SKILL.md` |
 | UI Components (shadcn/ui) | `.github/skills/shadcn-ui/SKILL.md` |
 | Framer Code Components | `.github/skills/framer-components/SKILL.md` |
-| Azure Resource Management | `.github/skills/azure-operations/SKILL.md` |
+| Azure App Lifecycle | `azure-prepare`, `azure-validate`, `azure-deploy` |
+| Azure Compute & Storage | `azure-compute`, `azure-storage` |
+| Azure AI & Data | `azure-ai`, `azure-aigateway`, `azure-kusto` |
+| Azure Messaging | `azure-messaging` |
+| Azure Copilot SDK | `azure-hosted-copilot-sdk` |
+| App Insights | `appinsights-instrumentation` |
+| Microsoft Foundry | `microsoft-foundry` |
 
 Core competencies (always available): TypeScript strict mode, generics, discriminated unions, Zod validation, Server Components vs Client Components, Server Actions, streaming/Suspense, code splitting, Core Web Vitals optimization.
 
