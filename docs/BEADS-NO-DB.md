@@ -252,9 +252,9 @@ daemon.log
 *.log
 .local_version
 
-# Keep these (tracked in git):
+# Intended to be kept (tracked in git) when not ignored by your root .gitignore:
 # config.yaml
-# backup/*.jsonl
+# backup/*.jsonl   # If your repo-level .gitignore ignores `.beads/backup/`, remove/override that rule to track backups
 # hooks/
 ```
 
