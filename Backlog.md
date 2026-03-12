@@ -2,7 +2,7 @@
 
 > *"I don't have time to explain things twice. Read this."*
 
-Last updated: 2026-03-11 (beth-0c2: Azure Skills integration complete)
+Last updated: 2026-03-12 (beth-3uo: BEADS-NO-DB.md cleanup epic planned — 14 subtasks)
 
 ---
 
@@ -11,6 +11,7 @@ Last updated: 2026-03-11 (beth-0c2: Azure Skills integration complete)
 | Task | Epic | Status |
 |------|------|--------|
 | **Migrate beads to no-db mode + Backlog.md tool** | beth-ajg | `.1` complete (no-db enabled). `.2` complete (concurrent write safety — found duplication race, documented). `.3`/`.4`/`.5` unblocked. `.7`/`.8` (tests) → `.6` (Dolt cleanup). |
+| **BEADS-NO-DB.md cleanup: fix inconsistencies, fill gaps, deduplicate, codify processes** | beth-3uo | 14 subtasks planned. 5 inconsistency fixes (config path, .gitignore, close command, version pins, doctor output). 3 gap fills (close enforcement, backup/restore, JSONL formats). 1 dedup pass. 4 code-as-process tasks (doctor --deep, init safety, migrate-to-nodb cmd, init --no-db flag). 1 structural restructure (target ≤250 lines from ~395). |
 
 ## Completed
 
