@@ -1,69 +1,71 @@
-# Beads No-DB Mode: JSONL-Only, Zero Dolt Dependency
+# Beads Data Management: Dolt Backend with JSONL Backup
 
-> How Beth killed the database and lived to tell about it.
+> The truth about how beads actually stores your data — no fairy tales, no aspirational docs.
 
-Beads supports a **no-db mode** where all data is stored in plain JSONL files — no Dolt, no SQLite, no daemon, no server. One config flag. That's it.
+## How It Actually Works
+
+Beads uses **Dolt** (a version-controlled SQL database) as its runtime storage backend. Every `bd` command reads from and writes to a local Dolt server that auto-starts on first use.
+
+**JSONL backup files** (`.beads/backup/*.jsonl`) are the portable, human-readable, git-trackable copy of your data. They're updated by running `bd backup` and restored via `bd backup restore`. They are your recovery mechanism when Dolt breaks — and it will break.
+
+### The `no-db: true` Config Flag
+
+The `.beads/config.yaml` file supports a `no-db: true` flag that is *supposed* to make `bd` skip Dolt and operate directly on JSONL files. **This flag does not work in v0.59.0 or v0.60.0.** Bd reads the flag, `beth-copilot doctor` reports it as enabled, but all operations still go through Dolt. Empirically verified: `bd create` does not update JSONL files — only `bd backup` does.
+
+We keep `no-db: true` in config as a forward-looking setting for when the feature actually ships. It doesn't hurt anything. It just doesn't do anything either.
 
 ## Quick Setup
 
 ```bash
-# 1. Install beads CLI
-curl -fsSL https://raw.githubusercontent.com/steveyegge/beads/main/scripts/install.sh | bash
+# 1. Install beads CLI (requires Go)
+go install github.com/steveyegge/beads/cmd/bd@latest
 
-# 2. Initialize in your project
+# 2. Initialize in your project (creates .beads/ dir, starts Dolt)
 cd /path/to/project
-bd init
+bd init --prefix <your-prefix>
 
-# 3. Enable no-db mode
-# Edit .beads/config.yaml and set:
-#   no-db: true
+# 3. Enable no-db flag (aspirational — see note above)
+# Edit .beads/config.yaml and add: no-db: true
 
 # 4. Verify
 bd list          # Should return empty or existing issues
-bd --version     # Should show >= 0.59.0
+bd --version     # Should show >= 0.60.0
 ```
 
-## The One Line That Matters
-
-In `.beads/config.yaml`:
-
-```yaml
-no-db: true
-```
-
-This single flag tells `bd` to:
-- **Skip** SQLite/Dolt entirely — no database process, no SQL, no daemon
-- **Read** from JSONL files on every command
-- **Write** back to JSONL after every mutation
-- Store everything as one JSON object per line
-
-**Do NOT install Dolt.** It is not needed. Period.
+> **Note:** `bd init` creates a `.beads/dolt/` directory and starts a Dolt server automatically. This is expected behavior, not an error.
 
 ## File Structure
 
-Beads stores JSONL data in `.beads/backup/`. Some repos may also have root-level `.beads/*.jsonl` files from older versions.
-
 ```
 .beads/
-├── config.yaml              # Configuration (must have no-db: true)
+├── config.yaml              # Configuration
+├── metadata.json            # Backend config (database name, mode, project ID)
 ├── backup/
-│   ├── issues.jsonl         # All issues (primary read/write location)
+│   ├── issues.jsonl         # All issues (portable backup)
 │   ├── dependencies.jsonl   # Dependency relationships
 │   ├── events.jsonl         # Audit trail / history
 │   ├── comments.jsonl       # Issue comments
 │   ├── labels.jsonl         # Label definitions
 │   ├── config.jsonl         # Internal config state
 │   └── backup_state.json    # Backup metadata
-└── hooks/                   # Git hooks (optional)
+├── dolt/                    # Dolt database files (runtime storage)
+├── hooks/                   # Git hooks (optional)
+└── *.log, *.pid, *.port     # Dolt server runtime files
 ```
 
-The **only files that matter** are `config.yaml` and the `backup/*.jsonl` files. Everything else (dolt/, daemon.log, .db files) is legacy cruft from the database era. Ignore it or `.gitignore` it.
+**What matters:**
+- `config.yaml` — your settings
+- `metadata.json` — backend identity (do NOT corrupt this — see Troubleshooting)
+- `backup/*.jsonl` — your portable data (track in git)
+- `dolt/` — runtime database (gitignored, auto-created by `bd init`)
 
 ### Git Tracking Strategy
 
-The `backup/*.jsonl` files **should be tracked in git** so issue state survives across clones and sessions. If your root `.gitignore` has an entry ignoring `.beads/backup/`, but the files are already tracked, git continues tracking them (tracked files override `.gitignore`). This is the correct behavior — if you need to recover issue data, `git show <commit>:.beads/backup/issues.jsonl` is your safety net.
+The `backup/*.jsonl` files **must be tracked in git** so issue state survives across clones and sessions. The `dolt/` directory and runtime files should be gitignored.
 
-> **Note:** In the `beth` repo, `.beads/backup/` was force-added to git before a `.gitignore` rule was introduced. The files remain tracked despite the ignore rule. If you're setting up a new project, ensure backup files are tracked by either not ignoring them or by running `git add -f .beads/backup/` after `bd init`.
+If your root `.gitignore` ignores `.beads/backup/` but the files are already tracked, git continues tracking them (tracked files override `.gitignore`). If setting up a new project, ensure backup files are tracked: `git add -f .beads/backup/` after `bd init`.
+
+Recovery from git history is your safety net: `git show <commit>:.beads/backup/issues.jsonl`
 
 ## JSONL Record Format
 
@@ -80,20 +82,33 @@ Each line in `backup/issues.jsonl` is a self-contained JSON object:
   "created_by": "Stephanie Schofield",
   "owner": "sschofield@microsoft.com",
   "close_reason": "Closed",
-  "closed_at": "2026-03-10T05:04:23Z",
-  "description": "",
-  "acceptance_criteria": "",
-  "assignee": null,
-  "due_at": null,
-  "metadata": "{}"
+  "closed_at": "2026-03-10T05:04:23Z"
 }
 ```
 
-No relational joins. No query layer. Beads reads the entire file on startup, operates in memory, writes back on mutation.
+No relational joins. No query layer. Plain text you can grep, jq, or read with your eyes.
+
+## Data Sync Workflow
+
+Since bd writes to Dolt but your portable data lives in JSONL, you need to sync:
+
+```bash
+# After creating/closing/updating issues — sync Dolt → JSONL
+bd backup
+
+# After recovering JSONL from git — sync JSONL → Dolt
+bd backup restore
+
+# Always commit after backup
+git add .beads/backup/
+git commit -m "sync beads backup"
+```
+
+**The rule:** Run `bd backup` after write operations, then commit. This is your insurance policy.
 
 ## Commands
 
-Every `bd` command works identically in no-db mode — same syntax, same flags, same output. The storage backend is invisible to the user.
+Every `bd` command works the same regardless of backend configuration.
 
 ### Creating Issues
 
@@ -107,7 +122,7 @@ bd create "Auth system overhaul" --type epic -p 1
 # Subtask under an epic
 bd create "JWT token rotation" --parent <epic-id>
 
-# Task with a dependency (blocked until blocker closes)
+# Task with a dependency
 bd create "Deploy auth" --deps "<impl-id>"
 
 # Task with description
@@ -118,22 +133,20 @@ bd create "Issue title" --description="Detailed description here"
 
 ```bash
 bd list                          # All issues (human-readable table)
-bd list --json                   # ⚠ BROKEN in v0.59.0 — outputs table, not JSON
+bd list --json                   # JSON output (fixed in v0.60.0)
 bd show <id>                     # Single issue details
-bd show <id> --json              # JSON output (works correctly)
+bd show <id> --json              # JSON output for single issue
 bd ready                         # Issues with no open blockers
 bd dep tree <id>                 # Dependency graph (ASCII tree)
 bd dep cycles                    # Detect circular dependencies
 ```
-
-> **Known bug (v0.59.0):** `bd list --json` is accepted but ignored — output is always human-readable. `bd show <id> --json` works correctly and is used by `npx beth-copilot close` for epic validation. See [Troubleshooting](#bd-list---json-outputs-human-readable-text-instead-of-json) for workarounds.
 
 ### Updating Issues
 
 ```bash
 bd close <id>                              # Close an issue
 bd update <id> --status in_progress        # Change status
-bd delete <id>                             # Delete an issue
+bd delete <id>                             # Delete an issue (requires --force)
 bd delete --from-file <path>               # Batch delete from file of IDs
 ```
 
@@ -146,111 +159,89 @@ bd epic close-eligible           # Find epics where all children are closed
 
 ## Concurrency Rules
 
-**This is the most important section. Read it twice.**
+**Read this twice.**
 
-In no-db mode, `bd` performs a full read → modify → write cycle on the JSONL file for every mutation. This creates a classic race condition.
+Write operations must be sequential. This applies whether bd is using Dolt or (eventually) direct JSONL writes. Concurrent writes cause duplicate issues and lost updates.
 
-| Operation | Safe in Parallel? | What Happens if Parallel |
-|-----------|-------------------|--------------------------|
-| `bd list` | ✅ Yes | Read-only, no conflict |
-| `bd show` | ✅ Yes | Read-only, no conflict |
-| `bd ready` | ✅ Yes | Read-only, no conflict |
-| `bd create` | ❌ **NO** | **Duplicate issues** — each process reads same state, both append |
-| `bd close` | ⚠️ Tested safe, but don't rely on it | Theoretically risky |
-| `bd update` | ❌ **NO** | Last writer wins, changes lost |
-| `bd delete` | ❌ **NO** | Last writer wins, deletes lost |
-
-### The Rule
-
-> **All beads write commands (`bd create`, `bd close`, `bd update`, `bd delete`) must execute sequentially. Never in parallel. Never via `Promise.all()`.**
+| Operation | Safe in Parallel? | Risk if Parallel |
+|-----------|-------------------|------------------|
+| `bd list` | Yes | None (read-only) |
+| `bd show` | Yes | None (read-only) |
+| `bd ready` | Yes | None (read-only) |
+| `bd create` | **NO** | Duplicate issues |
+| `bd close` | Tested safe, don't rely on it | Theoretically risky |
+| `bd update` | **NO** | Last writer wins |
+| `bd delete` | **NO** | Last writer wins |
 
 ### For Multi-Agent / Subagent Workflows
 
-If an orchestrator spawns multiple subagents that each need to create or close beads issues:
-
 1. **Create all issues sequentially in the orchestrator** BEFORE spawning parallel subagents
-2. Each subagent closes its own issue at the END of its work (sequential by nature — they finish at different times)
-3. **Never** have two subagents call `bd create` at the same time
+2. Each subagent closes its own issue at the END of its work (sequential by nature)
+3. **Never** have two subagents call `bd create` simultaneously
 
 ```typescript
-// ❌ WRONG — parallel creates produce duplicates
+// ❌ Parallel creates → duplicates
 await Promise.all([
   exec('bd create "Task A"'),
   exec('bd create "Task B"'),
-  exec('bd create "Task C"'),
 ]);
 
-// ✅ CORRECT — sequential creates
+// ✅ Sequential creates
 await exec('bd create "Task A"');
 await exec('bd create "Task B"');
-await exec('bd create "Task C"');
 ```
 
 ## What NOT to Do
 
 | Don't | Why |
 |-------|-----|
-| Install Dolt | Not needed. no-db mode uses JSONL only. |
-| Set `BEADS_DB` environment variable | Forces database mode. Leave it unset. |
-| Start any database server or daemon | No server required. `bd` is a standalone CLI. |
-| Run `bd init --force` with existing data | **Nukes everything.** Wipes JSONL files. Unrecoverable without git history. |
-| Run `bd sync` | Git-based sync mechanism, not needed for single-repo no-db. |
-| Run write commands in parallel | Duplicate issues, lost updates. See concurrency rules above. |
+| Run `bd init --force` with existing data | **Zeroes ALL backup JSONL files.** Recovery requires `git show <commit>:.beads/backup/issues.jsonl`. |
+| Edit `metadata.json` manually | Corrupt JSON or wrong `dolt_database` name breaks ALL bd operations. |
+| Set `BEADS_DB` environment variable | Forces a specific database mode. Leave it unset. |
+| Run write commands in parallel | Duplicate issues, lost updates. See concurrency rules. |
+| Delete `.beads/dolt/` while bd is running | Dolt server loses its data directory. Kill the server first. |
+| Assume `no-db: true` means Dolt isn't running | It's still running. The flag is non-functional in v0.59-0.60. |
 
 ## Verification
 
 ### Manual Check
 
 ```bash
-# 1. Confirm no-db mode is enabled
-grep 'no-db: true' .beads/config.yaml
+# 1. Confirm config exists
+cat .beads/config.yaml
 
 # 2. Confirm JSONL has data
 wc -l .beads/backup/issues.jsonl
 
 # 3. Confirm bd works
 bd list
+
+# 4. Confirm backup is current
+bd backup
 ```
 
-### Programmatic Check (from beth-copilot doctor)
-
-The doctor command validates no-db setup with two checks:
-
-1. **Config check**: Regex `/^no-db:\s*true/m` against `.beads/config.yaml`
-2. **JSONL health**: Counts lines in `issues.jsonl` or `backup/issues.jsonl`
+### Via beth-copilot Doctor
 
 ```bash
-npx beth-copilot doctor
+node bin/cli.js doctor
 ```
 
-Expected output:
+Expected output includes:
 ```
+✓ beads: installed (bd version 0.60.0 (dev))
+✓ Beads Init: .beads/ directory present
 ✓ Beads no-db: no-db mode enabled
-✓ JSONL data: 139 issue(s) in JSONL
+✓ JSONL data: 142 issue(s) in JSONL
 ```
 
-## Minimal .beads/config.yaml
-
-For a fresh project, this is the minimum viable config:
-
-```yaml
-# Required: enables JSONL-only storage, no database
-no-db: true
-
-# Optional: Git branch for bd sync commits (if using multi-repo sync)
-# sync-branch: "beads-sync"
-```
+> **Note:** `npx beth-copilot doctor` may fail with "beth: not found" depending on PATH. Use `node bin/cli.js doctor` from the repo root instead.
 
 ## .gitignore for .beads/
-
-Keep config and JSONL data in git. Ignore everything else.
 
 Recommended `.beads/.gitignore`:
 
 ```gitignore
-# .beads/.gitignore
-
-# Database artifacts (not used in no-db mode)
+# Dolt runtime (auto-created, not portable)
 *.db*
 dolt/
 daemon.log
@@ -261,146 +252,140 @@ daemon.log
 *.activity
 *.log
 .local_version
+metadata.json
 
-# Keep these (tracked in git):
+# Keep these tracked in git:
 # config.yaml
 # backup/*.jsonl
 # hooks/
 ```
 
-> **Important:** Do NOT add `.beads/backup/` to your root `.gitignore`. The backup JSONL files are issue data, not throwaway runtime state. If they're already tracked and your `.gitignore` has a rule ignoring them, git still tracks them — but new `backup/*.jsonl` files won't be picked up automatically. When in doubt, `git add -f .beads/backup/` after writes.
+## Recovery Procedures
 
-## Migration from Dolt Mode
+### Dolt Database Lost or Corrupt
 
-If you have an existing beads setup with Dolt:
+If `bd list` fails with "database not found" or similar:
 
-1. **Verify backup JSONL exists and has data:**
-   ```bash
-   wc -l .beads/backup/issues.jsonl
-   # Must be > 0
-   ```
+```bash
+# 1. Check your JSONL backup has data
+wc -l .beads/backup/issues.jsonl
+# If zero, recover from git first (step 3)
 
-2. **Set no-db mode:**
-   ```bash
-   # Edit .beads/config.yaml
-   # Add or change: no-db: true
-   ```
+# 2. Re-initialize and restore
+bd init --prefix <your-prefix> --force
+bd backup restore
+bd list  # Verify data is back
 
-3. **Remove BEADS_DB from environment** (check `.env`, `.vscode/mcp.json`, shell profiles):
-   ```bash
-   grep -r 'BEADS_DB' . --include='*.json' --include='*.env' --include='*.yaml'
-   ```
+# 3. If JSONL was zeroed by init --force, recover from git
+git log --oneline -- .beads/backup/issues.jsonl
+git show <good-commit>:.beads/backup/issues.jsonl > .beads/backup/issues.jsonl
+git show <good-commit>:.beads/backup/events.jsonl > .beads/backup/events.jsonl
+git show <good-commit>:.beads/backup/dependencies.jsonl > .beads/backup/dependencies.jsonl
+bd backup restore
+```
 
-4. **Verify everything works:**
-   ```bash
-   bd list        # Should show your existing issues
-   bd ready       # Should show unblocked issues
-   bd create "Migration test" && bd list  # Create and verify
-   ```
+### Port Mismatch (Stale Dolt Server)
 
-5. **Stop any running Dolt processes** (optional cleanup):
-   ```bash
-   pkill -f dolt || true
-   ```
+If bd can't connect to Dolt but `pgrep -f dolt` shows a process:
 
-6. **Do NOT run `bd init --force`** — this destroys data. The switch is just the config flag.
+```bash
+# Kill all Dolt processes and let bd restart cleanly
+pkill -f dolt
+sleep 1
+bd list  # bd auto-starts a fresh Dolt server
+```
+
+### metadata.json Corruption
+
+If `metadata.json` has invalid JSON, bd falls back to "beads" as the database name, which won't match your actual database. Symptoms: every command fails silently or returns empty results.
+
+```bash
+# Check the file
+cat .beads/metadata.json | python3 -m json.tool
+
+# If corrupt, the safest fix is re-init + restore
+bd init --prefix <your-prefix> --force
+bd backup restore
+```
+
+> **Critical:** Always verify `wc -l .beads/backup/issues.jsonl` is non-zero BEFORE running `bd init --force`. The init command zeroes backup files.
 
 ## Troubleshooting
 
-### `bd list` returns nothing but I had issues
-
-Beads reads from `.beads/backup/issues.jsonl` in no-db mode. Some older setups also have `.beads/issues.jsonl` at the root level. Check both:
-```bash
-wc -l .beads/issues.jsonl 2>/dev/null
-wc -l .beads/backup/issues.jsonl 2>/dev/null
-```
-
-If `backup/issues.jsonl` has data, that's the active file — you're fine. If only `.beads/issues.jsonl` has data, beads may be reading from there instead (version-dependent). Run `bd list` to confirm which one is live.
-
-### `bd list --json` outputs human-readable text instead of JSON
-
-As of beads v0.59.0, the `--json` flag on `bd list` is accepted but **not honored** — it outputs the same human-readable table as `bd list`. This breaks any tooling that shells out to `bd list --json` and tries to parse the output as JSON, failing with:
-
-> `Failed to parse bd JSON output: Expecting value: line 1 column 1 (char 0)`
-
-**Workaround:** Use `bd list` directly in the terminal for human-readable output. For programmatic access, parse the JSONL files directly:
-
-```bash
-# Read issues directly from the source of truth
-cat .beads/backup/issues.jsonl | python3 -c "
-import json, sys
-for line in sys.stdin:
-    line = line.strip()
-    if line:
-        issue = json.loads(line)
-        if issue.get('status') != 'closed':
-            print(f\"{issue['id']}  {issue['status']:12s}  {issue['title']}\")
-"
-```
-
-**Note:** `bd show <id> --json` works correctly — this bug only affects `bd list --json`. The `npx beth-copilot close` command relies on `bd show --json` for epic validation (see `src/cli/commands/close.ts`).
-
 ### `bd show <id>` says "not found" but `bd list` shows the issue
 
-Known intermittent issue with `bd show` ID resolution. Use `bd list` in the terminal as the reliable fallback.
+Known intermittent issue with ID resolution. Use `bd list --json` and filter with `jq` as a workaround:
 
-### Duplicate issues appearing after parallel creates
-
-You hit the concurrency bug. Fix:
 ```bash
-# Find duplicates (parse JSONL directly since --json flag is broken in v0.59.0)
-python3 -c "
-import json, collections
-titles = collections.Counter()
-for line in open('.beads/backup/issues.jsonl'):
-    line = line.strip()
-    if line:
-        issue = json.loads(line)
-        if issue.get('status') != 'closed':
-            titles[issue['title']] += 1
-for title, count in titles.items():
-    if count > 1:
-        print(f'{count}x  {title}')
-"
-
-# Delete the duplicates manually
-bd delete <duplicate-id>
+bd list --json | jq '.[] | select(.id == "<id>")'
 ```
 
-Then enforce sequential writes going forward.
+### Duplicate issues after parallel creates
 
-### JSONL file is corrupted / parse errors
+```bash
+# Find duplicates
+bd list --json | jq -r '.[].title' | sort | uniq -c | sort -rn | head
 
-If a JSONL file has malformed lines:
+# Delete extras
+bd delete <duplicate-id> --force
+```
+
+### JSONL file corrupted or has parse errors
+
 ```bash
 # Validate each line
 python3 -c "
-import json, sys
+import json
 for i, line in enumerate(open('.beads/backup/issues.jsonl'), 1):
     line = line.strip()
     if line:
-        try:
-            json.loads(line)
-        except json.JSONDecodeError as e:
-            print(f'Line {i}: {e}')
+        try: json.loads(line)
+        except json.JSONDecodeError as e: print(f'Line {i}: {e}')
 "
+
+# Recover from git if needed
+git show <good-commit>:.beads/backup/issues.jsonl > .beads/backup/issues.jsonl
+bd backup restore
 ```
 
-If corruption exists and the file is in git, recover from history:
-```bash
-git log --oneline -- .beads/backup/issues.jsonl
-git show <good-commit>:.beads/backup/issues.jsonl > .beads/backup/issues.jsonl
+## Config Reference
+
+### .beads/config.yaml
+
+```yaml
+# Aspirational — does not work in v0.59-0.60. Keep it for forward compatibility.
+no-db: true
+
+# Git branch for bd sync commits (optional, for multi-repo sync)
+# sync-branch: "beads-sync"
 ```
+
+### .beads/metadata.json
+
+Auto-generated by `bd init`. Do not edit manually.
+
+```json
+{
+  "database": "dolt",
+  "backend": "dolt",
+  "dolt_mode": "server",
+  "dolt_database": "<your-prefix>",
+  "project_id": "<uuid>"
+}
+```
+
+The `dolt_database` field must match the actual database name in Dolt. If this file is corrupt or the database name is wrong, all bd operations fail.
 
 ## Summary
 
 | Question | Answer |
 |----------|--------|
-| Do I need Dolt? | **No.** |
-| Do I need SQLite? | **No.** |
-| Do I need a database server? | **No.** |
-| What do I need? | `bd` CLI + `no-db: true` in config |
-| Where is the data? | `.beads/backup/issues.jsonl` (primary); some setups also use `.beads/issues.jsonl` |
-| Can I read it with any text editor? | **Yes.** It's plain text. |
+| Does bd need Dolt? | **Yes**, in v0.59-0.60. It auto-starts a Dolt server. |
+| Does `no-db: true` work? | **No**, not in current versions. The flag is recognized but non-functional. |
+| Where is runtime data? | Dolt database in `.beads/dolt/` |
+| Where is portable data? | `.beads/backup/*.jsonl` — synced via `bd backup` |
+| Can I read JSONL with a text editor? | **Yes.** One JSON object per line. |
+| How do I recover from Dolt failures? | `bd backup restore` (imports JSONL → Dolt) |
 | Can agents write in parallel? | **No.** Sequential writes only. |
 | Can agents read in parallel? | **Yes.** Reads are always safe. |
+| What does `bd init --force` do to backups? | **Zeroes them.** Recover from git history first. |
