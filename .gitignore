@@ -48,5 +48,8 @@ coverage/
 # bs-buster local state
 .bs-buster/
 
-# Beads backup state (runtime, not source)
-.beads/backup/
+# Beads backup JSONL — these files ARE issue data and should be tracked.
+# This ignore rule is overridden because the files were force-added to git.
+# Do NOT remove the tracked files. If you need to re-track after a fresh clone:
+#   git add -f .beads/backup/
+# .beads/backup/
