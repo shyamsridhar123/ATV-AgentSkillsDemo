@@ -28,7 +28,6 @@ import {
   isReleaseBranch,
   isRecognizedBranch,
   runGuard,
-  getInProgressIssues,
   generateHookScript,
   BETH_GUARD_BEGIN,
   BETH_GUARD_END,
@@ -213,19 +212,6 @@ describe('isRecognizedBranch', () => {
     expect(isRecognizedBranch('bugfix/bar')).toBe(false);
     expect(isRecognizedBranch('dev')).toBe(false);
     expect(isRecognizedBranch('')).toBe(false);
-  });
-});
-
-// ─── getInProgressIssues ───────────────────────────────────────────────────────
-
-describe('getInProgressIssues', () => {
-  it('always returns empty array (stub)', () => {
-    expect(getInProgressIssues()).toEqual([]);
-  });
-
-  it('does not call execFileSync', () => {
-    getInProgressIssues();
-    expect(mockedExecFileSync).not.toHaveBeenCalled();
   });
 });
 

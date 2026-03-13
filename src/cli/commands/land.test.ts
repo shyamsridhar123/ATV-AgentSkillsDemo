@@ -34,7 +34,6 @@ import {
   hasStagedChanges,
   hasUnpushedCommits,
   runTests,
-  runBeadsBackup,
   gitAddAll,
   gitCommit,
   remoteBranchExists,
@@ -267,16 +266,6 @@ describe('runTests', () => {
       ['test'],
       expect.objectContaining({ encoding: 'utf-8' }),
     );
-  });
-});
-
-// ─── runBeadsBackup (stub) ───────────────────────────────────────────────────
-
-describe('runBeadsBackup', () => {
-  it('always returns success (stub — beads removed)', () => {
-    const result = runBeadsBackup();
-    expect(result.success).toBe(true);
-    expect(result.output).toBe('beads removed — no backup needed');
   });
 });
 
