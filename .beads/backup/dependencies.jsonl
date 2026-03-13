@@ -22,7 +22,9 @@
 {"created_at":"2026-03-09T22:36:31Z","created_by":"Stephanie Schofield","depends_on_id":"beth-5ju","issue_id":"beth-5ju.1","metadata":"{}","type":"parent-child"}
 {"created_at":"2026-03-11T15:39:45Z","created_by":"Stephanie Schofield","depends_on_id":"beth-62q","issue_id":"beth-62q.1","metadata":"{}","type":"parent-child"}
 {"created_at":"2026-03-11T15:39:55Z","created_by":"Stephanie Schofield","depends_on_id":"beth-62q","issue_id":"beth-62q.2","metadata":"{}","type":"parent-child"}
+{"created_at":"2026-03-12T16:17:11Z","created_by":"Stephanie Schofield","depends_on_id":"beth-swu","issue_id":"beth-6ah","metadata":"{}","type":"blocks"}
 {"created_at":"2026-03-09T22:11:14Z","created_by":"Stephanie Schofield","depends_on_id":"beth-6rs","issue_id":"beth-6rs.1","metadata":"{}","type":"parent-child"}
+{"created_at":"2026-03-12T16:17:18Z","created_by":"Stephanie Schofield","depends_on_id":"beth-swu","issue_id":"beth-6vr","metadata":"{}","type":"blocks"}
 {"created_at":"2026-03-08T14:53:10Z","created_by":"Stephanie Schofield","depends_on_id":"beth-7cu","issue_id":"beth-7cu.1","metadata":"{}","type":"parent-child"}
 {"created_at":"2026-03-08T15:05:38Z","created_by":"Stephanie Schofield","depends_on_id":"beth-7cu","issue_id":"beth-7cu.2","metadata":"{}","type":"parent-child"}
 {"created_at":"2026-03-08T15:05:45Z","created_by":"Stephanie Schofield","depends_on_id":"beth-7cu","issue_id":"beth-7cu.3","metadata":"{}","type":"parent-child"}
@@ -63,6 +65,7 @@
 {"created_at":"2026-03-10T00:13:00Z","created_by":"Stephanie Schofield","depends_on_id":"beth-cyt","issue_id":"beth-cyt.1","metadata":"{}","type":"parent-child"}
 {"created_at":"2026-03-11T15:12:32Z","created_by":"Stephanie Schofield","depends_on_id":"beth-dmc","issue_id":"beth-dmc.1","metadata":"{}","type":"parent-child"}
 {"created_at":"2026-03-09T22:36:46Z","created_by":"Stephanie Schofield","depends_on_id":"beth-e9q","issue_id":"beth-e9q.1","metadata":"{}","type":"parent-child"}
+{"created_at":"2026-03-12T16:17:25Z","created_by":"Stephanie Schofield","depends_on_id":"beth-6ah","issue_id":"beth-eab","metadata":"{}","type":"blocks"}
 {"created_at":"2026-03-10T10:26:25Z","created_by":"Stephanie Schofield","depends_on_id":"beth-eiw","issue_id":"beth-eiw.1","metadata":"{}","type":"parent-child"}
 {"created_at":"2026-03-09T22:11:27Z","created_by":"Stephanie Schofield","depends_on_id":"beth-f6n","issue_id":"beth-f6n.1","metadata":"{}","type":"parent-child"}
 {"created_at":"2026-03-09T01:39:40Z","created_by":"Stephanie Schofield","depends_on_id":"beth-gau","issue_id":"beth-gau.1","metadata":"{}","type":"parent-child"}
