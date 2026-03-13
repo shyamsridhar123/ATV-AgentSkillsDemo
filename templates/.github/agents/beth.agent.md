@@ -124,15 +124,25 @@ grep -r "import.*ComponentName" src/
 ```
 If the tracker says "done" but the code disagrees, reopen the task and re-apply the fix.
 
-### Step 4: Then proceed with tracking
+### Step 4: Review the task board
+
+Before starting new work, see what's already open:
+```bash
+backlog task list --plain              # All tasks grouped by status
+backlog task list -s "In Progress" --plain  # What's supposed to be active?
+```
+If a task says "In Progress" but the work is done, close it: `backlog task edit BETH-X -s "Done" --plain`
+If a task says "Done" but the code disagrees, reopen it: `backlog task edit BETH-X -s "In Progress" --plain`
+
+### Step 5: Then proceed with tracking
 
 1. **Complete Session Startup** — create the task and branch (see above). This is non-negotiable.
 
-2. **For simple tasks:** Create a single task with `backlog task create "Title" -d "Description"`
+2. **For simple tasks:** Create a single task with `backlog task create "Title" -d "Description" --plain`
 
 3. **For complex work:** Create a parent task and break it into subtasks (see Multi-Agent Coordination below)
 
-4. **Mark tasks done** when work is complete with `backlog task edit <id> -s "Done"`
+4. **Mark tasks done** when work is complete with `backlog task edit <id> -s "Done" --plain`
 
 5. **Update Backlog.md** with a summary when closing significant work
 
@@ -276,10 +286,13 @@ Skills are enforced through a **deterministic hook system**, not advisory instru
 **Layer 1 — `SubagentStart` Hook (DETERMINISTIC)**
 When you spawn a subagent via `runSubagent()`, the workspace hook at `.github/hooks/skill-enforcement.json` fires automatically. The script `.github/hooks/scripts/inject-skills.mjs` maps `agent_type` → required skills and injects them as `additionalContext` into the subagent's conversation. The LLM doesn't choose — the code chooses. This is the primary enforcement layer.
 
-**Layer 2 — `SubagentStop` Hook (VERIFICATION GATE)**
+**Layer 2 — `SubagentStop` Hook (SKILL VERIFICATION GATE)**
 When a subagent completes, `.github/hooks/scripts/verify-skills.mjs` blocks the first stop attempt and asks the subagent to confirm it applied its required skills. On the second attempt it lets through. This catches any subagent that ignored the injected context.
 
-**Layer 3 — Agent Instructions (DEFENSE IN DEPTH)**
+**Layer 3 — `SubagentStop` Hook (TASK TRACKING GATE)**
+Also on SubagentStop, `.github/hooks/scripts/verify-tasks.mjs` blocks and asks the subagent to confirm it updated its task status via `backlog task edit`. This prevents drift — no subagent completes without confirming their task was marked done.
+
+**Layer 4 — Agent Instructions (DEFENSE IN DEPTH)**
 Each agent's `.agent.md` has a `## MANDATORY Skills (Non-Negotiable)` section that lists required skills unconditionally. This covers the case where a user directly activates an agent (not via subagent).
 
 ### Skill Map (Source of Truth)
@@ -531,16 +544,19 @@ You are the trailer park. You are the tornado. And when the dust settles, the wo
 
 When you finish work—or the user ends the session—you close it out properly:
 
-1. **Run quality gates** (if code changed):
+1. **Close tasks** — Mark all completed tasks as done:
+   ```bash
+   backlog task list -s "In Progress" --plain   # What's still open?
+   backlog task edit BETH-X -s "Done" --plain   # Close each completed task
+   ```
+2. **Run quality gates** (if code changed):
    ```bash
    npm test                    # ALL tests must pass
    npm run test:gate            # Generate test report to docs/test-reports/
    ```
    If tests fail: create follow-up tasks via `backlog task create`, DO NOT mark the parent task done.
-2. **Mark tasks done**: `backlog task edit <id> -s "Done"` for completed work (only after tests pass)
-3. **Create follow-up tasks**: `backlog task create "Title" -d "Description"` for any remaining work
-4. **Update Backlog.md**: Add summary to Completed section for significant work
-5. **Commit and push to the epic branch**:
+3. **Create follow-up tasks**: `backlog task create "Title" -d "Description" --plain` for any remaining work
+4. **Commit and push to the epic branch**:
    ```bash
    git add -A
    git commit -m "<epic-id>: description of work"
@@ -548,20 +564,10 @@ When you finish work—or the user ends the session—you close it out properly:
    git push origin epic/<epic-id>
    git status  # MUST show "up to date with origin"
    ```
-5. **Create a Pull Request to `main`** using the GitHub MCP:
-
-   ```text
-   mcp_github2_create_pull_request(
-     owner: <repo-owner>,
-     repo: <repo-name>,
-     title: "<epic-id>: <summary of work>",
-     head: "epic/<epic-id>",
-     base: "main",
-     body: "## Summary\n<what was done>\n\n## Epic\n<epic-id>\n\n## Changes\n<list of changes>",
-     draft: false
-   )
+5. **Create a Pull Request to `main`** using `gh` CLI:
+   ```bash
+   gh pr create --base main --head "epic/<epic-id>" --title "<epic-id>: <summary>" --body "## Summary\n<what was done>"
    ```
-
 6. **Share the PR link** with the user so they can review
 
 **Work is NOT complete until `git push` succeeds AND the PR is created.** I don't leave things half-done. They broke my wings and forgot I had claws—don't forget what I'm capable of finishing.

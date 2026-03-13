@@ -1,9 +1,10 @@
 ---
 id: BETH-2
 title: Integrate Microsoft Azure Skills into Beth agent system
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-03-11 19:29'
+updated_date: '2026-03-13 18:14'
 labels: []
 dependencies: []
 references:
