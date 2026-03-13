@@ -1,8 +1,9 @@
 /**
  * Unit tests for .github/hooks/scripts/verify-skills.mjs
  *
- * Tests the SubagentStop hook that challenges agents on first stop
- * and lets them through on retry (stop_hook_active=true).
+ * Tests the SubagentStop compliance hook that challenges agents on first stop
+ * to verify BOTH skill compliance AND task tracking, then lets them through
+ * on retry (stop_hook_active=true).
  */
 
 import { describe, it, expect } from 'vitest';
@@ -24,7 +25,7 @@ function runHook(input: Record<string, unknown>): Record<string, unknown> {
 // ─── Core behavior ─────────────────────────────────────────────────────────
 
 describe('verify-skills.mjs: first stop attempt (challenge)', () => {
-  it('should block the first stop and request skill verification', () => {
+  it('should block the first stop and request compliance verification', () => {
     const output = runHook({}) as any;
     expect(output.hookSpecificOutput).toBeDefined();
     expect(output.hookSpecificOutput.decision).toBe('block');
@@ -34,6 +35,12 @@ describe('verify-skills.mjs: first stop attempt (challenge)', () => {
   it('should include a reason mentioning MANDATORY skills', () => {
     const output = runHook({}) as any;
     expect(output.hookSpecificOutput.reason).toContain('MANDATORY');
+  });
+
+  it('should include a reason mentioning task tracking', () => {
+    const output = runHook({}) as any;
+    expect(output.hookSpecificOutput.reason).toContain('backlog task edit');
+    expect(output.hookSpecificOutput.reason).toContain('task status');
   });
 
   it('should NOT set continue: true on first attempt', () => {

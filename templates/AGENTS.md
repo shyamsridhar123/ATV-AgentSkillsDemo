@@ -2,6 +2,27 @@
 
 This project uses [Backlog.md](Backlog.md) for task tracking — the single source of truth for both agents and humans.
 
+## Backlog.md CLI Quick Reference
+
+```bash
+# See everything at once (use --plain where supported to avoid TUI)
+backlog task list --plain              # All tasks grouped by status
+backlog task list -s "In Progress" --plain  # Filter by status
+backlog board                          # Kanban board (always plain-text)
+backlog overview                       # Project health stats (always plain-text)
+
+# Task lifecycle (--plain prevents TUI after mutation)
+backlog task create "Title" -d "Description" --plain   # Create
+backlog task edit BETH-X -s "In Progress" --plain       # Start
+backlog task edit BETH-X -s "Done" --plain              # Close
+backlog task edit BETH-X --append-notes "text" --plain  # Add notes
+
+# Search
+backlog search "query" --plain         # Fuzzy search across tasks
+```
+
+**CRITICAL:** Always use `--plain` flag on commands that support it (`task list`, `task create`, `task edit`, `search`) — without it, these commands open a TUI that agents cannot interact with. Commands like `board` and `overview` are already plain-text.
+
 ## Quick Setup
 
 ```bash
@@ -31,7 +52,15 @@ git log --oneline origin/$(git branch --show-current)..HEAD
 ```
 If there are unpushed commits from a previous session, push them or understand why they weren't pushed.
 
-### 3. Spot-check closed work is intact
+### 3. Review task status
+```bash
+backlog task list --plain              # See all tasks — what's open, done, in progress
+backlog task list -s "In Progress" --plain  # What's supposed to be active?
+```
+If a task says "In Progress" but the work is done, close it: `backlog task edit BETH-X -s "Done"`
+If a task says "Done" but the code disagrees, reopen it: `backlog task edit BETH-X -s "In Progress"`
+
+### 4. Spot-check closed work is intact
 Pick 1-2 tasks closed in the last session and verify the changes are actually in the code:
 ```bash
 # Example: verify an import was actually added
@@ -48,9 +77,11 @@ This can happen to ANY file touched by agents. The most vulnerable are files tou
 ## Workflow
 
 ### Simple Tasks
-1. Do the work
-2. Update Backlog.md if significant
-3. Commit and push
+1. Create a task: `backlog task create "Title" -d "Description" --plain`
+2. Mark it in progress: `backlog task edit BETH-X -s "In Progress" --plain`
+3. Do the work
+4. Mark it done: `backlog task edit BETH-X -s "Done" --plain`
+5. Commit and push
 
 ### Complex Work (Multi-Agent)
 1. **Create/checkout** an epic branch from main:
@@ -60,10 +91,11 @@ This can happen to ANY file touched by agents. The most vulnerable are files tou
    git checkout -b epic/<epic-id> origin/main
    ```
 
-2. Break work into subtasks, route to specialists
-3. Update Backlog.md with progress
-4. Push the epic branch
-5. **Create a PR to `main`**
+2. Create a parent task: `backlog task create "Epic title" -d "Description" --plain`
+3. Break into subtasks, route to specialists
+4. Each subtask: create → assign → work → mark done via `backlog task edit`
+5. Push the epic branch
+6. **Create a PR to `main`**
 
 ## Landing the Plane (Session Completion)
 
@@ -71,7 +103,11 @@ This can happen to ANY file touched by agents. The most vulnerable are files tou
 
 **MANDATORY WORKFLOW:**
 
-1. **Update Backlog.md** - Add summary to Completed section for significant work
+1. **Close tasks** - Mark all completed tasks as done:
+   ```bash
+   backlog task list -s "In Progress" --plain   # What's still open?
+   backlog task edit BETH-X -s "Done" --plain   # Close each completed task
+   ```
 2. **Run quality gates** (if code changed) - ALL tests must pass:
    ```bash
    npm test                   # Unit + integration tests
