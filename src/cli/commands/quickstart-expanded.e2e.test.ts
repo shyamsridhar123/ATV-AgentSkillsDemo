@@ -8,7 +8,7 @@
  *   1. Build: npm run build
  *   2. Run: npx vitest run src/cli/commands/quickstart-expanded.e2e.test.ts
  *
- * Test cases (non-conditional — no beads dependency):
+ * Test cases (non-conditional):
  *   - Empty directory → exit 1, clear error about missing Beth
  *   - Beth initialized but no skills → still runs doctor, reports warning
  *   - Output contains "Quick Start Guide" heading or equivalent guidance
@@ -23,39 +23,11 @@
 import { describe, it, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert';
 import { spawnSync } from 'child_process';
-import { chmodSync, existsSync, mkdirSync, rmSync, writeFileSync } from 'fs';
+import { existsSync, mkdirSync, rmSync, writeFileSync } from 'fs';
 import { delimiter, join, resolve } from 'path';
 import { tmpdir } from 'os';
 
 const CLI_PATH = resolve(join(import.meta.dirname, '..', '..', '..', 'bin', 'cli.js'));
-
-function createMockBeadsCli(binDir: string): void {
-  const cliPath = join(binDir, 'bd');
-  const script = `#!/bin/sh
-set -eu
-
-command_name="\${1:-}"
-
-case "$command_name" in
-  --version)
-    echo "bd 0.0.0-test"
-    exit 0
-    ;;
-  init)
-    mkdir -p .beads
-    printf '{"version":"1.0"}' > .beads/config.json
-    exit 0
-    ;;
-  *)
-    echo "mock bd: unsupported command $command_name" >&2
-    exit 0
-    ;;
-esac
-`;
-
-  writeFileSync(cliPath, script);
-  chmodSync(cliPath, 0o755);
-}
 
 function runQuickstart(cwd: string, mockBinDir: string, args: string[] = []): { stdout: string; stderr: string; code: number } {
   const result = spawnSync('node', [CLI_PATH, 'quickstart', ...args], {
@@ -103,7 +75,6 @@ describe('quickstart expanded E2E tests', () => {
 
     mockBinDir = join(testDir, 'mock-bin');
     mkdirSync(mockBinDir, { recursive: true });
-    createMockBeadsCli(mockBinDir);
   });
 
   afterEach(() => {

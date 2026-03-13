@@ -11,7 +11,6 @@
  * - Protected branch blocking
  * - Git state checks (uncommitted, staged, unpushed)
  * - Test execution pass/fail handling
- * - Beads backup
  * - Git operations (add, commit, pull rebase, push)
  * - Full landing sequence orchestration
  * - Dry-run mode
@@ -35,7 +34,6 @@ import {
   hasStagedChanges,
   hasUnpushedCommits,
   runTests,
-  runBeadsBackup,
   gitAddAll,
   gitCommit,
   remoteBranchExists,
@@ -65,11 +63,6 @@ describe('parseLandArgs', () => {
   it('parses --skip-tests', () => {
     const opts = parseLandArgs(['--skip-tests']);
     expect(opts.skipTests).toBe(true);
-  });
-
-  it('parses --skip-backup', () => {
-    const opts = parseLandArgs(['--skip-backup']);
-    expect(opts.skipBackup).toBe(true);
   });
 
   it('parses --force and -f', () => {
@@ -276,24 +269,6 @@ describe('runTests', () => {
   });
 });
 
-// ─── runBeadsBackup ─────────────────────────────────────────────────────────
-
-describe('runBeadsBackup', () => {
-  it('returns success=true when bd backup works', () => {
-    mockedExecFileSync.mockReturnValue('Backup complete\n');
-    const result = runBeadsBackup();
-    expect(result.success).toBe(true);
-  });
-
-  it('returns success=false when bd is not available', () => {
-    mockedExecFileSync.mockImplementation(() => {
-      throw new Error('command not found');
-    });
-    const result = runBeadsBackup();
-    expect(result.success).toBe(false);
-  });
-});
-
 // ─── gitAddAll ──────────────────────────────────────────────────────────────
 
 describe('gitAddAll', () => {
@@ -493,7 +468,6 @@ describe('executeLanding', () => {
     mockedExecFileSync
       .mockReturnValueOnce('feature/something\n') // getCurrentBranch
       .mockReturnValueOnce('Tests passed\n') // npm test
-      .mockReturnValueOnce('Backup ok\n') // bd backup
       .mockReturnValueOnce('') // hasUncommittedChanges (git status --porcelain)
       .mockImplementation(() => { throw new Error('no remote'); }); // hasUnpushedCommits
     const result = executeLanding();
@@ -506,7 +480,6 @@ describe('executeLanding', () => {
     mockedExecFileSync
       .mockReturnValueOnce('epic/beth-z9n\n') // getCurrentBranch
       .mockReturnValueOnce('Tests: 361 passed\n') // npm test
-      .mockReturnValueOnce('Backup ok\n') // bd backup
       .mockReturnValueOnce('') // hasUncommittedChanges
       .mockImplementation(() => {
         throw new Error('no remote');
@@ -536,7 +509,6 @@ describe('executeLanding', () => {
     mockedExecFileSync
       .mockReturnValueOnce('epic/beth-z9n\n') // getCurrentBranch
       .mockImplementationOnce(() => { throw testError; }) // npm test fails
-      .mockReturnValueOnce('Backup ok\n') // bd backup
       .mockReturnValueOnce('') // hasUncommittedChanges (clean)
       .mockImplementation(() => { throw new Error('no remote'); }); // hasUnpushedCommits
     const landResult = executeLanding({ force: true });
@@ -550,7 +522,6 @@ describe('executeLanding', () => {
   it('skips tests with --skip-tests', () => {
     mockedExecFileSync
       .mockReturnValueOnce('epic/beth-z9n\n') // getCurrentBranch
-      .mockReturnValueOnce('Backup ok\n') // bd backup
       .mockReturnValueOnce('') // hasUncommittedChanges
       .mockImplementation(() => { throw new Error('no remote'); }); // hasUnpushedCommits
     const result = executeLanding({ skipTests: true });
@@ -558,22 +529,10 @@ describe('executeLanding', () => {
     expect(testStep?.status).toBe('skip');
   });
 
-  it('skips backup with --skip-backup', () => {
-    mockedExecFileSync
-      .mockReturnValueOnce('epic/beth-z9n\n') // getCurrentBranch
-      .mockReturnValueOnce('Tests passed\n') // npm test
-      .mockReturnValueOnce('') // hasUncommittedChanges
-      .mockImplementation(() => { throw new Error('no remote'); }); // hasUnpushedCommits
-    const result = executeLanding({ skipBackup: true });
-    const backupStep = result.steps.find((s) => s.step === 'Beads backup');
-    expect(backupStep?.status).toBe('skip');
-  });
-
   it('reports clean tree as success', () => {
     mockedExecFileSync
       .mockReturnValueOnce('epic/beth-z9n\n') // getCurrentBranch
       .mockReturnValueOnce('Tests passed\n') // npm test
-      .mockReturnValueOnce('Backup ok\n') // bd backup
       .mockReturnValueOnce('') // hasUncommittedChanges (clean)
       .mockReturnValueOnce('') // hasUnpushedCommits: show-ref
       .mockReturnValueOnce(''); // hasUnpushedCommits: git log (nothing)
@@ -588,7 +547,7 @@ describe('executeLanding', () => {
       .mockReturnValueOnce('epic/beth-z9n\n') // getCurrentBranch (always runs)
       .mockReturnValueOnce(' M foo.ts\n') // hasUncommittedChanges
       .mockImplementation(() => { throw new Error('no remote'); }); // hasUnpushedCommits
-    executeLanding({ dryRun: true, skipTests: true, skipBackup: true });
+    executeLanding({ dryRun: true, skipTests: true });
     // Should not have called git add, commit, push
     const addCall = mockedExecFileSync.mock.calls.find(
       (c) => c[0] === 'git' && (c[1] as string[])[0] === 'add',
@@ -604,7 +563,6 @@ describe('executeLanding', () => {
     mockedExecFileSync
       .mockReturnValueOnce('epic/beth-z9n\n') // getCurrentBranch
       .mockReturnValueOnce('Tests passed\n') // npm test
-      .mockReturnValueOnce('Backup ok\n') // bd backup
       .mockReturnValueOnce(' M foo.ts\n') // hasUncommittedChanges
       .mockImplementationOnce(() => { throw new Error('no remote'); }) // hasUnpushedCommits: show-ref fails
       .mockReturnValueOnce('') // git add -A
@@ -626,7 +584,6 @@ describe('executeLanding', () => {
     mockedExecFileSync
       .mockReturnValueOnce('epic/beth-z9n\n') // getCurrentBranch
       .mockReturnValueOnce('Tests passed\n') // npm test
-      .mockReturnValueOnce('Backup ok\n') // bd backup
       .mockReturnValueOnce(' M foo.ts\n') // hasUncommittedChanges
       .mockImplementationOnce(() => { throw new Error('no remote'); }) // hasUnpushedCommits
       .mockReturnValueOnce('') // git add -A
@@ -647,7 +604,6 @@ describe('executeLanding', () => {
     mockedExecFileSync
       .mockReturnValueOnce('epic/beth-z9n\n') // getCurrentBranch
       .mockReturnValueOnce('Tests: 361 passed, 1 skipped\n') // npm test
-      .mockReturnValueOnce('Backup complete\n') // bd backup
       .mockReturnValueOnce(' M src/land.ts\n') // hasUncommittedChanges
       .mockImplementationOnce(() => { throw new Error('no remote'); }) // hasUnpushedCommits
       .mockReturnValueOnce('') // git add -A
@@ -665,7 +621,6 @@ describe('executeLanding', () => {
     const stepNames = result.steps.map((s) => s.step);
     expect(stepNames).toContain('Branch check');
     expect(stepNames).toContain('Tests');
-    expect(stepNames).toContain('Beads backup');
     expect(stepNames).toContain('Stage changes');
     expect(stepNames).toContain('Commit');
     expect(stepNames).toContain('Pull rebase');
@@ -677,27 +632,12 @@ describe('executeLanding', () => {
     expect(failures).toHaveLength(0);
   });
 
-  it('beads backup failure is non-blocking', () => {
-    mockedExecFileSync
-      .mockReturnValueOnce('epic/beth-z9n\n') // getCurrentBranch
-      .mockReturnValueOnce('Tests passed\n') // npm test
-      .mockImplementationOnce(() => { throw new Error('bd not found'); }) // bd backup fails
-      .mockReturnValueOnce('') // hasUncommittedChanges (clean)
-      .mockReturnValueOnce('') // show-ref
-      .mockReturnValueOnce(''); // git log (no unpushed)
-    const result = executeLanding();
-    expect(result.success).toBe(true);
-    const backupStep = result.steps.find((s) => s.step === 'Beads backup');
-    expect(backupStep?.status).toBe('warn');
-  });
-
   it('push failure marks landing as failed', () => {
     const pushError = new Error('rejected') as Error & { stderr: string };
     pushError.stderr = 'rejected (non-fast-forward)';
     mockedExecFileSync
       .mockReturnValueOnce('epic/beth-z9n\n') // getCurrentBranch
       .mockReturnValueOnce('Tests passed\n') // npm test
-      .mockReturnValueOnce('Backup ok\n') // bd backup
       .mockReturnValueOnce(' M foo.ts\n') // hasUncommittedChanges
       .mockImplementationOnce(() => { throw new Error('no remote'); }) // hasUnpushedCommits
       .mockReturnValueOnce('') // git add
@@ -714,7 +654,6 @@ describe('executeLanding', () => {
     mockedExecFileSync
       .mockReturnValueOnce('epic/beth-z9n\n') // getCurrentBranch
       .mockReturnValueOnce('Tests passed\n') // npm test
-      .mockReturnValueOnce('Backup ok\n') // bd backup
       .mockReturnValueOnce(' M foo.ts\n') // hasUncommittedChanges
       .mockReturnValueOnce('') // hasUnpushedCommits: show-ref succeeds (remote exists)
       .mockReturnValueOnce('abc123 commit msg\n') // hasUnpushedCommits: git log (has unpushed)
@@ -738,7 +677,6 @@ describe('executeLanding', () => {
     mockedExecFileSync
       .mockReturnValueOnce('epic/beth-z9n\n') // getCurrentBranch
       .mockReturnValueOnce('Tests passed\n') // npm test
-      .mockReturnValueOnce('Backup ok\n') // bd backup
       .mockReturnValueOnce(' M foo.ts\n') // hasUncommittedChanges
       .mockReturnValueOnce('') // hasUnpushedCommits: show-ref succeeds (remote exists)
       .mockReturnValueOnce('abc123 commit msg\n') // hasUnpushedCommits: git log (has unpushed)

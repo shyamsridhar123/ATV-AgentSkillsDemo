@@ -32,7 +32,7 @@ Make Beth work identically whether invoked via GitHub Copilot custom agents OR a
 │   (routing)     │   (parse .md)   │   (triggers)    │  (conversation)      │
 ├─────────────────┴─────────────────┴─────────────────┴──────────────────────┤
 │                           Tool Interface                                    │
-│   readFile │ editFile │ search │ terminal │ subagent │ beads │ mcp        │
+│   readFile │ editFile │ search │ terminal │ subagent │ mcp              │
 └────────────────────────────────────────────────────────────────────────────┘
                                          │
                     ┌────────────────────▼───────────────┐
@@ -112,9 +112,8 @@ Make Beth work identically whether invoked via GitHub Copilot custom agents OR a
    - `editFile.ts` — Atomic string replacement with single-match enforcement
    - `search.ts` — Ripgrep with Node.js fallback
    - `terminal.ts` — Secure command execution via execFile('/bin/sh', ['-c', cmd])
-   - `beads.ts` — Issue tracking via bd CLI wrapper
    - `subagent.ts` — Agent spawning stub (full implementation in Phase 4)
-   - 108 tests across 6 test files
+   - 108 tests across 5 test files
 
 9. **MCP client** in `src/tools/mcp/` ✅:
    - `client.ts` — JSON-RPC 2.0 over stdio, MCP protocol handshake
@@ -127,7 +126,7 @@ Make Beth work identically whether invoked via GitHub Copilot custom agents OR a
     - Route user requests to appropriate agent
     - Manage agent-to-agent handoffs
     - Handle subagent spawning and result collection
-    - Track active issues via beads integration
+    - Track active issues via Backlog.md
 
 11. **Implement context manager** in `src/core/context.ts`:
     - Maintain conversation history per agent
@@ -223,7 +222,6 @@ beth/
 │   │       ├── editFile.ts
 │   │       ├── search.ts
 │   │       ├── terminal.ts
-│   │       ├── beads.ts
 │   │       └── subagent.ts
 │   │   └── mcp/
 │   │       ├── client.ts         # MCP protocol client

@@ -5,29 +5,13 @@
 
 import { describe, it, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert';
-import { execSync, spawnSync } from 'child_process';
+import { spawnSync } from 'child_process';
 import { existsSync, mkdirSync, writeFileSync, rmSync } from 'fs';
 import { join, resolve } from 'path';
 import { tmpdir } from 'os';
 
 // Path to CLI
 const CLI_PATH = resolve(join(import.meta.dirname, '../../../bin/cli.js'));
-
-// Check if beads CLI is available for conditional tests
-function isBeadsInstalled(): boolean {
-  try {
-    execSync('bd --version', { stdio: 'ignore' });
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-const BEADS_AVAILABLE = isBeadsInstalled();
-
-// Skip reason for tests requiring beads
-const SKIP_NO_BEADS = !BEADS_AVAILABLE ? 'beads CLI not installed' : false;
-const SKIP_BEADS_INSTALLED = BEADS_AVAILABLE ? 'beads CLI is installed, cannot test missing CLI' : false;
 
 /**
  * Run quickstart command in a directory
@@ -76,16 +60,6 @@ function createSkillsDir(dir: string): void {
   writeFileSync(join(skillsDir, 'SKILL.md'), '# Test Skill');
 }
 
-/**
- * Simulate beads initialization by creating .beads directory
- */
-function simulateBeadsInit(dir: string): void {
-  const beadsDir = join(dir, '.beads');
-  mkdirSync(beadsDir, { recursive: true });
-  // Create minimal beads structure
-  writeFileSync(join(beadsDir, 'config.json'), JSON.stringify({ version: '1.0' }));
-}
-
 describe('quickstart command E2E', () => {
   let testDir: string;
 
@@ -121,10 +95,9 @@ describe('quickstart command E2E', () => {
     it('should detect Beth is initialized when .github/agents exists', () => {
       createBethProject(testDir);
       
-      // Even if beads is missing, it should pass the Beth check first
       const result = runQuickstart(testDir);
       
-      // Should show Beth is initialized (may fail later for beads)
+      // Should show Beth is initialized
       assert.ok(
         result.stdout.includes('Beth is initialized') || result.stdout.includes('✓'),
         'Should confirm Beth is initialized'
@@ -132,57 +105,10 @@ describe('quickstart command E2E', () => {
     });
   });
 
-  describe('beads CLI detection', () => {
-    it('should detect missing beads CLI', { skip: SKIP_BEADS_INSTALLED }, () => {
-      createBethProject(testDir);
-      
-      const result = runQuickstart(testDir);
-      
-      assert.strictEqual(result.status, 1, 'Should exit with status 1 when beads missing');
-      assert.ok(
-        result.stdout.includes('beads CLI not found') || result.stdout.includes('not found'),
-        'Should indicate beads CLI is not found'
-      );
-    });
-  });
-
-  describe('beads initialization', () => {
-    it('should detect uninitialized beads (no .beads directory)', { skip: SKIP_NO_BEADS }, () => {
-      createBethProject(testDir);
-      
-      // Verify .beads doesn't exist initially
-      assert.strictEqual(existsSync(join(testDir, '.beads')), false);
-      
-      // Note: quickstart will try to run `bd init` which may or may not succeed
-      // depending on the environment. We're testing detection, not initialization.
-      const result = runQuickstart(testDir);
-      
-      // The command should attempt to initialize beads or indicate it's not initialized
-      assert.ok(
-        result.stdout.includes('beads') || result.stdout.includes('Initializing'),
-        'Should mention beads in output'
-      );
-    });
-
-    it('should recognize existing beads initialization', { skip: SKIP_NO_BEADS }, () => {
-      createBethProject(testDir);
-      simulateBeadsInit(testDir);
-      
-      const result = runQuickstart(testDir);
-      
-      assert.ok(
-        result.stdout.includes('beads already initialized') || 
-        result.stdout.includes('already initialized'),
-        'Should indicate beads is already initialized'
-      );
-    });
-  });
-
   describe('Quick Start Guide output', () => {
-    it('should show Quick Start Guide with VS Code instructions', { skip: SKIP_NO_BEADS }, () => {
+    it('should show Quick Start Guide with VS Code instructions', () => {
       createBethProject(testDir);
       createSkillsDir(testDir);
-      simulateBeadsInit(testDir);
       
       const result = runQuickstart(testDir);
       
@@ -211,10 +137,9 @@ describe('quickstart command E2E', () => {
       );
     });
 
-    it('should show Beth tagline quote', { skip: SKIP_NO_BEADS }, () => {
+    it('should show Beth tagline quote', () => {
       createBethProject(testDir);
       createSkillsDir(testDir);
-      simulateBeadsInit(testDir);
       
       const result = runQuickstart(testDir);
       
@@ -227,10 +152,9 @@ describe('quickstart command E2E', () => {
   });
 
   describe('doctor integration', () => {
-    it('should run doctor check and show results', { skip: SKIP_NO_BEADS }, () => {
+    it('should run doctor check and show results', () => {
       createBethProject(testDir);
       createSkillsDir(testDir);
-      simulateBeadsInit(testDir);
       
       const result = runQuickstart(testDir);
       
@@ -249,10 +173,9 @@ describe('quickstart command E2E', () => {
       );
     });
 
-    it('should pass --verbose flag through to doctor command', { skip: SKIP_NO_BEADS }, () => {
+    it('should pass --verbose flag through to doctor command', () => {
       createBethProject(testDir);
       createSkillsDir(testDir);
-      simulateBeadsInit(testDir);
       
       // Run with verbose flag
       const verboseResult = runQuickstart(testDir, ['--verbose']);
@@ -270,11 +193,10 @@ describe('quickstart command E2E', () => {
   });
 
   describe('full success scenario', () => {
-    it('should succeed in fully initialized project', { skip: SKIP_NO_BEADS }, () => {
+    it('should succeed in fully initialized project', () => {
       // Create complete project structure
       createBethProject(testDir);
       createSkillsDir(testDir);
-      simulateBeadsInit(testDir);
       
       // Also create AGENTS.md and Backlog.md  
       writeFileSync(join(testDir, 'AGENTS.md'), '# Agent Instructions');

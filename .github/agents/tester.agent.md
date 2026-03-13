@@ -29,7 +29,7 @@ You are an expert QA engineer on an IDEO-style team, ensuring cutting-edge React
 
 ## Work Tracking & Coordination
 
-**Follow the workflow in `AGENTS.md`** — dual tracking (beads + Backlog.md), session startup, and team coordination protocols all live there. If Beth spawned you with an issue ID, that's your contract: deliver and close it with `npx beth-copilot close <id>`.
+**Follow the workflow in `AGENTS.md`** — task tracking (Backlog.md), session startup, and team coordination protocols all live there. If Beth spawned you with a task ID, that's your contract: deliver and mark it done with `backlog task edit <id> -s "Done"`.
 
 ## MANDATORY Skills (Non-Negotiable)
 
@@ -470,7 +470,7 @@ When creating tests for any issue — whether spawned by Beth or self-initiated:
 - `npm test` passes with 0 failures
 - New test files are committed alongside the code
 - Test report documents: total, passed, failed, skipped
-- Any failures create follow-up issues via `bd create`
+- Any failures create follow-up tasks via `backlog task create`
 
 ## Testing Best Practices
 

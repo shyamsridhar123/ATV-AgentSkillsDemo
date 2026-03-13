@@ -56,7 +56,7 @@ flowchart LR
 | **Auth** | `@azure/identity` DefaultAzureCredential | az login, managed identity, VS Code creds |
 | **Frontmatter** | `gray-matter` | Parses `.agent.md` and `SKILL.md` YAML |
 | **Testing** | vitest + Node.js test runner | 478 tests — unit, integration, E2E |
-| **Task Tracking** | beads (`bd` CLI) | Dependency-aware issue tracking for agents |
+| **Task Tracking** | Backlog.md (`backlog` CLI) | Markdown-based task tracking for agents and humans |
 | **Package Manager** | npm | Lockfile committed |
 
 **Production dependencies:** 2 (`gray-matter`, `bs-buster`). Minimal attack surface by design.
@@ -80,8 +80,8 @@ Then open VS Code, switch Copilot Chat to **Agent mode**, and type `@Beth`.
 
 **Verify everything works:**
 ```bash
-beth doctor       # Health check: Node.js, beads, agents, skills
-beth quickstart   # Init + doctor + beads setup in one shot
+beth doctor       # Health check: Node.js, agents, skills
+beth quickstart   # Init + doctor in one shot
 ```
 
 For detailed setup (prerequisites, task tracking, MCP servers): [docs/INSTALLATION.md](docs/INSTALLATION.md)
@@ -92,21 +92,20 @@ For detailed setup (prerequisites, task tracking, MCP servers): [docs/INSTALLATI
 
 | Command | What It Does |
 |---------|-------------|
-| `beth init` | Install agents, skills, VS Code settings, beads tracking, pre-push hook |
+| `beth init` | Install agents, skills, VS Code settings, Backlog.md tracking, pre-push hook |
 | `beth init --force` | Overwrite existing files |
-| `beth doctor` | Validate Node.js ≥18, beads CLI, agents frontmatter, skills |
-| `beth quickstart` | Run init + doctor + beads init in one shot |
-| `beth close <id>` | Close a beads issue with 3-layer enforcement (deps, children, test subtasks) |
-| `beth land` | Automate session completion: tests, backup, commit, push, verify sync |
+| `beth doctor` | Validate Node.js ≥18, agents frontmatter, skills |
+| `beth quickstart` | Run init + doctor in one shot |
+| `beth land` | Automate session completion: tests, commit, push, verify sync |
 | `beth help` | Show all commands and options |
 
-**Flags:** `--force`, `--skip-backlog`, `--skip-mcp`, `--skip-beads`, `--verbose`, `--skip-tests`, `--skip-backup`, `--message/-m`, `--dry-run`
+**Flags:** `--force`, `--skip-backlog`, `--skip-mcp`, `--verbose`, `--skip-tests`, `--message/-m`, `--dry-run`
 
 ---
 
 ## Agent Orchestration
 
-Beth doesn't micromanage. She delegates to specialists over **subagent** and **handoff** channels, tracks dependencies with beads, and holds every agent accountable.
+Beth doesn't micromanage. She delegates to specialists over **subagent** and **handoff** channels, tracks work in Backlog.md, and holds every agent accountable.
 
 ### The Family
 
@@ -254,7 +253,7 @@ Three complementary skills cover the full design-to-code pipeline. They don't ov
 
 ## How It Works
 
-Beth runs inside VS Code Copilot Agent Mode. The `@Beth` agent parses requests, delegates to specialist agents via subagent spawning, and tracks work through beads.
+Beth runs inside VS Code Copilot Agent Mode. The `@Beth` agent parses requests, delegates to specialist agents via subagent spawning, and tracks work through Backlog.md.
 
 ```mermaid
 flowchart LR
@@ -270,12 +269,12 @@ flowchart LR
 **Key capabilities:**
 - **Agent routing** — `@mention` parsing, subagent spawning, handoff chains
 - **Skill injection** — Domain knowledge loaded on trigger phrases
-- **Task tracking** — beads (`bd`) for epics, subtasks, dependencies
+- **Task tracking** — Backlog.md (`backlog`) for tasks, milestones, and progress
 - **MCP integration** — Optional external tool servers (shadcn, Playwright, Azure)
 
 ```
 @Beth implement the login page
-→ Beth routes to @developer, tracks work in beads
+→ Beth routes to @developer, tracks work in Backlog.md
 
 @Beth review this PR for security vulnerabilities
 → Beth routes to @security-reviewer, injects security-analysis skill
@@ -290,7 +289,7 @@ flowchart LR
 
 ## Tool Abstraction Layer
 
-A uniform interface for all agent capabilities — file I/O, terminal, search, beads, subagent spawning, and MCP server tools. Tools expose OpenAI-compatible function calling schemas so the LLM can invoke them directly.
+A uniform interface for all agent capabilities — file I/O, terminal, search, task tracking, subagent spawning, and MCP server tools. Tools expose OpenAI-compatible function calling schemas so the LLM can invoke them directly.
 
 | Tool | What It Does | Key Features |
 |------|-------------|-------------- |
@@ -298,7 +297,7 @@ A uniform interface for all agent capabilities — file I/O, terminal, search, b
 | **editFile** | Atomic string replacement | Single-match enforcement, whitespace-safe |
 | **search** | Ripgrep search | Node.js fallback, regex support, file filtering |
 | **terminal** | Execute shell commands | `execFile('/bin/sh')` — no shell injection, timeouts |
-| **beads** | Issue tracking | `bd create`, `npx beth-copilot close`, `bd list` via CLI wrapper |
+| **backlog** | Task tracking | `backlog task create`, `backlog board`, `backlog task edit` via CLI |
 | **subagent** | Spawn nested agents | Returns structured result for orchestrator to process |
 | **MCP Bridge** | External tool servers | JSON-RPC 2.0 over stdio, JSONC config, namespaced tools |
 
@@ -331,14 +330,14 @@ flowchart LR
     CLI --> Doctor["doctor"]
     CLI --> QS["quickstart"]
     Init --> Templates[".agent.md · SKILL.md · settings"]
-    Doctor --> Checks["Node ≥18 · beads · agents · skills"]
+    Doctor --> Checks["Node ≥18 · agents · skills"]
     QS --> Init & Doctor
 ```
 
 **Commands:**
-- `beth init` — Scaffold agents, skills, VS Code settings, beads tracking
-- `beth doctor` — Validate Node.js, beads CLI, agent frontmatter, skill directories
-- `beth quickstart` — Run init + doctor + beads init in one shot
+- `beth init` — Scaffold agents, skills, VS Code settings, Backlog.md tracking
+- `beth doctor` — Validate Node.js, agent frontmatter, skill directories
+- `beth quickstart` — Run init + doctor in one shot
 
 ---
 
@@ -379,7 +378,7 @@ beth/
 │   │   │   ├── editFile.ts         # Atomic string replacement
 │   │   │   ├── search.ts           # Ripgrep with Node.js fallback
 │   │   │   ├── terminal.ts         # Secure command execution
-│   │   │   ├── beads.ts            # Issue tracking via bd CLI
+│   │   │   ├── backlog.ts           # Task tracking via backlog CLI
 │   │   │   └── subagent.ts         # Agent spawning interface
 │   │   └── mcp/
 │   │       ├── client.ts           # JSON-RPC 2.0 over stdio
@@ -420,7 +419,7 @@ beth/
 | editFile | 30+ | String replacement, single-match enforcement |
 | search | 30+ | Ripgrep, Node.js fallback, regex, file filtering |
 | terminal | 30+ | Command execution, timeouts, output capture |
-| beads | 30+ | bd CLI wrapper, create/close/list/ready |
+| backlog | 30+ | Backlog.md CLI wrapper, task tracking |
 | subagent | 30+ | Spawn interface, result marking, agent validation |
 | MCP client | 30+ | JSON-RPC 2.0, protocol handshake, tool listing |
 | MCP bridge | 30+ | JSONC parsing, tool namespacing, error handling |
@@ -521,23 +520,6 @@ Is it magic? No. It's just competence with very good hair.
 - **Node.js** ≥ 18
 - **VS Code** with GitHub Copilot extension
 - **GitHub Copilot Chat** in Agent mode
-- [**beads**](https://github.com/steveyegge/beads) for task tracking (`bd` CLI)
-
-### Installing Beads
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/steveyegge/beads/main/scripts/install.sh | bash
-```
-
-**Common beads issues:**
-- `bd: command not found` — Add `~/.local/bin` to your PATH: `export PATH="$HOME/.local/bin:$PATH"`
-- `bd doctor` warnings about metadata — Run `bd doctor --fix` to auto-repair
-- JSONL corruption — Delete `.beads/` and re-initialize with `bd init`
-
-```bash
-# Verify beads is working
-bd doctor
-```
 
 ### Optional: MCP Servers
 
@@ -549,7 +531,7 @@ See [MCP Integrations](#mcp-integrations) above or [docs/MCP-SETUP.md](docs/MCP-
 
 | Doc | Purpose |
 |-----|---------|
-| [Installation Guide](docs/INSTALLATION.md) | Full setup: prerequisites, VS Code config, beads |
+| [Installation Guide](docs/INSTALLATION.md) | Full setup: prerequisites, VS Code config, Backlog.md |
 | [MCP Setup](docs/MCP-SETUP.md) | Optional server integrations |
 | [CLI Architecture](docs/CLI-ARCHITECTURE.md) | Dual-interface design, implementation phases |
 | [System Flow](docs/SYSTEM-FLOW.md) | Agent orchestration diagrams |

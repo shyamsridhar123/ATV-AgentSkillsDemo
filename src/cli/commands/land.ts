@@ -9,14 +9,11 @@
  * What this command handles:
  *   1. Verify we're on an epic branch (not main/master)
  *   2. Run quality gates (npm test)
- *   3. Backup beads data (bd backup)
- *   4. Stage, commit, and push to origin
- *   5. Report final status
+ *   3. Stage, commit, and push to origin
+ *   4. Report final status
  *
  * What this command does NOT handle (manual / agent responsibility):
- *   - Closing beads issues          (`npx beth-copilot close <id>`)
- *   - Creating follow-up issues     (`bd create`)
- *   - Updating Backlog.md           (human-readable completed-work archive)
+ *   - Updating Backlog.md           (task tracking)
  *   - Generating test gate report   (`npm run test:gate`)
  *   - Creating a PR to main         (`gh pr create` or GitHub MCP)
  *
@@ -26,7 +23,6 @@
  *
  * Options:
  *   --skip-tests    Skip test execution (not recommended)
- *   --skip-backup   Skip beads backup
  *   --message, -m   Custom commit message (default: "<epic-id>: session work")
  *   --force         Push even if tests fail (DANGEROUS)
  *   --dry-run       Show what would happen without executing
@@ -46,7 +42,6 @@ const COLORS = {
 
 export interface LandOptions {
   skipTests?: boolean;
-  skipBackup?: boolean;
   message?: string;
   force?: boolean;
   dryRun?: boolean;
@@ -83,8 +78,6 @@ export function parseLandArgs(rawArgs: string[]): LandOptions {
 
     if (arg === '--skip-tests') {
       opts.skipTests = true;
-    } else if (arg === '--skip-backup') {
-      opts.skipBackup = true;
     } else if (arg === '--force' || arg === '-f') {
       opts.force = true;
     } else if (arg === '--dry-run') {
@@ -213,22 +206,9 @@ export function runTests(): { passed: boolean; output: string } {
   }
 }
 
-/**
- * Run beads backup (bd backup).
- */
+/** @deprecated Beads removed — stub kept for API compat. */
 export function runBeadsBackup(): { success: boolean; output: string } {
-  try {
-    const output = execFileSync('bd', ['backup'], {
-      encoding: 'utf-8',
-      timeout: 30000,
-      stdio: ['pipe', 'pipe', 'pipe'],
-    });
-    return { success: true, output };
-  } catch (error: unknown) {
-    const output =
-      (error && typeof error === 'object' && 'stderr' in error ? String((error as { stderr: unknown }).stderr) : '');
-    return { success: false, output };
-  }
+  return { success: true, output: 'beads removed — no backup needed' };
 }
 
 /**
@@ -408,7 +388,7 @@ function logStep(result: LandStepResult): void {
  */
 export function executeLanding(options: LandOptions = {}): LandResult {
   const steps: LandStepResult[] = [];
-  const { skipTests, skipBackup, message, force, dryRun } = options;
+  const { skipTests, message, force, dryRun } = options;
 
   console.log(`\n${COLORS.bright}${COLORS.cyan}━━━ Landing the Plane ━━━${COLORS.reset}\n`);
 
@@ -497,36 +477,7 @@ export function executeLanding(options: LandOptions = {}): LandResult {
     }
   }
 
-  // Step 3: Beads backup
-  if (skipBackup) {
-    const step: LandStepResult = {
-      step: 'Beads backup',
-      status: 'skip',
-      message: 'Skipped (--skip-backup)',
-    };
-    steps.push(step);
-    logStep(step);
-  } else {
-    const backupStep = executeStep('Beads backup', !!dryRun, () => {
-      const { success } = runBeadsBackup();
-      if (success) {
-        return {
-          step: 'Beads backup',
-          status: 'pass',
-          message: 'Beads data backed up',
-        };
-      }
-      return {
-        step: 'Beads backup',
-        status: 'warn',
-        message: 'Beads backup failed (bd not available or no data)',
-        details: 'Non-blocking — continuing with landing',
-      };
-    });
-    steps.push(backupStep);
-  }
-
-  // Step 4: Check for changes to commit
+  // Step 3: Check for changes to commit
   const hasChanges = hasUncommittedChanges();
   const unpushed = hasUnpushedCommits(branch);
 
@@ -542,7 +493,7 @@ export function executeLanding(options: LandOptions = {}): LandResult {
     return { success: true, steps, branch, epicId: epicId ?? undefined };
   }
 
-  // Step 5: Stage changes
+  // Step 4: Stage changes
   if (hasChanges) {
     const stageStep = executeStep('Stage changes', !!dryRun, () => {
       if (gitAddAll()) {
@@ -565,7 +516,7 @@ export function executeLanding(options: LandOptions = {}): LandResult {
     }
   }
 
-  // Step 6: Commit
+  // Step 5: Commit
   if (hasChanges) {
     const commitMsg = message || `${epicId ? epicId + ': ' : ''}session work`;
     const commitStep = executeStep('Commit', !!dryRun, () => {
@@ -586,7 +537,7 @@ export function executeLanding(options: LandOptions = {}): LandResult {
     steps.push(commitStep);
   }
 
-  // Step 7: Pull with rebase
+  // Step 6: Pull with rebase
   const pullStep = executeStep('Pull rebase', !!dryRun, () => {
     if (!remoteBranchExists(branch)) {
       return {
@@ -619,7 +570,7 @@ export function executeLanding(options: LandOptions = {}): LandResult {
     return { success: false, steps, branch, epicId: epicId ?? undefined };
   }
 
-  // Step 8: Push
+  // Step 7: Push
   const pushStep = executeStep('Push', !!dryRun, () => {
     const { success, output } = gitPush(branch);
     if (success) {
@@ -643,7 +594,7 @@ export function executeLanding(options: LandOptions = {}): LandResult {
     return { success: false, steps, branch, epicId: epicId ?? undefined };
   }
 
-  // Step 9: Verify
+  // Step 8: Verify
   if (!dryRun) {
     const verifyStep: LandStepResult = (() => {
       if (isUpToDateWithOrigin(branch)) {
@@ -671,12 +622,10 @@ export function executeLanding(options: LandOptions = {}): LandResult {
   if (failed === 0) {
     console.log(`${COLORS.green}✓ Landed successfully on ${branch}${COLORS.reset}`);
     console.log(`\n${COLORS.bright}Remaining manual steps (see AGENTS.md):${COLORS.reset}`);
-    console.log(`${COLORS.dim}  1. Close completed beads issues   npx beth-copilot close <id>${COLORS.reset}`);
-    console.log(`${COLORS.dim}  2. Create follow-up issues         bd create "..." ${COLORS.reset}`);
-    console.log(`${COLORS.dim}  3. Update Backlog.md               (completed-work archive)${COLORS.reset}`);
-    console.log(`${COLORS.dim}  4. Generate test gate report        npm run test:gate${COLORS.reset}`);
+    console.log(`${COLORS.dim}  1. Update Backlog.md               backlog task edit <id> -s "Done"${COLORS.reset}`);
+    console.log(`${COLORS.dim}  2. Generate test gate report        npm run test:gate${COLORS.reset}`);
     if (epicId) {
-      console.log(`${COLORS.dim}  5. Create a PR to main             gh pr create --base main --head ${branch}${COLORS.reset}`);
+      console.log(`${COLORS.dim}  3. Create a PR to main             gh pr create --base main --head ${branch}${COLORS.reset}`);
     }
   } else {
     console.log(`${COLORS.red}✗ Landing incomplete — ${failed} step(s) failed${COLORS.reset}`);

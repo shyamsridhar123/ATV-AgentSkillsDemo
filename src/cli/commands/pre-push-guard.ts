@@ -4,7 +4,6 @@
  * Validates before push:
  * - No direct pushes to main/master (BLOCKS)
  * - Current branch follows epic/<id> convention (WARNING)
- * - Open in-progress beads issues reported (WARNING)
  * - Bypassed with BETH_SKIP_PUSH_GUARD=1 environment variable
  */
 
@@ -120,34 +119,10 @@ export function getCurrentBranch(): string | null {
 }
 
 /**
- * Get beads issues with in_progress status.
- * Returns empty array if bd is unavailable or errors.
+ * @deprecated Beads removed — stub kept for API compat.
  */
 export function getInProgressIssues(): Array<{ id: string; title: string }> {
-  try {
-    const output = execFileSync('bd', ['list', '--json'], {
-      encoding: 'utf-8',
-      timeout: 10000,
-      stdio: ['pipe', 'pipe', 'pipe'],
-    });
-
-    const parsed: unknown = JSON.parse(output);
-    if (!Array.isArray(parsed)) return [];
-
-    return parsed
-      .filter(
-        (item: unknown): item is { id: string; title: string; status: string } =>
-          typeof item === 'object' &&
-          item !== null &&
-          'id' in item &&
-          'title' in item &&
-          'status' in item &&
-          (item as Record<string, unknown>).status === 'in_progress',
-      )
-      .map((item) => ({ id: item.id, title: item.title }));
-  } catch {
-    return [];
-  }
+  return [];
 }
 
 /**
@@ -155,13 +130,13 @@ export function getInProgressIssues(): Array<{ id: string; title: string }> {
  *
  * @param currentBranch - Current Git branch name
  * @param refs - Optional parsed push refs from Git stdin (for remote ref validation)
- * @param checkBeads - Whether to check for in-progress beads issues
+ * @param _checkBeads - Deprecated, ignored. Kept for API compat.
  * @returns GuardResult with allowed status and diagnostics
  */
 export function runGuard(
   currentBranch: string | null,
   refs?: PushRef[],
-  checkBeads = true,
+  _checkBeads = false, // Deprecated — kept for API compat
 ): GuardResult {
   const errors: string[] = [];
   const warnings: string[] = [];
@@ -192,24 +167,6 @@ export function runGuard(
     warnings.push(
       `Branch '${currentBranch}' doesn't follow the epic/<id> convention. Consider renaming.`,
     );
-  }
-
-  // Check 3: Warn about in-progress beads issues (soft check)
-  if (checkBeads) {
-    try {
-      const inProgress = getInProgressIssues();
-      if (inProgress.length > 0) {
-        warnings.push(
-          `${inProgress.length} issue${inProgress.length === 1 ? '' : 's'} still in_progress:`,
-        );
-        for (const issue of inProgress) {
-          warnings.push(`  ◐ ${issue.id}: ${issue.title}`);
-        }
-        warnings.push('Consider closing completed work before pushing.');
-      }
-    } catch {
-      // bd not available — skip silently
-    }
   }
 
   return {
