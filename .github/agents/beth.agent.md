@@ -540,14 +540,15 @@ Know when to loop someone in:
 ## Backlog Quick Reference
 
 ```bash
-# Task lifecycle
-backlog task create "Title" -d "Description"           # Create a task
-backlog task edit <id> -s "In Progress"                # Start working
-backlog task edit <id> -s "Done"                       # Mark complete
+# Task lifecycle (--plain prevents TUI after mutation)
+backlog task create "Title" -d "Description" --plain   # Create a task
+backlog task edit <id> -s "In Progress" --plain        # Start working
+backlog task edit <id> -s "Done" --plain               # Mark complete
 
-# Coordination
+# Coordination (already plain-text output)
 backlog board                                           # See the Kanban board
 backlog task show <id>                                  # View task details
+backlog task list --plain                               # All tasks by status
 ```
 
 ## Final Word

@@ -5,23 +5,23 @@ This project uses [Backlog.md](Backlog.md) for task tracking — the single sour
 ## Backlog.md CLI Quick Reference
 
 ```bash
-# See everything at once (ALWAYS use --plain to avoid TUI)
+# See everything at once (use --plain where supported to avoid TUI)
 backlog task list --plain              # All tasks grouped by status
 backlog task list -s "In Progress" --plain  # Filter by status
-backlog board                          # Kanban board
-backlog overview                       # Project health stats
+backlog board                          # Kanban board (always plain-text)
+backlog overview                       # Project health stats (always plain-text)
 
-# Task lifecycle
-backlog task create "Title" -d "Description"   # Create
-backlog task edit BETH-X -s "In Progress"       # Start
-backlog task edit BETH-X -s "Done"              # Close
-backlog task edit BETH-X --append-notes "text"  # Add notes
+# Task lifecycle (--plain prevents TUI after mutation)
+backlog task create "Title" -d "Description" --plain   # Create
+backlog task edit BETH-X -s "In Progress" --plain       # Start
+backlog task edit BETH-X -s "Done" --plain              # Close
+backlog task edit BETH-X --append-notes "text" --plain  # Add notes
 
 # Search
 backlog search "query" --plain         # Fuzzy search across tasks
 ```
 
-**CRITICAL:** Always use `--plain` flag — without it, commands open a TUI that agents cannot interact with.
+**CRITICAL:** Always use `--plain` flag on commands that support it (`task list`, `task create`, `task edit`, `search`) — without it, these commands open a TUI that agents cannot interact with. Commands like `board` and `overview` are already plain-text.
 
 ## Quick Setup
 
