@@ -1,9 +1,10 @@
 ---
 id: BETH-1.6
 title: Clean up Dolt artifacts
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-03-11 19:29'
+updated_date: '2026-03-13 17:24'
 labels: []
 dependencies: []
 references:

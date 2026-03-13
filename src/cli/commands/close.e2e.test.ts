@@ -2,7 +2,7 @@
  * E2E tests for close command (DEPRECATED).
  *
  * The close command was deprecated when beads was removed.
- * It now prints a deprecation message and exits 0 for all inputs.
+ * It now prints a deprecation message and exits 1 for all inputs.
  *
  * Repro steps:
  *   1. Run: npx vitest run src/cli/commands/close.e2e.test.ts
@@ -35,18 +35,18 @@ function runClose(args: string): { stdout: string; stderr: string; code: number 
 
 describe('close command E2E (deprecated)', () => {
   describe('deprecation behavior', () => {
-    it('should exit 0 with deprecation message when no ID given', () => {
+    it('should exit 1 with deprecation message when no ID given', () => {
       const result = runClose('');
-      assert.strictEqual(result.code, 0, 'Deprecated close should exit 0');
+      assert.strictEqual(result.code, 1, 'Deprecated close should exit 1');
       assert.ok(
         result.stdout.includes('deprecated') || result.stdout.includes('Backlog.md'),
         'Should show deprecation message'
       );
     });
 
-    it('should exit 0 with deprecation message when ID given', () => {
+    it('should exit 1 with deprecation message when ID given', () => {
       const result = runClose('beth-abc123');
-      assert.strictEqual(result.code, 0, 'Deprecated close should exit 0 with ID');
+      assert.strictEqual(result.code, 1, 'Deprecated close should exit 1 with ID');
       assert.ok(
         result.stdout.includes('deprecated') || result.stdout.includes('Backlog.md'),
         'Should show deprecation message'
@@ -63,7 +63,7 @@ describe('close command E2E (deprecated)', () => {
 
     it('should accept --reason flag without error', () => {
       const result = runClose('beth-zzz999 --reason "Testing close"');
-      assert.strictEqual(result.code, 0, 'Should accept --reason');
+      assert.strictEqual(result.code, 1, 'Should accept --reason');
       assert.ok(
         !result.stderr.includes('Unknown flag'),
         'Should not reject --reason as unknown flag'
@@ -72,7 +72,7 @@ describe('close command E2E (deprecated)', () => {
 
     it('should accept -r shorthand for --reason', () => {
       const result = runClose('beth-zzz999 -r "Short reason"');
-      assert.strictEqual(result.code, 0, 'Should accept -r');
+      assert.strictEqual(result.code, 1, 'Should accept -r');
       assert.ok(
         !result.stderr.includes('Unknown flag'),
         '-r should be accepted as reason shorthand'
@@ -81,7 +81,7 @@ describe('close command E2E (deprecated)', () => {
 
     it('should accept --force flag without error', () => {
       const result = runClose('beth-zzz999 --force');
-      assert.strictEqual(result.code, 0, 'Should accept --force');
+      assert.strictEqual(result.code, 1, 'Should accept --force');
       assert.ok(
         !result.stderr.includes('Unknown flag'),
         '--force should be accepted'
@@ -90,7 +90,7 @@ describe('close command E2E (deprecated)', () => {
 
     it('should accept -f shorthand for --force', () => {
       const result = runClose('beth-zzz999 -f');
-      assert.strictEqual(result.code, 0, 'Should accept -f');
+      assert.strictEqual(result.code, 1, 'Should accept -f');
       assert.ok(
         !result.stderr.includes('Unknown flag'),
         '-f should be accepted as force shorthand'

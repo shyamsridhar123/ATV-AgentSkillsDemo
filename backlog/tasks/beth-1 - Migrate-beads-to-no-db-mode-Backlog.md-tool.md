@@ -1,9 +1,10 @@
 ---
 id: BETH-1
 title: Migrate beads to no-db mode + Backlog.md tool
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-03-11 19:28'
+updated_date: '2026-03-13 17:24'
 labels: []
 dependencies: []
 references:
