@@ -14,7 +14,7 @@ Run these checks:
 
 ```bash
 # Count components
-echo "Agents: $(ls plugins/compound-engineering/agents/*.md | wc -l)"
+echo "Agents: $(ls plugins/compound-engineering/agents/*.md 2>/dev/null | wc -l)"
 echo "Skills: $(ls -d plugins/compound-engineering/skills/*/ 2>/dev/null | wc -l)"
 
 # Validate JSON

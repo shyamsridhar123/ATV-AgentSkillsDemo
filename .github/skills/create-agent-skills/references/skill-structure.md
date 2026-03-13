@@ -59,7 +59,7 @@ description: What it does and when to use it (specific triggers included)
 
 **Validation rules:**
 - Maximum 64 characters
-- Lowercase letters, numbers, hyphens only
+- Lowercase letters, numbers, hyphens, and colons (for namespaced skills like `ce:plan`)
 - Must match directory name
 - No reserved words: "anthropic", "claude"
 
@@ -144,7 +144,6 @@ Before finalizing:
 
 ## Anti-Patterns
 
-- **XML tags in body** - Use standard markdown headings
 - **Vague descriptions** - Be specific with trigger keywords
 - **Deep nesting** - Keep references one level from SKILL.md
 - **Missing invocation control** - Side-effect workflows need `disable-model-invocation: true`

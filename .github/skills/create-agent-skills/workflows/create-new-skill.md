@@ -151,11 +151,10 @@ Check:
 - [ ] YAML frontmatter valid
 - [ ] Name matches directory (lowercase-with-hyphens)
 - [ ] Description says what it does AND when to use it (third person)
-- [ ] No markdown headings (#) in body - use XML tags
-- [ ] Required tags present: objective, quick_start, success_criteria
+- [ ] Uses standard markdown headings for structure
+- [ ] Has Quick Start, Instructions, and Success Criteria sections
 - [ ] All referenced files exist
 - [ ] SKILL.md under 500 lines
-- [ ] XML tags properly closed
 
 ## Step 9: Create Slash Command
 
