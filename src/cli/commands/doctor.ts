@@ -230,32 +230,6 @@ function checkSkills(cwd: string): CheckResult {
 }
 
 /**
- * Check if beads is initialized in the project (DEPRECATED — kept for test compatibility)
- */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export function checkBeadsInit(_cwd: string): CheckResult {
-  return {
-    name: 'Beads Init',
-    status: 'pass',
-    message: 'beads removed — using Backlog.md only',
-  };
-}
-
-/**
- * Check beads no-db mode (DEPRECATED — kept for test compatibility, returns empty)
- */
-export function checkBeadsNoDb(_cwd: string): CheckResult[] {
-  return [];
-}
-
-/**
- * DEPRECATED — beads removed. Kept as stubs for test compatibility.
- */
-export function checkDoltProcess(): CheckResult[] { return []; }
-export function checkMetadataJson(_cwd: string): CheckResult[] { return []; }
-export function checkBdRuntime(_cwd: string): CheckResult[] { return []; }
-
-/**
  * Check backlog.md initialization
  */
 function checkBacklogInit(cwd: string): CheckResult {
@@ -275,14 +249,6 @@ function checkBacklogInit(cwd: string): CheckResult {
     message: 'backlog/ not initialized',
     details: 'Run: backlog init',
   };
-}
-
-/**
- * Check git hooks configuration (DEPRECATED — beads hooks removed).
- * Kept as stub for test compatibility.
- */
-export function checkGitHooks(_cwd: string): CheckResult[] {
-  return [];
 }
 
 /**

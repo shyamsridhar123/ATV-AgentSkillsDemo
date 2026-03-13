@@ -9,7 +9,7 @@ import { execSync } from 'child_process';
 import { existsSync, mkdirSync, writeFileSync, rmSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
-import { checkBeadsInit, checkBeadsNoDb, checkGitHooks, checkMetadataJson, checkBdRuntime, checkDoltProcess, getMinNodeVersion } from './doctor.js';
+import { getMinNodeVersion } from './doctor.js';
 
 // Test utilities - we can't import the private functions from doctor.ts
 // but we can test the overall behavior
@@ -152,15 +152,6 @@ description: A test agent without name
       assert.strictEqual(existsSync(join(skillDir, 'SKILL.md')), false);
     });
   });
-
-  describe('beads initialization check (deprecated stub)', () => {
-    it('should return pass with removal message', () => {
-      const result = checkBeadsInit(testDir);
-      assert.strictEqual(result.name, 'Beads Init');
-      assert.strictEqual(result.status, 'pass');
-      assert.ok(result.message.includes('beads removed'));
-    });
-  });
 });
 
 describe('CLI availability checks', () => {
@@ -177,37 +168,3 @@ describe('CLI availability checks', () => {
   });
 });
 
-describe('checkBeadsNoDb (deprecated stub)', () => {
-  it('should always return empty array', () => {
-    const results = checkBeadsNoDb('/any/path');
-    assert.deepStrictEqual(results, []);
-  });
-});
-
-describe('checkGitHooks (deprecated stub)', () => {
-  it('should always return empty array', () => {
-    const results = checkGitHooks('/any/path');
-    assert.deepStrictEqual(results, []);
-  });
-});
-
-describe('checkMetadataJson (deprecated stub)', () => {
-  it('should always return empty array', () => {
-    const results = checkMetadataJson('/any/path');
-    assert.deepStrictEqual(results, []);
-  });
-});
-
-describe('checkDoltProcess (deprecated stub)', () => {
-  it('should always return empty array', () => {
-    const results = checkDoltProcess();
-    assert.deepStrictEqual(results, []);
-  });
-});
-
-describe('checkBdRuntime (deprecated stub)', () => {
-  it('should always return empty array', () => {
-    const results = checkBdRuntime('/any/path');
-    assert.deepStrictEqual(results, []);
-  });
-});
