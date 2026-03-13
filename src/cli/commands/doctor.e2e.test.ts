@@ -316,8 +316,8 @@ describe('doctor command E2E', () => {
     });
   });
 
-  describe('beads initialization check', () => {
-    it('should show warning when .beads directory is missing', () => {
+  describe('beads initialization check (deprecated)', () => {
+    it('should not produce beads-specific output (beads removed)', () => {
       // Setup: Create project without .beads
       const agentsDir = join(testDir, '.github', 'agents');
       const skillsDir = join(testDir, '.github', 'skills');
@@ -330,19 +330,15 @@ describe('doctor command E2E', () => {
 
       const result = runDoctor(testDir);
 
-      // Should show warning for missing beads init
+      // Beads was removed — doctor should NOT produce beads init warnings
       assert.ok(
-        result.stdout.includes('⚠') || result.stdout.includes('not initialized'),
-        'Should indicate beads is not initialized'
-      );
-      assert.ok(
-        result.stdout.toLowerCase().includes('beads') || result.stdout.toLowerCase().includes('.beads'),
-        'Should mention beads'
+        !result.stdout.includes('Beads Init') || result.stdout.includes('beads removed'),
+        'Should not produce beads initialization warnings (beads removed)'
       );
     });
 
-    it('should pass when .beads directory exists', () => {
-      // Setup: Create project with .beads
+    it('should run without beads checks regardless of .beads directory', () => {
+      // Setup: Create project with .beads (should be ignored)
       const agentsDir = join(testDir, '.github', 'agents');
       const skillsDir = join(testDir, '.github', 'skills');
       const beadsDir = join(testDir, '.beads');
@@ -356,10 +352,10 @@ describe('doctor command E2E', () => {
 
       const result = runDoctor(testDir);
 
-      // Should pass beads init check
+      // Doctor should complete successfully regardless of .beads
       assert.ok(
-        result.stdout.includes('Beads Init') || result.stdout.includes('.beads'),
-        'Should check beads initialization'
+        result.stdout.includes('Node.js') && result.stdout.includes('Agents'),
+        'Doctor should run core checks regardless of .beads directory'
       );
     });
   });
@@ -605,7 +601,7 @@ name: test
   });
 
   describe('no-db mode checks', () => {
-    it('should show no-db check when .beads/config.yaml has no-db: true', () => {
+    it('should show no-db check when .beads/config.yaml has no-db: true', { skip: 'beads removed — no-db checks deprecated' }, () => {
       const agentsDir = join(testDir, '.github', 'agents');
       const skillsDir = join(testDir, '.github', 'skills');
       const beadsDir = join(testDir, '.beads');
@@ -684,7 +680,7 @@ name: test
      * Expected: Doctor output includes "Dolt process" with ⚠ warning and
      * the suggestion to kill it with pkill.
      */
-    it('should warn when a Dolt server process is running in no-db mode', () => {
+    it('should warn when a Dolt server process is running in no-db mode', { skip: 'beads removed — no-db checks deprecated' }, () => {
       const agentsDir = join(testDir, '.github', 'agents');
       const skillsDir = join(testDir, '.github', 'skills');
       const beadsDir = join(testDir, '.beads');
@@ -791,7 +787,7 @@ name: test
      * Expected: Doctor shows "Beads metadata" with ✗ fail and
      * "invalid JSON" message with re-init guidance.
      */
-    it('should fail when metadata.json contains corrupt JSON', () => {
+    it('should fail when metadata.json contains corrupt JSON', { skip: 'beads removed — no-db checks deprecated' }, () => {
       const agentsDir = join(testDir, '.github', 'agents');
       const skillsDir = join(testDir, '.github', 'skills');
       const beadsDir = join(testDir, '.beads');
@@ -831,7 +827,7 @@ name: test
      * Expected: Doctor shows "Beads metadata" with ⚠ warn about the dangerous
      * default database name.
      */
-    it('should warn when metadata.json has the dangerous "beads" fallback name', () => {
+    it('should warn when metadata.json has the dangerous "beads" fallback name', { skip: 'beads removed — no-db checks deprecated' }, () => {
       const agentsDir = join(testDir, '.github', 'agents');
       const skillsDir = join(testDir, '.github', 'skills');
       const beadsDir = join(testDir, '.beads');
@@ -871,7 +867,7 @@ name: test
      *
      * Expected: Doctor shows "Beads metadata" with ✓ pass.
      */
-    it('should pass metadata check with valid repo-specific name', () => {
+    it('should pass metadata check with valid repo-specific name', { skip: 'beads removed — no-db checks deprecated' }, () => {
       const agentsDir = join(testDir, '.github', 'agents');
       const skillsDir = join(testDir, '.github', 'skills');
       const beadsDir = join(testDir, '.beads');
@@ -905,7 +901,7 @@ name: test
      * Expected: Doctor shows "JSONL data" with ⚠ warn and "legacy" in message,
      * with guidance to use backup/ path.
      */
-    it('should warn about legacy root-level JSONL path', () => {
+    it('should warn about legacy root-level JSONL path', { skip: 'beads removed — no-db checks deprecated' }, () => {
       const agentsDir = join(testDir, '.github', 'agents');
       const skillsDir = join(testDir, '.github', 'skills');
       const beadsDir = join(testDir, '.beads');
@@ -945,7 +941,7 @@ name: test
      * Expected: Doctor shows "JSONL data" with ✓ pass, mentioning
      * .beads/backup/issues.jsonl path.
      */
-    it('should pass JSONL check with canonical backup/ path', () => {
+    it('should pass JSONL check with canonical backup/ path', { skip: 'beads removed — no-db checks deprecated' }, () => {
       const agentsDir = join(testDir, '.github', 'agents');
       const skillsDir = join(testDir, '.github', 'skills');
       const beadsDir = join(testDir, '.beads');
@@ -983,7 +979,7 @@ name: test
      * initialize in a non-bd-initialized directory). The key assertion is that
      * the check IS performed — not silently skipped.
      */
-    it('should include bd runtime check when no-db is enabled', () => {
+    it('should include bd runtime check when no-db is enabled', { skip: 'beads removed — no-db checks deprecated' }, () => {
       const agentsDir = join(testDir, '.github', 'agents');
       const skillsDir = join(testDir, '.github', 'skills');
       const beadsDir = join(testDir, '.beads');
@@ -1079,7 +1075,7 @@ name: test
      * - "JSONL data" (✓)
      * Plus "bd runtime" if bd CLI is installed.
      */
-    it('should show all no-db validation checks for a healthy setup', () => {
+    it('should show all no-db validation checks for a healthy setup', { skip: 'beads removed — no-db checks deprecated' }, () => {
       const agentsDir = join(testDir, '.github', 'agents');
       const skillsDir = join(testDir, '.github', 'skills');
       const beadsDir = join(testDir, '.beads');

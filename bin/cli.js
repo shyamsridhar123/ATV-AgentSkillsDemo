@@ -614,6 +614,7 @@ ${COLORS.bright}Options:${COLORS.reset}
   --force                             Overwrite existing files
   --skip-backlog                      Don't create Backlog.md
   --skip-mcp                          Don't create mcp.json.example
+  --skip-beads                        (Deprecated) No-op, kept for compatibility
   --verbose                           Show detailed diagnostics on errors
   --check-only                        Check for updates without modifying files
 
@@ -827,7 +828,7 @@ ${COLORS.cyan}"They broke my wings and forgot I had claws."${COLORS.reset}
 
 // Input validation constants
 const ALLOWED_COMMANDS = ['init', 'help', '--help', '-h', 'doctor', 'quickstart', 'close', 'pre-push-guard', 'update', 'land'];
-const ALLOWED_FLAGS = ['--force', '--skip-backlog', '--skip-mcp', '--verbose', '--reason', '-r', '-f', '--skip-tests', '--message', '-m', '--dry-run', '--check-only'];
+const ALLOWED_FLAGS = ['--force', '--skip-backlog', '--skip-mcp', '--skip-beads', '--verbose', '--reason', '-r', '-f', '--skip-tests', '--message', '-m', '--dry-run', '--check-only'];
 const MAX_ARG_LENGTH = 50;
 
 // Validate and sanitize input

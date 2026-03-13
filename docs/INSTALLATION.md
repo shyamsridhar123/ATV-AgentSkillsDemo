@@ -11,11 +11,10 @@ This guide gets you from zero to running Beth in under 10 minutes.
 1. [Prerequisites](#prerequisites)
 2. [Installation](#installation)
 3. [VS Code Setup](#vs-code-setup)
-4. [Issue Tracking Setup](#issue-tracking-setup)
-5. [Optional: MCP Servers](#optional-mcp-servers)
-6. [Verify Installation](#verify-installation)
-7. [Your First Task](#your-first-task)
-8. [Troubleshooting](#troubleshooting)
+4. [Optional: MCP Servers](#optional-mcp-servers)
+5. [Verify Installation](#verify-installation)
+6. [Your First Task](#your-first-task)
+7. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -90,7 +89,6 @@ That's it. Beth and her team are now installed in your project.
 
 ```bash
 npx beth-copilot init --force        # Overwrite existing files
-npx beth-copilot init --skip-beads   # Don't initialize beads
 npx beth-copilot init --skip-mcp     # Don't create mcp.json.example
 npx beth-copilot help                # Show all options
 ```
@@ -107,9 +105,6 @@ rm -rf .git
 git init
 git add -A
 git commit -m "Initial commit with Beth agent system"
-
-# Initialize beads for issue tracking
-bd init
 ```
 
 ### Option C: Add Beth to an Existing Project (Manual)
@@ -127,9 +122,6 @@ cp temp-beth/AGENTS.md .
 
 # Clean up
 rm -rf temp-beth
-
-# Initialize beads for issue tracking
-bd init
 
 # Commit the additions
 git add -A
@@ -161,7 +153,7 @@ your-project/
 │   └── copilot-instructions.md
 ├── .vscode/
 │   └── settings.json        # Recommended VS Code settings
-├── .beads/                  # Issue tracking database (created by bd init)
+├── Backlog.md               # Task tracking (single source of truth)
 └── AGENTS.md                # Agent workflow documentation
 ```
 
@@ -230,63 +222,6 @@ The `npx beth-copilot init` command automatically creates `.vscode/settings.json
 ```
 
 If you installed manually, create this file yourself.
-
----
-
-## Issue Tracking Setup
-
-Beth uses [beads](https://github.com/steveyegge/beads) (`bd`) for issue tracking. It provides dependency-aware issue management designed for AI agents.
-
-### Install Beads
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/steveyegge/beads/main/scripts/install.sh | bash
-```
-
-### Initialize in Your Project
-
-```bash
-cd your-project
-bd init
-```
-
-### Verify Setup
-
-```bash
-bd doctor
-```
-
-### Quick Reference
-
-```bash
-# Create an issue
-bd create "Issue title" --description="What needs to be done"
-
-# List issues
-bd list
-
-# Show ready work (no blockers)
-bd ready
-
-# Show issue details
-bd show <id>
-
-# Mark in progress
-bd update <id> -l in_progress
-
-# Close an issue (enforced — checks for open children)
-npx beth-copilot close <id>
-```
-
-### Workflow
-
-1. Check available work: `bd ready` or `bd list`
-2. Claim work: `bd update <id> -l in_progress`
-3. Do the work
-4. Complete: `npx beth-copilot close <id>`
-5. Commit and push
-
-See [steveyegge/beads](https://github.com/steveyegge/beads) for full documentation.
 
 ---
 
@@ -375,14 +310,6 @@ She should list her team.
 ```
 
 The developer should reference React best practices.
-
-### ✅ Beads Works
-
-```bash
-bd list
-```
-
-Should run without errors (empty list is fine for a new project).
 
 ### ✅ File Operations Work
 
@@ -486,43 +413,6 @@ Beth will:
 2. Check remote is set: `git remote -v`
 3. Ensure you have push permissions
 4. Check for uncommitted changes conflicts
-
-### Beads Issues
-
-**Symptom:** `bd` commands fail
-
-**Solutions:**
-1. Verify beads is installed: `which bd` or `bd --version`
-2. Initialize beads in project: `bd init`
-3. Run diagnostics: `bd doctor`
-4. Check PATH includes `~/.local/bin`: `export PATH="$HOME/.local/bin:$PATH"`
-
-### Beads Initialization Errors
-
-**Symptom:** `bd init` or `bd doctor` fails
-
-Beads uses JSONL files for storage (no-db mode). If initialization fails:
-
-**Solutions:**
-
-```bash
-# 1. Re-install beads
-curl -fsSL https://raw.githubusercontent.com/steveyegge/beads/main/scripts/install.sh | bash
-
-# 2. Verify
-bd doctor
-```
-
-**If beads state is corrupted after upgrading:**
-
-```bash
-# Nuclear option: reinitialize beads (loses local issue history)
-rm -rf .beads
-bd init
-
-# Or try the auto-repair first
-bd doctor --fix
-```
 
 ### Windows Path Issues
 

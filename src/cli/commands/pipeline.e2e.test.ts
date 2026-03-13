@@ -88,14 +88,15 @@ describe('init → doctor pipeline E2E', () => {
       );
     });
 
-    it('should warn about beads when init used --skip-beads', () => {
+    it('should not warn about beads (beads removed)', () => {
       runCli(testDir, 'init', ['--skip-beads']);
       const doctorResult = runCli(testDir, 'doctor');
 
-      // beads warning expected (init skipped it, so .beads/ doesn't exist)
+      // beads was removed — doctor should not produce beads-specific warnings
+      // It may still show other warnings (e.g. backlog not initialized)
       assert.ok(
-        doctorResult.stdout.includes('⚠') || doctorResult.stdout.includes('not initialized'),
-        'Doctor should warn about missing .beads after init --skip-beads'
+        !doctorResult.stdout.includes('Beads Init') || doctorResult.stdout.includes('beads removed'),
+        'Doctor should not produce beads initialization warnings'
       );
     });
 
@@ -270,20 +271,14 @@ describe('init → doctor pipeline E2E', () => {
     it('doctor summary should show no failures after full init', () => {
       runCli(testDir, 'init', ['--skip-beads']);
 
-      // Simulate beads init so doctor has no failures
-      mkdirSync(join(testDir, '.beads'), { recursive: true });
-
       const doctorResult = runCli(testDir, 'doctor');
 
-      // Should not have any ✗ failures
-      const failureCount = (doctorResult.stdout.match(/✗/g) || []).length;
-
-      // beads CLI might not be installed, which would be a failure
-      // but agents, skills, Node.js, and beads init should all pass
+      // Core checks: Node.js, backlog.md CLI, Agents, Skills
+      // Backlog Init may warn (backlog/ not initialized in temp dir)
       const passCount = (doctorResult.stdout.match(/✓/g) || []).length;
       assert.ok(
-        passCount >= 4,
-        `Should have at least 4 passing checks (Node.js, Agents, Skills, Beads Init). Got ${passCount} passes, ${failureCount} failures. Output:\n${doctorResult.stdout}`
+        passCount >= 3,
+        `Should have at least 3 passing checks (Node.js, Agents, Skills). Got ${passCount} passes. Output:\n${doctorResult.stdout}`
       );
     });
   });

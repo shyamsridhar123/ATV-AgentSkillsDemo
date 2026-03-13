@@ -8,10 +8,7 @@ export default defineConfig({
   },
   test: {
     include: ['src/**/*.e2e.test.ts'],
-    exclude:
-      process.env.INCLUDE_BEADS_E2E === 'true'
-        ? []
-        : ['src/cli/commands/beads.e2e.test.ts'],
+    exclude: ['src/cli/commands/beads.e2e.test.ts'],
     environment: 'node',
     testTimeout: 30000,
     hookTimeout: 300000,
