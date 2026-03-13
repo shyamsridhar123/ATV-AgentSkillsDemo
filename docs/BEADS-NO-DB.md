@@ -8,6 +8,8 @@ Beads operates in **no-db mode** (`no-db: true` in `.beads/config.yaml`). All re
 
 This is the production configuration for Beth as of v0.60.0. It works. Doctor confirms it. Every `bd` command operates against the JSONL files.
 
+> **Note:** `beth-copilot doctor` checks two JSONL locations: `.beads/issues.jsonl` first, then `.beads/backup/issues.jsonl` as a fallback. The canonical location for beads no-db mode is `.beads/backup/` — that's where `bd` reads and writes. The root-level `.beads/issues.jsonl` path is a legacy compatibility check in doctor and does not exist in normal operation.
+
 ### History: Dolt Migration
 
 Beth originally used Dolt (a version-controlled SQL database) as the beads backend. The migration to no-db mode happened in March 2026 (epic beth-ajg). The `.beads/dolt/` directory still exists as a vestigial artifact — cleanup is tracked separately (beth-ajg.6). Dolt processes may still be running from previous sessions; they're harmless but can be killed with `pkill -f dolt`.
