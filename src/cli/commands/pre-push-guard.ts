@@ -130,7 +130,7 @@ export function getInProgressIssues(): Array<{ id: string; title: string }> {
  *
  * @param currentBranch - Current Git branch name
  * @param refs - Optional parsed push refs from Git stdin (for remote ref validation)
- * @param checkBeads - Whether to check for in-progress beads issues
+ * @param _checkBeads - Deprecated, ignored. Kept for API compat.
  * @returns GuardResult with allowed status and diagnostics
  */
 export function runGuard(
