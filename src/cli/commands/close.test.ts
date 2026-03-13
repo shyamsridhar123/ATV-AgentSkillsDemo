@@ -7,7 +7,7 @@
  * - Stub functions return expected values (null / empty arrays)
  * - getMissingTestSubtasks (still has real logic)
  * - Arg parsing (still has real logic)
- * - closeIssue prints deprecation and returns success
+ * - closeIssue prints deprecation and returns success: false
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -282,27 +282,27 @@ describe('parseCloseArgs', () => {
   });
 });
 
-// ─── closeIssue (deprecated — always returns success) ───────────────────────
+// ─── closeIssue (deprecated — always returns false) ─────────────────────────
 
 describe('closeIssue', () => {
-  it('returns success for any issue ID', () => {
+  it('returns success: false for any issue ID (deprecated, no-op)', () => {
     const result = closeIssue('beth-abc', {});
-    expect(result.success).toBe(true);
+    expect(result.success).toBe(false);
   });
 
-  it('returns success even for invalid-looking IDs (deprecated, no validation)', () => {
+  it('returns success: false even for invalid-looking IDs (deprecated, no validation)', () => {
     const result = closeIssue('INVALID; rm -rf /', {});
-    expect(result.success).toBe(true);
+    expect(result.success).toBe(false);
   });
 
-  it('returns success with force option', () => {
+  it('returns success: false with force option (deprecated)', () => {
     const result = closeIssue('beth-abc', { force: true });
-    expect(result.success).toBe(true);
+    expect(result.success).toBe(false);
   });
 
-  it('returns success with reason option', () => {
+  it('returns success: false with reason option (deprecated)', () => {
     const result = closeIssue('beth-abc', { reason: 'All done' });
-    expect(result.success).toBe(true);
+    expect(result.success).toBe(false);
   });
 
   it('prints deprecation message', () => {

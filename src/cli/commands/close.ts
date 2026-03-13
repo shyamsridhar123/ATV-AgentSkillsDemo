@@ -112,7 +112,7 @@ export function closeIssue(
   console.log(
     `  Example: backlog task edit <task-id> -s "Done"`,
   );
-  return { success: true };
+  return { success: false };
 }
 
 /**
