@@ -23,6 +23,7 @@
     "url": "https://github.com/stephschofield/beth/issues"
   },
   "bin": {
+    "beth-copilot": "bin/cli.js",
     "beth": "bin/cli.js"
   },
   "files": [
