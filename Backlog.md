@@ -221,12 +221,12 @@ Beth is fully operational — orchestrator, 6 specialist agents, 26+ skills (inc
 **Backlog.md CLI** is the single source of truth for both agents and humans.
 
 ```bash
-backlog task create "Title" -d "Description"   # Create a task
-backlog task edit BETH-X -s "In Progress"       # Start work
-backlog task edit BETH-X -s "Done"              # Close task
-backlog task list --plain                        # List all tasks
-backlog board                                    # Kanban view
-backlog overview                                 # Project stats
+backlog task create "Title" -d "Description" --plain   # Create a task
+backlog task edit BETH-X -s "In Progress" --plain       # Start work
+backlog task edit BETH-X -s "Done" --plain              # Close task
+backlog task list --plain                               # List all tasks
+backlog board                                           # Kanban view (always plain-text)
+backlog overview                                        # Project stats (always plain-text)
 ```
 
 Task files live in `backlog/tasks/` as plain markdown. The CLI reads/writes frontmatter.

@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "context7": {
+      "type": "sse",
+      "tools": [
+        "resolve-library-id",
+        "get-library-docs"
+      ],
+      "url": "https://mcp.context7.com/mcp"
+    }
+  }
+}
