@@ -255,6 +255,8 @@ function checkBeadsInit(cwd: string): CheckResult {
 
 /**
  * Check beads no-db mode: verify config has no-db: true and JSONL files are healthy.
+ * Also validates that Dolt isn't running, metadata.json is sane, and bd actually
+ * operates against JSONL (not a database).
  */
 export function checkBeadsNoDb(cwd: string): CheckResult[] {
   const results: CheckResult[] = [];
@@ -265,11 +267,12 @@ export function checkBeadsNoDb(cwd: string): CheckResult[] {
     return [];
   }
 
+  let noDbEnabled = false;
   try {
     const config = readFileSync(configPath, 'utf-8');
-    const hasNoDb = /^no-db:\s*true/m.test(config);
+    noDbEnabled = /^no-db:\s*true/m.test(config);
 
-    if (hasNoDb) {
+    if (noDbEnabled) {
       results.push({
         name: 'Beads no-db',
         status: 'pass',
@@ -291,32 +294,218 @@ export function checkBeadsNoDb(cwd: string): CheckResult[] {
     });
   }
 
-  // Check JSONL health
+  // When no-db is enabled, run deeper validation
+  if (noDbEnabled) {
+    // Check for running Dolt processes — they shouldn't exist in no-db mode
+    results.push(...checkDoltProcess());
+
+    // Validate metadata.json isn't corrupt (the March 2026 debugging nightmare)
+    results.push(...checkMetadataJson(cwd));
+
+    // Verify bd actually operates against JSONL
+    results.push(...checkBdRuntime(cwd));
+  }
+
+  // Check JSONL health — prefer backup/ (canonical) over root-level (legacy)
   const issuesPath = join(cwd, '.beads', 'issues.jsonl');
   const backupIssuesPath = join(cwd, '.beads', 'backup', 'issues.jsonl');
 
-  const jsonlPath = existsSync(issuesPath) ? issuesPath : existsSync(backupIssuesPath) ? backupIssuesPath : null;
-
-  if (jsonlPath) {
+  if (existsSync(backupIssuesPath)) {
     try {
-      const content = readFileSync(jsonlPath, 'utf-8').trim();
+      const content = readFileSync(backupIssuesPath, 'utf-8').trim();
       const lines = content ? content.split('\n').length : 0;
       results.push({
         name: 'JSONL data',
         status: lines > 0 ? 'pass' : 'warn',
-        message: lines > 0 ? `${lines} issue(s) in JSONL` : 'JSONL file is empty',
+        message: lines > 0 ? `${lines} issue(s) in .beads/backup/issues.jsonl` : 'JSONL file is empty',
         details: lines === 0 ? 'Run bd list to verify beads state' : undefined,
       });
     } catch {
       results.push({
         name: 'JSONL data',
         status: 'warn',
-        message: 'could not read JSONL file',
+        message: 'could not read .beads/backup/issues.jsonl',
+      });
+    }
+  } else if (existsSync(issuesPath)) {
+    // Legacy root-level path — warn that this isn't canonical
+    try {
+      const content = readFileSync(issuesPath, 'utf-8').trim();
+      const lines = content ? content.split('\n').length : 0;
+      results.push({
+        name: 'JSONL data',
+        status: 'warn',
+        message: `${lines} issue(s) in .beads/issues.jsonl (legacy path)`,
+        details: 'Canonical path is .beads/backup/issues.jsonl — run bd backup to sync',
+      });
+    } catch {
+      results.push({
+        name: 'JSONL data',
+        status: 'warn',
+        message: 'could not read legacy .beads/issues.jsonl',
       });
     }
   }
 
   return results;
+}
+
+/**
+ * Detect running Dolt server processes. In no-db mode, Dolt should not be running.
+ */
+export function checkDoltProcess(): CheckResult[] {
+  try {
+    const output = execSync('pgrep -af "dolt sql-server"', {
+      encoding: 'utf-8',
+      stdio: ['pipe', 'pipe', 'pipe'],
+    }).trim();
+
+    if (output) {
+      return [{
+        name: 'Dolt process',
+        status: 'warn',
+        message: 'Dolt server is running — should not be needed in no-db mode',
+        details: 'Kill with: pkill -f "dolt sql-server"',
+      }];
+    }
+  } catch {
+    // pgrep exits non-zero when no matching processes found — that's the happy path
+  }
+
+  return [{
+    name: 'Dolt process',
+    status: 'pass',
+    message: 'no Dolt server running',
+  }];
+}
+
+/**
+ * Validate metadata.json isn't corrupt. Corrupt metadata.json (e.g., dangling `}`)
+ * causes bd to fall back to "beads" as the default database name, breaking all operations.
+ */
+export function checkMetadataJson(cwd: string): CheckResult[] {
+  const metadataPath = join(cwd, '.beads', 'metadata.json');
+
+  if (!existsSync(metadataPath)) {
+    // metadata.json is optional — bd init creates it
+    return [];
+  }
+
+  try {
+    const raw = readFileSync(metadataPath, 'utf-8');
+    const metadata = JSON.parse(raw);
+
+    if (typeof metadata !== 'object' || metadata === null) {
+      return [{
+        name: 'Beads metadata',
+        status: 'fail',
+        message: 'metadata.json is not a valid JSON object',
+        details: 'Re-initialize with: bd init',
+      }];
+    }
+
+    // Check that the database name field exists and isn't the dangerous fallback
+    const dbName = metadata.name || metadata.database;
+    if (dbName === 'beads') {
+      return [{
+        name: 'Beads metadata',
+        status: 'warn',
+        message: 'metadata.json has default database name "beads" — may indicate corruption',
+        details: 'Verify with: cat .beads/metadata.json — expected repo-specific name',
+      }];
+    }
+
+    return [{
+      name: 'Beads metadata',
+      status: 'pass',
+      message: 'metadata.json valid',
+    }];
+  } catch {
+    return [{
+      name: 'Beads metadata',
+      status: 'fail',
+      message: 'metadata.json contains invalid JSON',
+      details: 'This causes bd to fall back to wrong defaults. Re-initialize with: bd init',
+    }];
+  }
+}
+
+/**
+ * Verify bd actually operates in no-db mode by running `bd list --json` and checking
+ * that it succeeds. This catches cases where config says no-db but bd isn't honoring it.
+ */
+export function checkBdRuntime(cwd: string): CheckResult[] {
+  try {
+    const output = execSync('bd list --json', {
+      encoding: 'utf-8',
+      cwd,
+      stdio: ['pipe', 'pipe', 'pipe'],
+      timeout: 10000,
+    });
+
+    // Check if the output contains valid JSON (array of issues)
+    try {
+      const parsed = JSON.parse(output);
+      if (Array.isArray(parsed)) {
+        return [{
+          name: 'bd runtime',
+          status: 'pass',
+          message: `bd list returns ${parsed.length} issue(s) — JSONL operational`,
+        }];
+      }
+    } catch {
+      // Output wasn't JSON — might be an error message
+    }
+
+    // bd returned something but not valid JSON array
+    const firstLine = output.split('\n')[0]?.trim() || '';
+    if (firstLine.toLowerCase().includes('error') || firstLine.toLowerCase().includes('database')) {
+      return [{
+        name: 'bd runtime',
+        status: 'fail',
+        message: 'bd list failed — may be falling back to database mode',
+        details: `Output: ${firstLine}`,
+      }];
+    }
+
+    return [{
+      name: 'bd runtime',
+      status: 'warn',
+      message: 'bd list returned unexpected output',
+      details: `Output: ${firstLine}`,
+    }];
+  } catch (err) {
+    const error = err as { stdout?: string; stderr?: string; message?: string };
+    // Prefer stdout (bd often returns JSON errors there) then stderr then message
+    const rawOutput = (error.stdout || '') + (error.stderr || '');
+    // Try to extract a meaningful error from JSON output like {"error": "..."}
+    let msg = '';
+    // Find a JSON object in the output — it might be mixed with log lines
+    const jsonMatch = rawOutput.match(/\{[\s\S]*"error"\s*:\s*"([^"]+)"[\s\S]*\}/);
+    if (jsonMatch) {
+      msg = jsonMatch[1];
+    }
+    if (!msg) {
+      // Fall back to first non-empty, non-diagnostic line
+      msg = rawOutput.split('\n')
+        .map(l => l.trim())
+        .filter(l => l && !l.includes('[circuit-breaker]') && l !== '{' && l !== '}')[0]
+        || error.message?.split('\n')[0]?.trim()
+        || 'unknown error';
+    }
+
+    // If bd isn't installed, don't fail the no-db check — the CLI check handles that
+    if (msg.includes('not found') || msg.includes('ENOENT')) {
+      return [];
+    }
+
+    return [{
+      name: 'bd runtime',
+      status: 'fail',
+      message: 'bd list failed — JSONL mode may not be operational',
+      details: msg,
+    }];
+  }
 }
 
 /**
