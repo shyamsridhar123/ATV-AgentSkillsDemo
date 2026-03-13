@@ -1,10 +1,10 @@
 ---
 id: BETH-4
 title: Add community skills and MCP config
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-03-13 20:09'
-updated_date: '2026-03-13 20:11'
+updated_date: '2026-03-13 20:19'
 labels: []
 dependencies: []
 ---
