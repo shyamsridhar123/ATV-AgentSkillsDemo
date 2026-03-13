@@ -35,12 +35,9 @@ const CLI_PATH = join(process.cwd(), 'bin', 'cli.js');
 
 /**
  * Run the init command in a specified directory.
- * Uses --skip-beads to avoid interactive prompts during testing.
  */
 function runInit(cwd: string, flags: string[] = []): { stdout: string; stderr: string; exitCode: number } {
-  // Always include --skip-beads to avoid interactive prompts
-  const allFlags = ['--skip-beads', ...flags];
-  const command = `node "${CLI_PATH}" init ${allFlags.join(' ')}`;
+  const command = `node "${CLI_PATH}" init ${flags.join(' ')}`;
   
   try {
     const stdout = execSync(command, {
@@ -108,7 +105,7 @@ describe('init command E2E', () => {
       assert.strictEqual(existsSync(agentsMd), true, 'AGENTS.md should exist');
 
       const content = readFileSync(agentsMd, 'utf-8');
-      assert.ok(content.includes('beads'), 'AGENTS.md should mention beads');
+      assert.ok(content.length > 0, 'AGENTS.md should have content');
     });
 
     it('should create Backlog.md in project root', () => {
@@ -155,7 +152,7 @@ describe('init command E2E', () => {
       runInit(testDir, ['--force']);
       content = readFileSync(agentsMd, 'utf-8');
       assert.notStrictEqual(content, 'ORIGINAL CONTENT', 'Should overwrite with --force');
-      assert.ok(content.includes('beads'), 'Content should be from template');
+      assert.ok(content.length > 0, 'Content should be from template');
     });
 
     it('should overwrite existing agent files with --force', () => {
@@ -208,28 +205,6 @@ describe('init command E2E', () => {
       assert.strictEqual(existsSync(join(testDir, 'AGENTS.md')), true, 'AGENTS.md should exist');
       assert.strictEqual(existsSync(join(testDir, 'Backlog.md')), true, 'Backlog.md should exist');
       assert.strictEqual(existsSync(join(testDir, '.github', 'agents')), true, '.github/agents should exist');
-    });
-  });
-
-  describe('--skip-beads flag', () => {
-    it('should complete without beads check when --skip-beads is used', () => {
-      const result = runInit(testDir);
-      
-      // Should complete successfully (exit 0)
-      assert.strictEqual(result.exitCode, 0, 'Should exit with code 0');
-      
-      // Should have created files
-      assert.strictEqual(existsSync(join(testDir, '.github', 'agents')), true, 'Should create agents');
-    });
-
-    it('should show warning about skipping beads', () => {
-      const result = runInit(testDir);
-      
-      // Output should mention skipping beads
-      assert.ok(
-        result.stdout.includes('Skipped beads check') || result.stdout.includes('skip-beads'),
-        'Should warn about skipping beads'
-      );
     });
   });
 

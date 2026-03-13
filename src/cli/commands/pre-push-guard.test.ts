@@ -219,64 +219,13 @@ describe('isRecognizedBranch', () => {
 // ─── getInProgressIssues ───────────────────────────────────────────────────────
 
 describe('getInProgressIssues', () => {
-  it('returns in-progress issues from bd list', () => {
-    mockedExecFileSync.mockReturnValueOnce(
-      JSON.stringify([
-        { id: 'beth-abc', title: 'Task A', status: 'in_progress' },
-        { id: 'beth-def', title: 'Task B', status: 'open' },
-        { id: 'beth-ghi', title: 'Task C', status: 'in_progress' },
-      ]),
-    );
-
-    const result = getInProgressIssues();
-    expect(result).toHaveLength(2);
-    expect(result[0]).toEqual({ id: 'beth-abc', title: 'Task A' });
-    expect(result[1]).toEqual({ id: 'beth-ghi', title: 'Task C' });
+  it('always returns empty array (stub)', () => {
+    expect(getInProgressIssues()).toEqual([]);
   });
 
-  it('returns empty array when no in-progress issues', () => {
-    mockedExecFileSync.mockReturnValueOnce(
-      JSON.stringify([
-        { id: 'beth-abc', title: 'Task A', status: 'open' },
-        { id: 'beth-def', title: 'Task B', status: 'closed' },
-      ]),
-    );
-
-    expect(getInProgressIssues()).toHaveLength(0);
-  });
-
-  it('returns empty array when bd is unavailable', () => {
-    mockedExecFileSync.mockImplementationOnce(() => {
-      throw new Error('bd not found');
-    });
-
-    expect(getInProgressIssues()).toHaveLength(0);
-  });
-
-  it('returns empty array on invalid JSON', () => {
-    mockedExecFileSync.mockReturnValueOnce('not json');
-
-    expect(getInProgressIssues()).toHaveLength(0);
-  });
-
-  it('returns empty array when bd returns non-array', () => {
-    mockedExecFileSync.mockReturnValueOnce(JSON.stringify({ error: 'nope' }));
-
-    expect(getInProgressIssues()).toHaveLength(0);
-  });
-
-  it('filters out items missing required fields', () => {
-    mockedExecFileSync.mockReturnValueOnce(
-      JSON.stringify([
-        { id: 'beth-abc', status: 'in_progress' }, // missing title
-        { title: 'Task B', status: 'in_progress' }, // missing id
-        { id: 'beth-ccc', title: 'Task C', status: 'in_progress' }, // valid
-      ]),
-    );
-
-    const result = getInProgressIssues();
-    expect(result).toHaveLength(1);
-    expect(result[0].id).toBe('beth-ccc');
+  it('does not call execFileSync', () => {
+    getInProgressIssues();
+    expect(mockedExecFileSync).not.toHaveBeenCalled();
   });
 });
 
@@ -377,44 +326,19 @@ describe('runGuard', () => {
     });
   });
 
-  describe('beads in-progress check', () => {
-    it('warns when there are in-progress issues', () => {
-      mockedExecFileSync.mockReturnValueOnce(
-        JSON.stringify([
-          { id: 'beth-abc', title: 'Unfinished work', status: 'in_progress' },
-        ]),
-      );
-
+  describe('beads in-progress check (removed)', () => {
+    it('never warns about in-progress issues even with checkBeads=true', () => {
       const result = runGuard('epic/beth-abc', undefined, true);
-      expect(result.allowed).toBe(true); // warning only, not blocking
-      expect(result.warnings.length).toBeGreaterThan(0);
-      expect(result.warnings.some((w) => w.includes('in_progress'))).toBe(true);
-    });
-
-    it('no warning when no in-progress issues', () => {
-      mockedExecFileSync.mockReturnValueOnce(
-        JSON.stringify([
-          { id: 'beth-abc', title: 'Done', status: 'closed' },
-        ]),
-      );
-
-      const result = runGuard('epic/beth-abc', undefined, true);
-      expect(result.warnings).toHaveLength(0);
-    });
-
-    it('skips beads check when checkBeads is false', () => {
-      const result = runGuard('epic/beth-abc', undefined, false);
+      expect(result.allowed).toBe(true);
       expect(result.warnings).toHaveLength(0);
       expect(mockedExecFileSync).not.toHaveBeenCalled();
     });
 
-    it('does not block on beads errors', () => {
-      mockedExecFileSync.mockImplementationOnce(() => {
-        throw new Error('bd timeout');
-      });
-
-      const result = runGuard('epic/beth-abc', undefined, true);
+    it('no warnings with checkBeads=false', () => {
+      const result = runGuard('epic/beth-abc', undefined, false);
       expect(result.allowed).toBe(true);
+      expect(result.warnings).toHaveLength(0);
+      expect(mockedExecFileSync).not.toHaveBeenCalled();
     });
   });
 

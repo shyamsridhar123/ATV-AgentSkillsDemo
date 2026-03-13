@@ -9,7 +9,7 @@ import { execSync } from 'child_process';
 import { existsSync, mkdirSync, writeFileSync, rmSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
-import { checkBeadsNoDb, checkGitHooks, checkMetadataJson, checkBdRuntime, getMinNodeVersion } from './doctor.js';
+import { checkBeadsInit, checkBeadsNoDb, checkGitHooks, checkMetadataJson, checkBdRuntime, checkDoltProcess, getMinNodeVersion } from './doctor.js';
 
 // Test utilities - we can't import the private functions from doctor.ts
 // but we can test the overall behavior
@@ -153,34 +153,17 @@ description: A test agent without name
     });
   });
 
-  describe('beads initialization check', () => {
-    it('should detect missing .beads directory', () => {
-      const beadsDir = join(testDir, '.beads');
-      assert.strictEqual(existsSync(beadsDir), false);
-    });
-
-    it('should detect existing .beads directory', () => {
-      const beadsDir = join(testDir, '.beads');
-      mkdirSync(beadsDir, { recursive: true });
-      assert.strictEqual(existsSync(beadsDir), true);
+  describe('beads initialization check (deprecated stub)', () => {
+    it('should return pass with removal message', () => {
+      const result = checkBeadsInit(testDir);
+      assert.strictEqual(result.name, 'Beads Init');
+      assert.strictEqual(result.status, 'pass');
+      assert.ok(result.message.includes('beads removed'));
     });
   });
 });
 
 describe('CLI availability checks', () => {
-  it('should detect beads CLI if installed', () => {
-    try {
-      const output = execSync('bd --version', { 
-        encoding: 'utf-8',
-        stdio: ['pipe', 'pipe', 'pipe'],
-      });
-      assert.ok(output.includes('version'), 'bd --version should return version info');
-    } catch {
-      // bd not installed - this is not a failure, just skip
-      assert.ok(true, 'bd CLI not installed, skipping');
-    }
-  });
-
   it('should handle missing CLI gracefully', () => {
     try {
       execSync('nonexistent-cli-tool-12345 --version', { 
@@ -194,313 +177,37 @@ describe('CLI availability checks', () => {
   });
 });
 
-describe('checkBeadsNoDb', () => {
-  let testDir: string;
-
-  beforeEach(() => {
-    testDir = join(tmpdir(), `beth-nodb-test-${Date.now()}`);
-    mkdirSync(testDir, { recursive: true });
-  });
-
-  afterEach(() => {
-    if (existsSync(testDir)) {
-      rmSync(testDir, { recursive: true, force: true });
-    }
-  });
-
-  it('should return empty array when .beads/config.yaml does not exist', () => {
-    const results = checkBeadsNoDb(testDir);
+describe('checkBeadsNoDb (deprecated stub)', () => {
+  it('should always return empty array', () => {
+    const results = checkBeadsNoDb('/any/path');
     assert.deepStrictEqual(results, []);
-  });
-
-  it('should pass when no-db: true is set', () => {
-    mkdirSync(join(testDir, '.beads'), { recursive: true });
-    writeFileSync(join(testDir, '.beads', 'config.yaml'), 'no-db: true\n');
-    const results = checkBeadsNoDb(testDir);
-    const noDbResult = results.find(r => r.name === 'Beads no-db');
-    assert.ok(noDbResult);
-    assert.strictEqual(noDbResult.status, 'pass');
-  });
-
-  it('should warn when no-db is not set', () => {
-    mkdirSync(join(testDir, '.beads'), { recursive: true });
-    writeFileSync(join(testDir, '.beads', 'config.yaml'), 'issue-prefix: "test"\n');
-    const results = checkBeadsNoDb(testDir);
-    const noDbResult = results.find(r => r.name === 'Beads no-db');
-    assert.ok(noDbResult);
-    assert.strictEqual(noDbResult.status, 'warn');
-  });
-
-  it('should warn when no-db is explicitly false', () => {
-    mkdirSync(join(testDir, '.beads'), { recursive: true });
-    writeFileSync(join(testDir, '.beads', 'config.yaml'), 'no-db: false\n');
-    const results = checkBeadsNoDb(testDir);
-    const noDbResult = results.find(r => r.name === 'Beads no-db');
-    assert.ok(noDbResult);
-    assert.strictEqual(noDbResult.status, 'warn');
-  });
-
-  it('should warn when root-level issues.jsonl has content (legacy path)', () => {
-    mkdirSync(join(testDir, '.beads'), { recursive: true });
-    writeFileSync(join(testDir, '.beads', 'config.yaml'), 'no-db: true\n');
-    writeFileSync(join(testDir, '.beads', 'issues.jsonl'), '{"id":"test-1"}\n{"id":"test-2"}\n');
-    const results = checkBeadsNoDb(testDir);
-    const jsonlResult = results.find(r => r.name === 'JSONL data');
-    assert.ok(jsonlResult);
-    assert.strictEqual(jsonlResult.status, 'warn');
-    assert.ok(jsonlResult.message.includes('legacy'), 'should flag as legacy path');
-  });
-
-  it('should warn when JSONL file is empty', () => {
-    mkdirSync(join(testDir, '.beads'), { recursive: true });
-    writeFileSync(join(testDir, '.beads', 'config.yaml'), 'no-db: true\n');
-    writeFileSync(join(testDir, '.beads', 'issues.jsonl'), '');
-    const results = checkBeadsNoDb(testDir);
-    const jsonlResult = results.find(r => r.name === 'JSONL data');
-    assert.ok(jsonlResult);
-    assert.strictEqual(jsonlResult.status, 'warn');
-  });
-
-  it('should check backup/issues.jsonl as canonical path', () => {
-    mkdirSync(join(testDir, '.beads', 'backup'), { recursive: true });
-    writeFileSync(join(testDir, '.beads', 'config.yaml'), 'no-db: true\n');
-    writeFileSync(join(testDir, '.beads', 'backup', 'issues.jsonl'), '{"id":"bak-1"}\n');
-    const results = checkBeadsNoDb(testDir);
-    const jsonlResult = results.find(r => r.name === 'JSONL data');
-    assert.ok(jsonlResult);
-    assert.strictEqual(jsonlResult.status, 'pass');
-    assert.ok(jsonlResult.message.includes('1'));
-    assert.ok(jsonlResult.message.includes('backup'), 'should mention backup path');
-  });
-
-  it('should not produce JSONL result when no JSONL files exist', () => {
-    mkdirSync(join(testDir, '.beads'), { recursive: true });
-    writeFileSync(join(testDir, '.beads', 'config.yaml'), 'no-db: true\n');
-    const results = checkBeadsNoDb(testDir);
-    const jsonlResult = results.find(r => r.name === 'JSONL data');
-    assert.strictEqual(jsonlResult, undefined);
-  });
-
-  it('should warn when only legacy root-level JSONL exists', () => {
-    mkdirSync(join(testDir, '.beads'), { recursive: true });
-    writeFileSync(join(testDir, '.beads', 'config.yaml'), 'no-db: true\n');
-    writeFileSync(join(testDir, '.beads', 'issues.jsonl'), '{"id":"legacy-1"}\n');
-    const results = checkBeadsNoDb(testDir);
-    const jsonlResult = results.find(r => r.name === 'JSONL data');
-    assert.ok(jsonlResult);
-    assert.strictEqual(jsonlResult.status, 'warn');
-    assert.ok(jsonlResult.message.includes('legacy'), 'should mention legacy path');
-  });
-
-  it('should include Dolt process check when no-db is enabled', () => {
-    mkdirSync(join(testDir, '.beads'), { recursive: true });
-    writeFileSync(join(testDir, '.beads', 'config.yaml'), 'no-db: true\n');
-    const results = checkBeadsNoDb(testDir);
-    const doltResult = results.find(r => r.name === 'Dolt process');
-    assert.ok(doltResult, 'should include Dolt process check when no-db enabled');
-  });
-
-  it('should not include Dolt process check when no-db is disabled', () => {
-    mkdirSync(join(testDir, '.beads'), { recursive: true });
-    writeFileSync(join(testDir, '.beads', 'config.yaml'), 'no-db: false\n');
-    const results = checkBeadsNoDb(testDir);
-    const doltResult = results.find(r => r.name === 'Dolt process');
-    assert.strictEqual(doltResult, undefined, 'should not check Dolt process when no-db disabled');
-  });
-
-  it('should include metadata check when no-db is enabled', () => {
-    mkdirSync(join(testDir, '.beads'), { recursive: true });
-    writeFileSync(join(testDir, '.beads', 'config.yaml'), 'no-db: true\n');
-    writeFileSync(join(testDir, '.beads', 'metadata.json'), JSON.stringify({ name: 'beth' }));
-    const results = checkBeadsNoDb(testDir);
-    const metaResult = results.find(r => r.name === 'Beads metadata');
-    assert.ok(metaResult, 'should include metadata check when no-db enabled');
-  });
-
-  it('should handle no-db: true with extra whitespace', () => {
-    mkdirSync(join(testDir, '.beads'), { recursive: true });
-    writeFileSync(join(testDir, '.beads', 'config.yaml'), 'no-db:   true\nother: value\n');
-    const results = checkBeadsNoDb(testDir);
-    const noDbResult = results.find(r => r.name === 'Beads no-db');
-    assert.ok(noDbResult);
-    assert.strictEqual(noDbResult.status, 'pass');
-  });
-
-  it('should handle no-db in middle of config file', () => {
-    mkdirSync(join(testDir, '.beads'), { recursive: true });
-    writeFileSync(join(testDir, '.beads', 'config.yaml'), 'issue-prefix: "test"\nno-db: true\nsync-branch: "main"\n');
-    const results = checkBeadsNoDb(testDir);
-    const noDbResult = results.find(r => r.name === 'Beads no-db');
-    assert.ok(noDbResult);
-    assert.strictEqual(noDbResult.status, 'pass');
   });
 });
 
-describe('checkGitHooks', () => {
-  let testDir: string;
-
-  beforeEach(() => {
-    testDir = join(tmpdir(), `beth-hooks-test-${Date.now()}`);
-    mkdirSync(testDir, { recursive: true });
-    // Initialize a git repo so git config works
-    execSync('git init', { cwd: testDir, stdio: 'pipe' });
-  });
-
-  afterEach(() => {
-    if (existsSync(testDir)) {
-      rmSync(testDir, { recursive: true, force: true });
-    }
-  });
-
-  it('should return empty array when .beads/hooks does not exist', () => {
-    const results = checkGitHooks(testDir);
+describe('checkGitHooks (deprecated stub)', () => {
+  it('should always return empty array', () => {
+    const results = checkGitHooks('/any/path');
     assert.deepStrictEqual(results, []);
-  });
-
-  it('should fail when core.hooksPath is not set', () => {
-    const hooksDir = join(testDir, '.beads', 'hooks');
-    mkdirSync(hooksDir, { recursive: true });
-    writeFileSync(join(hooksDir, 'pre-push'), '#!/bin/sh\nexit 0\n', { mode: 0o755 });
-
-    const results = checkGitHooks(testDir);
-    const hooksPathResult = results.find(r => r.name === 'Git hooksPath');
-    assert.ok(hooksPathResult, 'should have a Git hooksPath result');
-    assert.strictEqual(hooksPathResult.status, 'fail');
-  });
-
-  it('should pass when core.hooksPath is .beads/hooks', () => {
-    const hooksDir = join(testDir, '.beads', 'hooks');
-    mkdirSync(hooksDir, { recursive: true });
-    writeFileSync(join(hooksDir, 'pre-push'), '#!/bin/sh\nexit 0\n', { mode: 0o755 });
-    execSync('git config core.hooksPath .beads/hooks', { cwd: testDir, stdio: 'pipe' });
-
-    const results = checkGitHooks(testDir);
-    const hooksPathResult = results.find(r => r.name === 'Git hooksPath');
-    assert.ok(hooksPathResult, 'should have a Git hooksPath result');
-    assert.strictEqual(hooksPathResult.status, 'pass');
-  });
-
-  it('should warn when core.hooksPath is set to wrong directory', () => {
-    const hooksDir = join(testDir, '.beads', 'hooks');
-    mkdirSync(hooksDir, { recursive: true });
-    writeFileSync(join(hooksDir, 'pre-push'), '#!/bin/sh\nexit 0\n', { mode: 0o755 });
-    execSync('git config core.hooksPath .git/hooks', { cwd: testDir, stdio: 'pipe' });
-
-    const results = checkGitHooks(testDir);
-    const hooksPathResult = results.find(r => r.name === 'Git hooksPath');
-    assert.ok(hooksPathResult, 'should have a Git hooksPath result');
-    assert.strictEqual(hooksPathResult.status, 'warn');
-  });
-
-  it('should fail when hooks are not executable', () => {
-    const hooksDir = join(testDir, '.beads', 'hooks');
-    mkdirSync(hooksDir, { recursive: true });
-    // Create hook without execute permission
-    writeFileSync(join(hooksDir, 'pre-push'), '#!/bin/sh\nexit 0\n', { mode: 0o644 });
-    execSync('git config core.hooksPath .beads/hooks', { cwd: testDir, stdio: 'pipe' });
-
-    const results = checkGitHooks(testDir);
-    const permsResult = results.find(r => r.name === 'Hook permissions');
-    assert.ok(permsResult, 'should have a Hook permissions result');
-    assert.strictEqual(permsResult.status, 'fail');
-    assert.ok(permsResult.message.includes('pre-push'), 'should mention pre-push');
-  });
-
-  it('should pass when all present hooks are executable', () => {
-    const hooksDir = join(testDir, '.beads', 'hooks');
-    mkdirSync(hooksDir, { recursive: true });
-    writeFileSync(join(hooksDir, 'pre-push'), '#!/bin/sh\nexit 0\n', { mode: 0o755 });
-    writeFileSync(join(hooksDir, 'pre-commit'), '#!/bin/sh\nexit 0\n', { mode: 0o755 });
-    execSync('git config core.hooksPath .beads/hooks', { cwd: testDir, stdio: 'pipe' });
-
-    const results = checkGitHooks(testDir);
-    const permsResult = results.find(r => r.name === 'Hook permissions');
-    assert.ok(permsResult, 'should have a Hook permissions result');
-    assert.strictEqual(permsResult.status, 'pass');
   });
 });
 
-describe('checkMetadataJson', () => {
-  let testDir: string;
-
-  beforeEach(() => {
-    testDir = join(tmpdir(), `beth-meta-test-${Date.now()}`);
-    mkdirSync(join(testDir, '.beads'), { recursive: true });
-  });
-
-  afterEach(() => {
-    if (existsSync(testDir)) {
-      rmSync(testDir, { recursive: true, force: true });
-    }
-  });
-
-  it('should return empty array when metadata.json does not exist', () => {
-    const results = checkMetadataJson(testDir);
+describe('checkMetadataJson (deprecated stub)', () => {
+  it('should always return empty array', () => {
+    const results = checkMetadataJson('/any/path');
     assert.deepStrictEqual(results, []);
-  });
-
-  it('should pass for valid metadata with non-default name', () => {
-    writeFileSync(join(testDir, '.beads', 'metadata.json'), JSON.stringify({ name: 'beth' }));
-    const results = checkMetadataJson(testDir);
-    const result = results.find(r => r.name === 'Beads metadata');
-    assert.ok(result);
-    assert.strictEqual(result.status, 'pass');
-  });
-
-  it('should warn when database name is the dangerous fallback "beads"', () => {
-    writeFileSync(join(testDir, '.beads', 'metadata.json'), JSON.stringify({ name: 'beads' }));
-    const results = checkMetadataJson(testDir);
-    const result = results.find(r => r.name === 'Beads metadata');
-    assert.ok(result);
-    assert.strictEqual(result.status, 'warn');
-    assert.ok(result.message.includes('beads'));
-  });
-
-  it('should also check "database" field for the fallback name', () => {
-    writeFileSync(join(testDir, '.beads', 'metadata.json'), JSON.stringify({ database: 'beads' }));
-    const results = checkMetadataJson(testDir);
-    const result = results.find(r => r.name === 'Beads metadata');
-    assert.ok(result);
-    assert.strictEqual(result.status, 'warn');
-  });
-
-  it('should fail for corrupt JSON', () => {
-    writeFileSync(join(testDir, '.beads', 'metadata.json'), '{ "name": "beth" }}}');
-    const results = checkMetadataJson(testDir);
-    const result = results.find(r => r.name === 'Beads metadata');
-    assert.ok(result);
-    assert.strictEqual(result.status, 'fail');
-    assert.ok(result.message.includes('invalid JSON'));
-  });
-
-  it('should fail when metadata is not an object', () => {
-    writeFileSync(join(testDir, '.beads', 'metadata.json'), '"just a string"');
-    const results = checkMetadataJson(testDir);
-    const result = results.find(r => r.name === 'Beads metadata');
-    assert.ok(result);
-    assert.strictEqual(result.status, 'fail');
   });
 });
 
-describe('checkBdRuntime', () => {
-  let testDir: string;
-
-  beforeEach(() => {
-    testDir = join(tmpdir(), `beth-bdrt-test-${Date.now()}`);
-    mkdirSync(testDir, { recursive: true });
+describe('checkDoltProcess (deprecated stub)', () => {
+  it('should always return empty array', () => {
+    const results = checkDoltProcess();
+    assert.deepStrictEqual(results, []);
   });
+});
 
-  afterEach(() => {
-    if (existsSync(testDir)) {
-      rmSync(testDir, { recursive: true, force: true });
-    }
-  });
-
-  it('should return empty array when bd is not installed', () => {
-    // Run in entirely empty dir — bd likely not available or will error
-    // If bd IS installed, this test still exercises the runtime check
-    const results = checkBdRuntime(testDir);
-    // Either empty (bd not found) or some result — just verify it doesn't throw
-    assert.ok(Array.isArray(results));
+describe('checkBdRuntime (deprecated stub)', () => {
+  it('should always return empty array', () => {
+    const results = checkBdRuntime('/any/path');
+    assert.deepStrictEqual(results, []);
   });
 });
