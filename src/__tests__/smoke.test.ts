@@ -7,6 +7,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { join } from 'node:path';
+import { readFileSync } from 'node:fs';
 import { loadAgents } from '../core/agents/loader.js';
 import { loadSkills } from '../core/skills/loader.js';
 
@@ -56,5 +57,21 @@ describe('Smoke Test: Barrel Exports', () => {
     expect(typeof mod.loadSkills).toBe('function');
     expect(mod.loadSkill).toBeDefined();
     expect(typeof mod.loadSkill).toBe('function');
+  });
+});
+
+describe('Smoke Test: package.json bin field', () => {
+  const pkg = JSON.parse(readFileSync(join(process.cwd(), 'package.json'), 'utf-8'));
+
+  it('should have beth-copilot bin entry', () => {
+    expect(pkg.bin['beth-copilot']).toBe('bin/cli.js');
+  });
+
+  it('should have beth bin entry for backward compat', () => {
+    expect(pkg.bin['beth']).toBe('bin/cli.js');
+  });
+
+  it('should point both entries to the same file', () => {
+    expect(pkg.bin['beth-copilot']).toBe(pkg.bin['beth']);
   });
 });

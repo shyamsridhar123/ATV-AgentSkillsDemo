@@ -2,7 +2,7 @@
 
 > *"I don't have time to explain things twice. Read this."*
 
-Last updated: 2026-03-13 (Drop beads — 8 cleanup tasks planned)
+Last updated: 2026-03-13 (Tech debt assessment: 13 items documented across 3 priority tiers)
 
 ---
 
@@ -290,15 +290,64 @@ Beads is being removed entirely. All task tracking moves to Backlog.md CLI. All 
 
 ## Backlog (Prioritized)
 
-### High Priority (P1)
+### Tech Debt — Critical (P1)
 
-*All P1 items completed.*
+- [ ] **TD-01: Remove `bs-buster` unused production dependency**
+  - **Objective:** Eliminate dead runtime dependency that inflates install size (22MB local) and ships in `npm publish`
+  - **Acceptance Criteria:** (1) `bs-buster` removed from `dependencies` in package.json, (2) `npm install` succeeds, (3) all tests pass, (4) `npx beth-copilot init`, `doctor`, `close`, `land` commands work without `bs-buster`, (5) `.bs-buster/` directory documented as optional local artifact in .gitignore comment
 
-### Medium Priority (P2)
+- [ ] **TD-02: Delete dead `bin/lib/` files — animation.js, pathValidation.js, pathValidation.test.js**
+  - **Objective:** Remove 3 files in `bin/lib/` that are imported by nothing. `animation.js` was a startup splash never wired in. `pathValidation.js` is a JS duplicate of `src/lib/pathValidation.ts` — explicitly marked dead in `bin/cli.js` line 8. Test file covers dead code.
+  - **Acceptance Criteria:** (1) `bin/lib/animation.js` deleted, (2) `bin/lib/pathValidation.js` deleted, (3) `bin/lib/pathValidation.test.js` deleted, (4) `bin/beth-animation.sh` deleted, (5) `test:legacy` and `test:legacy:ts` scripts removed from package.json, (6) `test:all` script updated to just `npm run test`, (7) `bin/cli.js` comment on line 8 removed or updated, (8) all tests pass, (9) `npx beth-copilot` commands work
 
-*All P2 items completed.*
+- [ ] **TD-03: Remove beads stub functions from `bin/cli.js`**
+  - **Objective:** Delete 3 dead stub functions (`getBeadsPath`, `isBeadsInstalled`, `isBeadsInitialized`) at line ~522 of `bin/cli.js` that always return null/false and are called by nothing
+  - **Acceptance Criteria:** (1) All 3 stubs removed, (2) "Beads functions removed" comment block removed, (3) no runtime errors from any CLI command, (4) all tests pass
 
-### Low Priority (P3)
+- [ ] **TD-04: Sync `templates/AGENTS.md` from live `AGENTS.md`**
+  - **Objective:** Template AGENTS.md still references deprecated dual-tracking system (beads + Backlog.md), `bd init`, `bd create`, `bd list`. Anyone running `npx beth-copilot init` gets wrong instructions. Live version uses "Backlog.md — single source of truth" and has mandatory Session Startup section.
+  - **Acceptance Criteria:** (1) `templates/AGENTS.md` content synced from live `AGENTS.md`, (2) template-specific adjustments retained (generic epic-id examples, no beth-specific references), (3) `npx beth-copilot init` copies correct version, (4) no beads CLI references remain in template, (5) Session Startup section present
+
+- [ ] **TD-05: Sync `templates/.github/copilot-instructions.md` from live**
+  - **Objective:** Template copilot-instructions.md has diverged from live version. New projects get outdated skill tables, agent descriptions, and missing architecture guidance.
+  - **Acceptance Criteria:** (1) Template synced with live `.github/copilot-instructions.md`, (2) template-appropriate adjustments only (no project-specific data), (3) skill table reflects all current tracked skills
+
+### Tech Debt — High (P2)
+
+- [ ] **TD-06: Fix/delete empty `src/cli/commands/index.ts` barrel export**
+  - **Objective:** All exports are commented out. This file re-exports nothing but is re-exported from `src/index.ts` as the public API surface. CLI commands are loaded dynamically by `bin/cli.js`, not through this barrel.
+  - **Acceptance Criteria:** EITHER (a) uncomment exports and make barrel functional, OR (b) delete file and remove re-export from `src/index.ts` — (1) no import errors, (2) all tests pass, (3) `npm run build` succeeds, (4) CLI commands work
+
+- [ ] **TD-07: Archive obsolete documentation (5 files)**
+  - **Objective:** 5 docs are explicitly obsolete or completed plans that clutter active documentation
+  - **Files:** `docs/BD-BACKUP-PARSER-FAILURE.md` (self-labeled "ARCHIVED"), `docs/CLI-IMPLEMENTATION-PLAN.md` (status: COMPLETE), `docs/DOCKER-SWARM.md` (vision doc, zero implementation), `docs/FEATURE-REQUEST-userVisible.md` (unimplemented feature request), `docs/quality-gate-plan.md` (status: Complete Phase 1-5)
+  - **Acceptance Criteria:** (1) Create `docs/archive/` directory, (2) move all 5 files there, (3) any cross-references updated (grep for filenames in AGENTS.md, README.md, etc.), (4) no broken links
+
+- [ ] **TD-08: Review and sync 4 diverged template skills**
+  - **Objective:** 4 of 6 template skills have diverged from their live counterparts: `framer-components`, `prd`, `vercel-react-best-practices`, `web-design-guidelines`. If live is newer (likely), templates should be synced so `npx beth-copilot init` installs current versions.
+  - **Acceptance Criteria:** (1) Each divergence reviewed — determine which version is authoritative, (2) templates synced from live where live is newer, (3) `diff` between template and live shows only intentional differences (if any), (4) `security-analysis` and `shadcn-ui` confirmed still identical (no action needed)
+
+- [ ] **TD-09: Consolidate root `tasks/` directory**
+  - **Objective:** Root `tasks/` contains 2 orphaned PRD files (`DEMO-prd-agentic-banking.md`, `prd-v1.1.1-cli-doctor-fixes.md`) while active tasks live in `backlog/tasks/`. This creates confusion about where task files belong.
+  - **Acceptance Criteria:** (1) `tasks/DEMO-prd-agentic-banking.md` moved to `backlog/archive/` or deleted (demo content), (2) `tasks/prd-v1.1.1-cli-doctor-fixes.md` moved to `backlog/tasks/` if still relevant or archived if completed, (3) root `tasks/` directory deleted, (4) any references to moved files updated
+
+### Tech Debt — Medium (P3)
+
+- [ ] **TD-10: Delete 8 empty backlog scaffolding directories**
+  - **Objective:** `backlog/` contains 8 empty directories created by tool initialization but never populated: `archive/drafts/`, `archive/milestones/`, `archive/tasks/`, `completed/`, `decisions/`, `docs/`, `drafts/`, `milestones/`
+  - **Acceptance Criteria:** (1) All 8 empty dirs deleted, (2) tool can recreate them if needed (verify `backlog` command handles missing dirs gracefully), (3) `backlog/tasks/` and `backlog/config.yml` preserved
+
+- [ ] **TD-11: Delete unused asset `assets/beth-portrait-small.txt`**
+  - **Objective:** Zero references anywhere in codebase. The full-size `beth-portrait.txt` is only referenced by the also-dead `animation.js`. Once TD-02 removes animation.js, `beth-portrait.txt` becomes dead too.
+  - **Acceptance Criteria:** (1) `assets/beth-portrait-small.txt` deleted, (2) `assets/beth-portrait.txt` deleted (if TD-02 is completed first), (3) no broken references
+
+- [ ] **TD-12: Audit and deduplicate untracked `.github/skills/` (50+ local skills)**
+  - **Objective:** 50+ untracked skill directories in `.github/skills/` include duplicates and overlapping content. Key duplicates: `skill-creator` / `create-agent-skill` / `create-agent-skills` (3 skills doing the same thing), `ce:*` / `workflows:*` (5 pairs covering same domains), `resolve_parallel` / `resolve_todo_parallel` / `resolve-pr-parallel` (3 resolve variants), `lfg` / `slfg` (both "full autonomous engineering workflow").
+  - **Acceptance Criteria:** (1) Pick one "create skill" skill, delete the other 2, (2) pick one workflow namespace (`ce:` or `workflows:`), delete the other 5, (3) clarify or consolidate the 3 resolve variants, (4) clarify `lfg` vs `slfg` distinction or merge, (5) remaining skills have unique, non-overlapping purposes
+
+- [ ] **TD-13: Consider removing tracked `sbom.json` from git**
+  - **Objective:** 150KB generated file that gets stale quickly. Already generated at publish time via `prepublishOnly` script. Tracking in git inflates repo size across commits with no benefit since it changes every time dependencies update.
+  - **Acceptance Criteria:** (1) `sbom.json` added to `.gitignore`, (2) `git rm --cached sbom.json`, (3) `npm publish` still generates fresh SBOM via `prepublishOnly`, (4) document in CONTRIBUTING.md that SBOM is generated at publish time
 
 - [ ] Consider additional skills (API security, performance profiling)
 

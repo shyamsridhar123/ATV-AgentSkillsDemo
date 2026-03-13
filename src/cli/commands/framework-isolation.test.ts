@@ -1,7 +1,7 @@
 /**
  * Dual-framework isolation audit tests.
  *
- * beth-ywg.6: beads.e2e.test.ts and quickstart.test.ts mix node:test and vitest
+ * beth-ywg.6: quickstart.test.ts mixes node:test and vitest
  * imports. This file validates that the vitest config alias ('node:test' → 'vitest')
  * works correctly and that lifecycle hooks fire in the expected order.
  *
@@ -113,7 +113,6 @@ describe('framework isolation: audit of mixed-import files', () => {
    * The vitest alias makes this work, but it's fragile. Document for awareness.
    */
   const MIXED_FILES = [
-    'src/cli/commands/beads.e2e.test.ts',
     'src/cli/commands/quickstart.test.ts',
   ];
 
@@ -121,8 +120,8 @@ describe('framework isolation: audit of mixed-import files', () => {
     // This is a documentation test — it asserts the known mixed files exist.
     // If someone adds more mixed files, they should add them here too.
     assert.ok(
-      MIXED_FILES.length === 2,
-      `Expected 2 mixed-import files, found ${MIXED_FILES.length}. ` +
+      MIXED_FILES.length === 1,
+      `Expected 1 mixed-import file, found ${MIXED_FILES.length}. ` +
       'Update this test if new mixed-import files are added.'
     );
   });

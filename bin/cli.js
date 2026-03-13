@@ -5,7 +5,7 @@ import { dirname, join, relative } from 'path';
 import { existsSync, mkdirSync, readdirSync, statSync, copyFileSync, readFileSync, writeFileSync, unlinkSync, chmodSync } from 'fs';
 import { createRequire } from 'module';
 import { execSync, spawn } from 'child_process';
-import { validateBeadsPath, validateBinaryPath } from './lib/pathValidation.js';
+// pathValidation.js removed — beads no longer used
 
 const require = createRequire(import.meta.url);
 const __filename = fileURLToPath(import.meta.url);
@@ -518,58 +518,11 @@ async function checkForUpdates() {
   }
 }
 
-function getBeadsPath() {
-  // Check if bd is available in PATH
-  try {
-    logDebug('Checking if bd is in PATH...');
-    execSync('bd --version', { stdio: 'ignore' });
-    logDebug('Found bd in PATH');
-    return 'bd';
-  } catch {
-    logDebug('bd not in PATH, checking common locations...');
-    // Check common installation paths based on platform
-    const homeDir = process.env.HOME || process.env.USERPROFILE || '';
-    const isWindows = process.platform === 'win32';
-    
-    const commonPaths = isWindows ? [
-      // Windows: npm global, Go bin, local apps
-      join(process.env.APPDATA || '', 'npm', 'bd.cmd'),
-      join(homeDir, 'AppData', 'Roaming', 'npm', 'bd.cmd'),
-      join(homeDir, 'AppData', 'Local', 'Microsoft', 'WindowsApps', 'bd.exe'),
-      join(homeDir, 'go', 'bin', 'bd.exe'),
-      join(process.env.GOPATH || join(homeDir, 'go'), 'bin', 'bd.exe'),
-    ] : [
-      // Unix: homebrew, npm global, go bin, local bin
-      '/opt/homebrew/bin/bd',
-      '/usr/local/bin/bd',
-      join(homeDir, '.local', 'bin', 'bd'),
-      join(homeDir, 'bin', 'bd'),
-      join(homeDir, '.npm-global', 'bin', 'bd'),
-      join(homeDir, 'go', 'bin', 'bd'),
-      join(process.env.GOPATH || join(homeDir, 'go'), 'bin', 'bd'),
-    ];
-    
-    for (const bdPath of commonPaths) {
-      logDebug(`Checking: ${bdPath}`);
-      if (existsSync(bdPath)) {
-        logDebug(`Found at: ${bdPath}`);
-        return bdPath;
-      }
-    }
-    
-    logDebug('bd not found in any common location');
-    return null;
-  }
-}
-
-function isBeadsInstalled() {
-  return getBeadsPath() !== null;
-}
-
-function isBeadsInitialized(cwd) {
-  // Check if .beads directory exists in the project
-  return existsSync(join(cwd, '.beads'));
-}
+// ─── Beads functions removed ─────────────────────────────────────────────────
+// Stubs kept for backward compatibility (beads has been removed)
+function getBeadsPath() { return null; }
+function isBeadsInstalled() { return false; }
+function isBeadsInitialized(_cwd) { return false; }
 
 async function promptYesNo(question) {
   const readline = await import('readline');
@@ -597,180 +550,6 @@ async function promptForInput(question) {
     rl.question(`${question} `, (answer) => {
       rl.close();
       resolve(answer.trim());
-    });
-  });
-}
-
-/**
- * Installs the beads CLI globally via npm.
- * 
- * SECURITY NOTE - shell:true usage:
- * - Required for cross-platform npm execution (npm.cmd on Windows, npm on Unix)
- * - Arguments are HARDCODED - no user input is passed to the shell
- * - Command injection risk: NONE (no dynamic/user-supplied values)
- * 
- * Alternative considered: Using platform-specific binary names (npm.cmd vs npm)
- * would eliminate shell:true but adds complexity and edge cases for non-standard installs.
- * 
- * @returns {Promise<boolean>} True if installation succeeded and was verified
- */
-async function installBeads() {
-  const isWindows = process.platform === 'win32';
-  const isMac = process.platform === 'darwin';
-  
-  log('\nInstalling beads CLI via npm...', COLORS.cyan);
-  logInfo('npm install -g @beads/bd');
-  
-  // SECURITY: shell:true is required for cross-platform npm execution.
-  // All arguments are hardcoded constants - no user input reaches the shell.
-  return new Promise((resolve) => {
-    const child = spawn('npm', ['install', '-g', '@beads/bd'], {
-      stdio: 'inherit',
-      shell: true
-    });
-    
-    child.on('close', (code) => {
-      if (code === 0) {
-        // CRITICAL: Verify installation actually worked before claiming success
-        // npm can exit 0 even when the package isn't properly installed
-        const verifiedPath = getBeadsPath();
-        if (verifiedPath) {
-          logSuccess('beads CLI installed and verified!');
-          resolve(true);
-        } else {
-          logWarning('npm reported success but beads CLI not found in PATH.');
-          logInfo('This can happen if npm global bin is not in your PATH.');
-          if (globalThis.VERBOSE) {
-            showPathDiagnostics();
-          } else {
-            logInfo('Run with --verbose for PATH diagnostics.');
-          }
-          console.log('');
-          showBeadsAlternatives(isWindows, isMac);
-          resolve(false);
-        }
-      } else {
-        logError('npm install failed.');
-        console.log('');
-        showBeadsAlternatives(isWindows, isMac);
-        resolve(false);
-      }
-    });
-    
-    child.on('error', () => {
-      logError('Failed to run npm.');
-      logInfo('Make sure npm is installed and in your PATH.');
-      resolve(false);
-    });
-  });
-}
-
-function showBeadsAlternatives(isWindows, isMac) {
-  logInfo('Alternative installation methods:');
-  if (isWindows) {
-    logInfo('  PowerShell: irm https://raw.githubusercontent.com/steveyegge/beads/main/install.ps1 | iex');
-    logInfo('  Go:         go install github.com/steveyegge/beads/cmd/bd@latest');
-  } else {
-    if (isMac) {
-      logInfo('  Homebrew:   brew install beads');
-    }
-    logInfo('  Script:     curl -fsSL https://raw.githubusercontent.com/steveyegge/beads/main/scripts/install.sh | bash');
-    logInfo('  Go:         go install github.com/steveyegge/beads/cmd/bd@latest');
-  }
-  logInfo('');
-  logInfo('Learn more: https://github.com/steveyegge/beads');
-}
-
-/**
- * Initializes beads in the current project directory.
- * 
- * SECURITY NOTE - shell:true usage:
- * - bdPath is validated via getBeadsPath() which only returns paths that:
- *   1. Pass execSync('bd --version') verification, OR
- *   2. Exist on disk (verified via existsSync) from a HARDCODED list of paths
- * - Arguments are HARDCODED ('init') - no user input is passed to the shell
- * - Command injection risk: LOW (bdPath is validated, no user input in args)
- * 
- * The shell:true is used for PATH resolution consistency, though it could be
- * eliminated since we have an absolute path. Kept for consistency with other
- * spawn calls and to handle edge cases in shell script wrappers.
- * 
- * @param {string} cwd - Current working directory (validated by caller)
- * @returns {Promise<boolean>} True if initialization succeeded
- */
-async function initializeBeads(cwd) {
-  log('\nInitializing beads in project...', COLORS.cyan);
-  
-  const bdPath = getBeadsPath();
-  if (!bdPath) {
-    logWarning('Failed to initialize beads. Run manually: bd init');
-    return false;
-  }
-  
-  // SECURITY: bdPath is validated by getBeadsPath() (existsSync check).
-  // Only 'init' argument is passed - no user input reaches the shell.
-  return new Promise((resolve) => {
-    const child = spawn(bdPath, ['init'], {
-      stdio: 'inherit',
-      shell: true,
-      cwd
-    });
-    
-    child.on('close', (code) => {
-      if (code === 0) {
-        logSuccess('beads initialized successfully!');
-        resolve(true);
-      } else {
-        logWarning('Failed to initialize beads. Run manually: bd init');
-        resolve(false);
-      }
-    });
-    
-    child.on('error', () => {
-      logWarning('Failed to initialize beads. Run manually: bd init');
-      resolve(false);
-    });
-  });
-}
-
-/**
- * Runs `bd doctor` to verify beads configuration health.
- * 
- * SECURITY NOTE - shell:true usage:
- * - bdPath is validated via getBeadsPath() (same as initializeBeads)
- * - Arguments are HARDCODED ('doctor') - no user input is passed to the shell
- * - Command injection risk: LOW (bdPath is validated, no user input in args)
- * 
- * @returns {Promise<boolean>} True if bd doctor passed
- */
-async function runBeadsDoctor() {
-  log('\nRunning beads doctor to verify configuration...', COLORS.cyan);
-  
-  const bdPath = getBeadsPath();
-  if (!bdPath) {
-    logWarning('Cannot run beads doctor: bd not found.');
-    return false;
-  }
-  
-  return new Promise((resolve) => {
-    const child = spawn(bdPath, ['doctor'], {
-      stdio: 'inherit',
-      shell: true,
-    });
-    
-    child.on('close', (code) => {
-      if (code === 0) {
-        logSuccess('beads doctor passed!');
-        resolve(true);
-      } else {
-        logWarning('beads doctor reported issues. Run "bd doctor" manually to investigate.');
-        resolve(false);
-      }
-    });
-    
-    child.on('error', () => {
-      logWarning('Failed to run beads doctor. Run "bd doctor" manually.');
-      resolve(false);
     });
   });
 }
@@ -817,87 +596,6 @@ ${BETH_GUARD_END}
 `;
 }
 
-/**
- * Install the pre-push guard into .beads/hooks/pre-push.
- * Appends the guard section after the beads integration section.
- * Idempotent — skips if guard is already installed.
- *
- * @param {string} cwd - Project root directory
- */
-function installPrePushGuard(cwd) {
-  const hookPath = join(cwd, '.beads', 'hooks', 'pre-push');
-
-  if (!existsSync(hookPath)) {
-    logWarning('Pre-push hook not found (.beads/hooks/pre-push). Skipping guard installation.');
-    return;
-  }
-
-  const content = readFileSync(hookPath, 'utf-8');
-
-  // Already installed?
-  if (content.includes(BETH_GUARD_BEGIN)) {
-    logSuccess('Pre-push branch guard already installed');
-    return;
-  }
-
-  // Append guard after existing content
-  const guardScript = generateGuardScript();
-  writeFileSync(hookPath, content.trimEnd() + '\n' + guardScript, 'utf-8');
-  logSuccess('Installed pre-push branch guard (blocks direct pushes to main)');
-}
-
-/**
- * Configure git to use .beads/hooks and make all hooks executable.
- *
- * Git only runs hooks from its configured hooks path (.git/hooks by default).
- * beads creates hooks in .beads/hooks/, so we must:
- * 1. Set core.hooksPath to .beads/hooks
- * 2. chmod +x all hook scripts in that directory
- *
- * Idempotent — safe to call multiple times.
- *
- * @param {string} cwd - Project root directory
- */
-function configureGitHooks(cwd) {
-  const hooksDir = join(cwd, '.beads', 'hooks');
-
-  if (!existsSync(hooksDir)) {
-    logWarning('No .beads/hooks/ directory found. Skipping hook configuration.');
-    return;
-  }
-
-  // Set core.hooksPath so git looks in .beads/hooks/ instead of .git/hooks/
-  try {
-    execSync('git config core.hooksPath .beads/hooks', {
-      cwd,
-      stdio: ['pipe', 'pipe', 'pipe'],
-    });
-    logSuccess('Set git core.hooksPath → .beads/hooks');
-  } catch (err) {
-    logWarning(`Failed to set core.hooksPath: ${err.message || err}`);
-    logInfo('Run manually: git config core.hooksPath .beads/hooks');
-  }
-
-  // Make all hook scripts executable
-  const hookFiles = readdirSync(hooksDir).filter(f => {
-    const fullPath = join(hooksDir, f);
-    return statSync(fullPath).isFile();
-  });
-
-  for (const hookFile of hookFiles) {
-    const hookPath = join(hooksDir, hookFile);
-    try {
-      chmodSync(hookPath, 0o755);
-    } catch (err) {
-      logWarning(`Failed to chmod +x ${hookFile}: ${err.message || err}`);
-    }
-  }
-
-  if (hookFiles.length > 0) {
-    logSuccess(`Made ${hookFiles.length} hook(s) executable: ${hookFiles.join(', ')}`);
-  }
-}
-
 function showHelp() {
   showBethBannerStatic({ showQuickHelp: false });
   console.log(`${COLORS.bright}Beth${COLORS.reset} - AI Orchestrator for GitHub Copilot
@@ -905,18 +603,18 @@ function showHelp() {
 ${COLORS.bright}Usage:${COLORS.reset}
   npx beth-copilot init [options]     Initialize Beth in current directory
   npx beth-copilot doctor             Check system health and dependencies
-  npx beth-copilot close <id> [opts]   Close issue with dependency enforcement
+  npx beth-copilot close <id> [opts]   (Deprecated) Close task
   npx beth-copilot land [opts]          Automated session completion (test, commit, push)
   npx beth-copilot pre-push-guard      Run branch discipline checks (used by git hook)
   npx beth-copilot update [options]    Update project files to latest templates
-  npx beth-copilot quickstart         Run init + doctor + beads setup
+  npx beth-copilot quickstart         Run init + doctor
   npx beth-copilot help               Show this help message
 
 ${COLORS.bright}Options:${COLORS.reset}
   --force                             Overwrite existing files
   --skip-backlog                      Don't create Backlog.md
   --skip-mcp                          Don't create mcp.json.example
-  --skip-beads                        Skip beads check (not recommended)
+  --skip-beads                        (Deprecated) No-op, kept for compatibility
   --verbose                           Show detailed diagnostics on errors
   --check-only                        Check for updates without modifying files
 
@@ -993,7 +691,7 @@ function copyDirRecursive(src, dest, options = {}) {
 }
 
 async function init(options = {}) {
-  const { force = false, skipBacklog = false, skipMcp = false, skipBeads = false } = options;
+  const { force = false, skipBacklog = false, skipMcp = false } = options;
   const cwd = process.cwd();
   
   // Check for updates
@@ -1107,143 +805,10 @@ ${COLORS.yellow}╔════════════════════�
     logWarning('No files were copied. Use --force to overwrite existing files.');
   }
 
-  // Check for beads CLI (REQUIRED for Beth)
-  if (!skipBeads) {
-    console.log('');
-    log('Checking beads (required for task tracking)...', COLORS.cyan);
-    
-    let bdPath = getBeadsPath();
-    
-    // Loop until beads is installed
-    while (!bdPath) {
-      logWarning('beads CLI is not installed.');
-      logInfo('Beth requires beads for task tracking. Agents use it to coordinate work.');
-      logInfo('Learn more: https://github.com/steveyegge/beads');
-      console.log('');
-      
-      const shouldInstallBeads = await promptYesNo('Install beads CLI now? (required)');
-      if (shouldInstallBeads) {
-        const installed = await installBeads();
-        if (installed) {
-          // Re-check for beads after installation
-          bdPath = getBeadsPath();
-          if (!bdPath) {
-            console.log('');
-            logWarning('beads installed but not found in common paths.');
-            logInfo('The installer may have placed it in a custom location.');
-            console.log('');
-            logInfo('Please try one of these options:');
-            logInfo('  1. Open a NEW terminal and run: npx beth-copilot init');
-            logInfo('  2. Add ~/.local/bin to your PATH and retry');
-            logInfo('  3. Run: source ~/.bashrc (or ~/.zshrc) then retry');
-            console.log('');
-            
-            const retryCheck = await promptYesNo('Retry detection? (select No to enter path manually)');
-            if (retryCheck) {
-              bdPath = getBeadsPath();
-              continue;
-            }
-            
-            // Allow manual path entry
-            const customPath = await promptForInput('Enter full path to bd binary (or press Enter to retry installation):');
-            if (customPath) {
-              const validation = validateBeadsPath(customPath);
-              if (validation.valid) {
-                bdPath = validation.normalizedPath;
-                logSuccess(`Found beads at: ${bdPath}`);
-              } else {
-                logError(`Invalid path: ${validation.error}`);
-              }
-            }
-          }
-        } else {
-          console.log('');
-          logError('Installation script failed.');
-          logInfo('You can try installing manually:');
-          logInfo('  curl -fsSL https://raw.githubusercontent.com/steveyegge/beads/main/scripts/install.sh | bash');
-          console.log('');
-        }
-      } else {
-        console.log('');
-        logError('beads is REQUIRED for Beth to function.');
-        logInfo('Beth agents use beads to track tasks, dependencies, and coordinate work.');
-        logInfo('Without beads, the multi-agent workflow will not work correctly.');
-        console.log('');
-        
-        const tryAgain = await promptYesNo('Would you like to try installing beads?');
-        if (!tryAgain) {
-          logError('Cannot continue without beads. Exiting.');
-          logInfo('Install beads manually and run "npx beth-copilot init" again:');
-          logInfo('  npm install -g @beads/bd');
-          process.exit(1);
-        }
-      }
-    }
-    
-    // Show path info if not in standard PATH
-    if (bdPath && bdPath !== 'bd') {
-      logSuccess(`beads CLI found at: ${bdPath}`);
-      const isWindows = process.platform === 'win32';
-      if (isWindows) {
-        logInfo('Tip: Ensure npm global bin is in your PATH to use "bd" directly.');
-      } else {
-        logInfo('Tip: Add ~/.local/bin or npm global bin to your PATH to use "bd" directly.');
-      }
-    } else {
-      logSuccess('beads CLI is installed');
-    }
-    
-    // Initialize beads in the project if not already done
-    if (!isBeadsInitialized(cwd)) {
-      logInfo('beads not initialized in this project.');
-      let initialized = false;
-      
-      while (!initialized) {
-        const shouldInitBeads = await promptYesNo('Initialize beads now? (required)');
-        if (shouldInitBeads) {
-          initialized = await initializeBeads(cwd);
-          if (!initialized) {
-            logWarning('Initialization failed. Let\'s try again.');
-          }
-        } else {
-          logError('beads must be initialized for Beth to work correctly.');
-          logInfo('The .beads directory stores task tracking data used by all agents.');
-          console.log('');
-        }
-      }
-    } else {
-      logSuccess('beads is initialized in this project');
-    }
-  } else {
-    logWarning('Skipped beads check (--skip-beads). Beth may not function correctly.');
-  }
-
-  // Run bd doctor to verify beads configuration
-  if (!skipBeads && getBeadsPath() && isBeadsInitialized(cwd)) {
-    await runBeadsDoctor();
-  }
-
-  // Install pre-push guard hook and configure git to use .beads/hooks
-  if (!skipBeads && isBeadsInitialized(cwd)) {
-    installPrePushGuard(cwd);
-    configureGitHooks(cwd);
-  }
-
   // Final verification
   console.log('');
   log('Verifying installation...', COLORS.cyan);
-  
-  const finalBeadsOk = skipBeads || getBeadsPath();
-  const finalBeadsInit = skipBeads || isBeadsInitialized(cwd);
-  
-  if (finalBeadsOk && finalBeadsInit) {
-    logSuccess('All dependencies installed and configured!');
-  } else {
-    if (!finalBeadsOk) logError('beads CLI not found');
-    if (!finalBeadsInit) logError('beads not initialized in project');
-    logError('Setup incomplete. Please resolve issues above and run init again.');
-    process.exit(1);
-  }
+  logSuccess('All files installed and configured!');
 
   // Next steps
   console.log(`
@@ -1263,7 +828,7 @@ ${COLORS.cyan}"They broke my wings and forgot I had claws."${COLORS.reset}
 
 // Input validation constants
 const ALLOWED_COMMANDS = ['init', 'help', '--help', '-h', 'doctor', 'quickstart', 'close', 'pre-push-guard', 'update', 'land'];
-const ALLOWED_FLAGS = ['--force', '--skip-backlog', '--skip-mcp', '--skip-beads', '--verbose', '--reason', '-r', '-f', '--skip-tests', '--skip-backup', '--message', '-m', '--dry-run', '--check-only'];
+const ALLOWED_FLAGS = ['--force', '--skip-backlog', '--skip-mcp', '--skip-beads', '--verbose', '--reason', '-r', '-f', '--skip-tests', '--message', '-m', '--dry-run', '--check-only'];
 const MAX_ARG_LENGTH = 50;
 
 // Validate and sanitize input
@@ -1296,7 +861,6 @@ const options = {
   force: args.includes('--force'),
   skipBacklog: args.includes('--skip-backlog'),
   skipMcp: args.includes('--skip-mcp'),
-  skipBeads: args.includes('--skip-beads'),
   verbose: args.includes('--verbose'),
 };
 

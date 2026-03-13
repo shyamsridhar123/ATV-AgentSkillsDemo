@@ -119,11 +119,9 @@ describe('doctor command E2E', () => {
       // Setup: Create a fully healthy project
       const agentsDir = join(testDir, '.github', 'agents');
       const skillsDir = join(testDir, '.github', 'skills');
-      const beadsDir = join(testDir, '.beads');
 
       mkdirSync(agentsDir, { recursive: true });
       mkdirSync(skillsDir, { recursive: true });
-      mkdirSync(beadsDir, { recursive: true });
 
       // Create valid agents
       createValidAgentFile(agentsDir, 'test-agent');
@@ -152,11 +150,9 @@ describe('doctor command E2E', () => {
       // Setup: Create healthy project
       const agentsDir = join(testDir, '.github', 'agents');
       const skillsDir = join(testDir, '.github', 'skills');
-      const beadsDir = join(testDir, '.beads');
 
       mkdirSync(agentsDir, { recursive: true });
       mkdirSync(skillsDir, { recursive: true });
-      mkdirSync(beadsDir, { recursive: true });
 
       createValidAgentFile(agentsDir, 'beth');
       createValidSkill(skillsDir, 'prd');
@@ -172,10 +168,8 @@ describe('doctor command E2E', () => {
     it('should show failure for missing .github/agents directory', () => {
       // Setup: Only create skills, no agents
       const skillsDir = join(testDir, '.github', 'skills');
-      const beadsDir = join(testDir, '.beads');
 
       mkdirSync(skillsDir, { recursive: true });
-      mkdirSync(beadsDir, { recursive: true });
       createValidSkill(skillsDir, 'test-skill');
 
       const result = runDoctor(testDir);
@@ -196,10 +190,8 @@ describe('doctor command E2E', () => {
     it('should show failure for missing .github/skills directory', () => {
       // Setup: Only create agents, no skills
       const agentsDir = join(testDir, '.github', 'agents');
-      const beadsDir = join(testDir, '.beads');
 
       mkdirSync(agentsDir, { recursive: true });
-      mkdirSync(beadsDir, { recursive: true });
       createValidAgentFile(agentsDir, 'test-agent');
 
       const result = runDoctor(testDir);
@@ -221,11 +213,9 @@ describe('doctor command E2E', () => {
       // Setup: Create agent without name field
       const agentsDir = join(testDir, '.github', 'agents');
       const skillsDir = join(testDir, '.github', 'skills');
-      const beadsDir = join(testDir, '.beads');
 
       mkdirSync(agentsDir, { recursive: true });
       mkdirSync(skillsDir, { recursive: true });
-      mkdirSync(beadsDir, { recursive: true });
 
       createInvalidAgentFile(agentsDir, 'invalid.agent.md');
       createValidSkill(skillsDir, 'test-skill');
@@ -243,11 +233,9 @@ describe('doctor command E2E', () => {
       // Setup: Create mix of valid and invalid agents
       const agentsDir = join(testDir, '.github', 'agents');
       const skillsDir = join(testDir, '.github', 'skills');
-      const beadsDir = join(testDir, '.beads');
 
       mkdirSync(agentsDir, { recursive: true });
       mkdirSync(skillsDir, { recursive: true });
-      mkdirSync(beadsDir, { recursive: true });
 
       createValidAgentFile(agentsDir, 'valid-agent');
       createInvalidAgentFile(agentsDir, 'invalid1.agent.md');
@@ -273,11 +261,9 @@ describe('doctor command E2E', () => {
       // Setup: Create skill directory without SKILL.md
       const agentsDir = join(testDir, '.github', 'agents');
       const skillsDir = join(testDir, '.github', 'skills');
-      const beadsDir = join(testDir, '.beads');
 
       mkdirSync(agentsDir, { recursive: true });
       mkdirSync(skillsDir, { recursive: true });
-      mkdirSync(beadsDir, { recursive: true });
 
       createValidAgentFile(agentsDir, 'test-agent');
       createIncompleteSkill(skillsDir, 'incomplete-skill');
@@ -295,11 +281,9 @@ describe('doctor command E2E', () => {
       // Setup: Create multiple incomplete skills
       const agentsDir = join(testDir, '.github', 'agents');
       const skillsDir = join(testDir, '.github', 'skills');
-      const beadsDir = join(testDir, '.beads');
 
       mkdirSync(agentsDir, { recursive: true });
       mkdirSync(skillsDir, { recursive: true });
-      mkdirSync(beadsDir, { recursive: true });
 
       createValidAgentFile(agentsDir, 'test-agent');
       createValidSkill(skillsDir, 'complete-skill');
@@ -316,64 +300,14 @@ describe('doctor command E2E', () => {
     });
   });
 
-  describe('beads initialization check', () => {
-    it('should show warning when .beads directory is missing', () => {
-      // Setup: Create project without .beads
-      const agentsDir = join(testDir, '.github', 'agents');
-      const skillsDir = join(testDir, '.github', 'skills');
-
-      mkdirSync(agentsDir, { recursive: true });
-      mkdirSync(skillsDir, { recursive: true });
-
-      createValidAgentFile(agentsDir, 'test-agent');
-      createValidSkill(skillsDir, 'test-skill');
-
-      const result = runDoctor(testDir);
-
-      // Should show warning for missing beads init
-      assert.ok(
-        result.stdout.includes('⚠') || result.stdout.includes('not initialized'),
-        'Should indicate beads is not initialized'
-      );
-      assert.ok(
-        result.stdout.toLowerCase().includes('beads') || result.stdout.toLowerCase().includes('.beads'),
-        'Should mention beads'
-      );
-    });
-
-    it('should pass when .beads directory exists', () => {
-      // Setup: Create project with .beads
-      const agentsDir = join(testDir, '.github', 'agents');
-      const skillsDir = join(testDir, '.github', 'skills');
-      const beadsDir = join(testDir, '.beads');
-
-      mkdirSync(agentsDir, { recursive: true });
-      mkdirSync(skillsDir, { recursive: true });
-      mkdirSync(beadsDir, { recursive: true });
-
-      createValidAgentFile(agentsDir, 'test-agent');
-      createValidSkill(skillsDir, 'test-skill');
-
-      const result = runDoctor(testDir);
-
-      // Should pass beads init check
-      assert.ok(
-        result.stdout.includes('Beads Init') || result.stdout.includes('.beads'),
-        'Should check beads initialization'
-      );
-    });
-  });
-
   describe('--verbose flag', () => {
     it('should show additional details with --verbose flag', () => {
       // Setup: Create project with some issues
       const agentsDir = join(testDir, '.github', 'agents');
       const skillsDir = join(testDir, '.github', 'skills');
-      const beadsDir = join(testDir, '.beads');
 
       mkdirSync(agentsDir, { recursive: true });
       mkdirSync(skillsDir, { recursive: true });
-      mkdirSync(beadsDir, { recursive: true });
 
       // Create agent with missing name to trigger warning details
       createInvalidAgentFile(agentsDir, 'bad-agent.agent.md');
@@ -416,11 +350,9 @@ describe('doctor command E2E', () => {
       // Setup: Create healthy project components
       const agentsDir = join(testDir, '.github', 'agents');
       const skillsDir = join(testDir, '.github', 'skills');
-      const beadsDir = join(testDir, '.beads');
 
       mkdirSync(agentsDir, { recursive: true });
       mkdirSync(skillsDir, { recursive: true });
-      mkdirSync(beadsDir, { recursive: true });
 
       createValidAgentFile(agentsDir, 'test-agent');
       createValidSkill(skillsDir, 'test-skill');
@@ -432,7 +364,7 @@ describe('doctor command E2E', () => {
     });
 
     it('should use ⚠ for warning checks', () => {
-      // Setup: Create project with warnings (missing .beads, but valid agents/skills)
+      // Setup: Create project with warnings (valid agents/skills but incomplete setup)
       const agentsDir = join(testDir, '.github', 'agents');
       const skillsDir = join(testDir, '.github', 'skills');
 
@@ -502,19 +434,16 @@ describe('doctor command E2E', () => {
       // Setup: Create project with all required components
       const agentsDir = join(testDir, '.github', 'agents');
       const skillsDir = join(testDir, '.github', 'skills');
-      const beadsDir = join(testDir, '.beads');
 
       mkdirSync(agentsDir, { recursive: true });
       mkdirSync(skillsDir, { recursive: true });
-      mkdirSync(beadsDir, { recursive: true });
 
       createValidAgentFile(agentsDir, 'test-agent');
       createValidSkill(skillsDir, 'test-skill');
 
       const result = runDoctor(testDir);
 
-      // If beads CLI is installed, this should pass
-      // If beads CLI is not installed, it will fail - we check the agent/skill parts passed
+      // Check that agents and skills pass
       const hasAgentPass = result.stdout.includes('✓') && result.stdout.includes('Agent');
       const hasSkillPass = result.stdout.includes('✓') && result.stdout.includes('Skill');
 
@@ -552,11 +481,9 @@ describe('doctor command E2E', () => {
     it('should handle empty .agent.md files without crashing', () => {
       const agentsDir = join(testDir, '.github', 'agents');
       const skillsDir = join(testDir, '.github', 'skills');
-      const beadsDir = join(testDir, '.beads');
 
       mkdirSync(agentsDir, { recursive: true });
       mkdirSync(skillsDir, { recursive: true });
-      mkdirSync(beadsDir, { recursive: true });
 
       // Create empty agent file
       writeFileSync(join(agentsDir, 'empty.agent.md'), '');
@@ -576,11 +503,9 @@ describe('doctor command E2E', () => {
     it('should handle malformed YAML without crashing', () => {
       const agentsDir = join(testDir, '.github', 'agents');
       const skillsDir = join(testDir, '.github', 'skills');
-      const beadsDir = join(testDir, '.beads');
 
       mkdirSync(agentsDir, { recursive: true });
       mkdirSync(skillsDir, { recursive: true });
-      mkdirSync(beadsDir, { recursive: true });
 
       // Create agent with malformed YAML
       const badYaml = `---
@@ -600,75 +525,6 @@ name: test
       assert.ok(
         result.stdout.includes('Agents') || result.stdout.includes('✗') || result.stdout.includes('⚠'),
         'Should handle malformed YAML gracefully'
-      );
-    });
-  });
-
-  describe('no-db mode checks', () => {
-    it('should show no-db check when .beads/config.yaml has no-db: true', () => {
-      const agentsDir = join(testDir, '.github', 'agents');
-      const skillsDir = join(testDir, '.github', 'skills');
-      const beadsDir = join(testDir, '.beads');
-      const backupDir = join(testDir, '.beads', 'backup');
-
-      mkdirSync(agentsDir, { recursive: true });
-      mkdirSync(skillsDir, { recursive: true });
-      mkdirSync(backupDir, { recursive: true });
-
-      createValidAgentFile(agentsDir, 'beth');
-      createValidSkill(skillsDir, 'prd');
-      writeFileSync(join(beadsDir, 'config.yaml'), 'no-db: true\n');
-      writeFileSync(join(backupDir, 'issues.jsonl'), '{"id":"test-1","title":"test"}\n');
-
-      const result = runDoctor(testDir);
-      assert.ok(
-        result.stdout.includes('no-db') || result.stdout.includes('JSONL'),
-        'Should show no-db or JSONL check in output'
-      );
-    });
-
-    it('should warn when no-db is not enabled', () => {
-      const agentsDir = join(testDir, '.github', 'agents');
-      const skillsDir = join(testDir, '.github', 'skills');
-      const beadsDir = join(testDir, '.beads');
-
-      mkdirSync(agentsDir, { recursive: true });
-      mkdirSync(skillsDir, { recursive: true });
-      mkdirSync(beadsDir, { recursive: true });
-
-      createValidAgentFile(agentsDir, 'beth');
-      createValidSkill(skillsDir, 'prd');
-      writeFileSync(join(beadsDir, 'config.yaml'), 'issue-prefix: test\n');
-
-      const result = runDoctor(testDir);
-      assert.ok(
-        result.stdout.includes('⚠') || result.stdout.includes('no-db'),
-        'Should warn about no-db mode not enabled'
-      );
-    });
-
-    it('should report JSONL issue count when data exists', () => {
-      const agentsDir = join(testDir, '.github', 'agents');
-      const skillsDir = join(testDir, '.github', 'skills');
-      const beadsDir = join(testDir, '.beads');
-      const backupDir = join(testDir, '.beads', 'backup');
-
-      mkdirSync(agentsDir, { recursive: true });
-      mkdirSync(skillsDir, { recursive: true });
-      mkdirSync(backupDir, { recursive: true });
-
-      createValidAgentFile(agentsDir, 'beth');
-      createValidSkill(skillsDir, 'prd');
-      writeFileSync(join(beadsDir, 'config.yaml'), 'no-db: true\n');
-      writeFileSync(
-        join(backupDir, 'issues.jsonl'),
-        '{"id":"t-1","title":"one"}\n{"id":"t-2","title":"two"}\n{"id":"t-3","title":"three"}\n'
-      );
-
-      const result = runDoctor(testDir, ['--verbose']);
-      assert.ok(
-        result.stdout.includes('3') || result.stdout.includes('issues'),
-        'Should report JSONL issue count'
       );
     });
   });
