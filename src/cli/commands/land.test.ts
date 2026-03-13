@@ -66,11 +66,6 @@ describe('parseLandArgs', () => {
     expect(opts.skipTests).toBe(true);
   });
 
-  it('parses --skip-backup', () => {
-    const opts = parseLandArgs(['--skip-backup']);
-    expect(opts.skipBackup).toBe(true);
-  });
-
   it('parses --force and -f', () => {
     expect(parseLandArgs(['--force']).force).toBe(true);
     expect(parseLandArgs(['-f']).force).toBe(true);

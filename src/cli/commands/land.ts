@@ -42,7 +42,6 @@ const COLORS = {
 
 export interface LandOptions {
   skipTests?: boolean;
-  skipBackup?: boolean; // Deprecated — kept for API compat
   message?: string;
   force?: boolean;
   dryRun?: boolean;
@@ -79,8 +78,6 @@ export function parseLandArgs(rawArgs: string[]): LandOptions {
 
     if (arg === '--skip-tests') {
       opts.skipTests = true;
-    } else if (arg === '--skip-backup') {
-      opts.skipBackup = true;
     } else if (arg === '--force' || arg === '-f') {
       opts.force = true;
     } else if (arg === '--dry-run') {
