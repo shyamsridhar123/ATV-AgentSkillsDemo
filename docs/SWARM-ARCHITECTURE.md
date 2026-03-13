@@ -2,8 +2,8 @@
 
 > *"I'm not here to wreck one thing. When I fix this, I'm fixing it for generations."*
 
-**Status:** Plan — not yet implemented  
-**Date:** 2026-03-13  
+**Status:** Plan — not yet implemented (open questions resolved, implementation phases defined)  
+**Date:** 2026-03-13 (updated 2026-03-13 with ruflo competitive analysis)  
 **Supersedes:** [DOCKER-SWARM.md](DOCKER-SWARM.md) (conceptual Docker/Redis approach — abandoned in favor of this design)
 
 ---
@@ -33,7 +33,8 @@ Refactor Beth from a Copilot-hosted agent (synchronous `runSubagent()` calls ins
 15. [Phased Implementation](#phased-implementation)
 16. [What We're Dropping](#what-were-dropping)
 17. [What We're Keeping](#what-were-keeping)
-18. [Open Questions](#open-questions)
+18. [Open Questions (Resolved)](#open-questions-resolved)
+19. [Competitive Intelligence](#competitive-intelligence)
 
 ---
 
@@ -62,7 +63,8 @@ What we need:
 | Decision | Choice | Alternatives Rejected | Rationale |
 |----------|--------|----------------------|-----------|
 | **Language** | Python | TypeScript | Rich ML/AI ecosystem, first-class `openai` SDK, faster prototyping for daemon loops |
-| **LLM Client** | Azure OpenAI direct (`openai` package) | Copilot SDK, GitHub Models API | No GitHub auth token lifecycle for daemons; full control over parameters; simpler dependency; BYOM without abstraction overhead |
+| **LLM Client** | Azure OpenAI primary, OpenAI fallback (`openai` package) | Copilot SDK, GitHub Models API | No GitHub auth token lifecycle for daemons; full control over parameters; simpler dependency; provider abstraction via `base_url`; automatic failover |
+| **Model Routing** | 3-tier routing (complex/standard/simple) per agent role | Single model for all | Different tasks deserve different models; cheap models for cheap tasks saves cost without sacrificing quality where it matters |
 | **Coordination** | SQLite WAL (native) | Pied Piper Go server, Redis, RabbitMQ, NATS | Zero external dependencies; single-file database; WAL mode gives concurrent reads + serialized writes; steal Pied Piper's proven schema without running their server |
 | **Isolation** | Git worktrees | Docker containers, separate clones | Filesystem-level isolation per worker without cloning the repo; shared `.git` directory; lightweight; native git tooling |
 | **Tracking** | SQLite message board replaces beads | Beads (no-db JSONL), Backlog.md CLI | Beads is broken at its core (TOCTOU races, metadata corruption). SQLite WAL provides the concurrency guarantees beads never had |
@@ -206,6 +208,27 @@ def connect_board(db_path: str) -> sqlite3.Connection:
 | `learnings` | Reusable insights discovered during work | Workers | All |
 | `blockers` | Workers report they're stuck | Workers | Beth |
 | `heartbeats` | Worker liveness signals | Workers | Beth |
+
+### Outcome Tracking
+
+The board also stores structured outcomes for model routing intelligence (see [Competitive Intelligence](#competitive-intelligence)):
+
+```sql
+CREATE TABLE outcomes (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    epic_id     TEXT NOT NULL,
+    task_id     TEXT NOT NULL,
+    agent_role  TEXT NOT NULL,
+    task_type   TEXT,
+    model_used  TEXT NOT NULL,
+    tokens_in   INTEGER NOT NULL,
+    tokens_out  INTEGER NOT NULL,
+    duration_ms INTEGER NOT NULL,
+    success     BOOLEAN NOT NULL,
+    description TEXT,
+    created_at  TEXT DEFAULT (datetime('now'))
+);
+```
 
 ### Message Protocol
 
@@ -380,7 +403,11 @@ def merge_worker_branch(worker_branch: str, epic_branch: str) -> bool:
 
 ---
 
-## LLM Client (Azure OpenAI Direct)
+## LLM Client (Provider-Abstracted)
+
+### Provider Strategy
+
+Primary: Azure OpenAI (corporate deployment, Entra ID upgrade path). Fallback: OpenAI direct (or any OpenAI-compatible API via `base_url`). The `openai` Python package supports all of these natively — no abstraction layer needed.
 
 ### Why Not Copilot SDK
 
@@ -639,39 +666,43 @@ swarm/
 ├── __init__.py
 ├── main.py              # Entry point: CLI + daemon startup
 ├── config.py            # SwarmConfig dataclass, env vars, defaults
-├── board.py             # SQLite WAL message board (channels, posts, replies)
-├── llm.py               # Azure OpenAI client wrapper, agent_loop()
+├── board.py             # SQLite WAL message board (channels, posts, replies, outcomes)
+├── llm.py               # LLM client wrapper, agent_loop(), provider failover
+├── routing.py           # Model routing: tier resolution, outcome-based suggestion
 ├── tools.py             # Tool definitions and execution (read/write/edit/run/search)
 ├── git.py               # Worktree management (create, merge, cleanup)
 ├── orchestrator.py      # Beth's orchestration loop
 ├── worker.py            # Worker agent loop
 ├── agents.py            # Agent prompt loading from .agent.md files
 ├── skills.py            # Skill loading from .github/skills/
-├── budget.py            # Token budget tracking and context compaction
+├── budget.py            # Token budget tracking, cost estimation, context compaction
 └── tests/
     ├── test_board.py
     ├── test_git.py
     ├── test_tools.py
     ├── test_orchestrator.py
     ├── test_worker.py
-    └── test_llm.py
+    ├── test_llm.py
+    ├── test_routing.py
+    └── test_budget.py
 ```
 
 ### Module Responsibilities
 
 | Module | Responsibility | Key Dependencies |
 |--------|---------------|-----------------|
-| `main.py` | CLI parsing, daemon mode, signal handling | `orchestrator`, `config` |
-| `config.py` | Load config from `swarm.yaml` or env vars | stdlib only |
-| `board.py` | SQLite WAL CRUD for channels/posts/replies; `read_new()` with cursor tracking | `sqlite3` |
-| `llm.py` | Azure OpenAI chat completions with tool-use loop | `openai` |
+| `main.py` | CLI parsing, daemon mode (tmux), signal handling, `swarm start/stop/status/attach/resume` | `orchestrator`, `config` |
+| `config.py` | Load config from `swarm.yaml` or env vars; model routing tiers; provider definitions; budget thresholds | stdlib only |
+| `board.py` | SQLite WAL CRUD for channels/posts/replies/outcomes; `read_new()` with cursor tracking | `sqlite3` |
+| `llm.py` | LLM chat completions with tool-use loop; provider failover (primary → fallback on 429/500/503) | `openai` |
+| `routing.py` | Resolve model deployment for a task; query outcomes for learned routing; `suggest_model()` | `board`, `config` |
 | `tools.py` | Tool function registry; maps function names → callables; sandboxed to worktree | `board`, `git` |
 | `git.py` | `create_worktree()`, `merge_branch()`, `cleanup_worktree()`, conflict detection | `subprocess` (git CLI) |
-| `orchestrator.py` | Beth's poll loop: read board, dispatch tasks, sequence merges, check heartbeats | `board`, `git`, `llm`, `worker` |
+| `orchestrator.py` | Beth's poll loop: read board, dispatch tasks, sequence merges, check heartbeats, record outcomes, auto-update Backlog.md | `board`, `git`, `llm`, `worker`, `routing` |
 | `worker.py` | Tool-use agent loop with context management; one instance per task | `llm`, `tools`, `board`, `skills` |
-| `agents.py` | Parse `.agent.md` YAML frontmatter + instructions into system prompts | `yaml` |
+| `agents.py` | Parse `.agent.md` YAML frontmatter + instructions into system prompts; ignore Copilot-specific fields | `yaml` |
 | `skills.py` | Load `SKILL.md` files, inject per skill enforcement map | filesystem reads |
-| `budget.py` | Token counting, compaction trigger, conversation summarization | `tiktoken` |
+| `budget.py` | Token counting (`tiktoken`), per-task/epic/daily budget enforcement, compaction trigger, cost estimation | `tiktoken`, `config` |
 
 ---
 
@@ -710,46 +741,167 @@ swarm/
 
 ## Phased Implementation
 
+### Overview
+
+Six phases, each gated by a concrete milestone that must be demonstrated before moving to the next. Phases 0–2 are the foundation — they prove the architecture works. Phases 3–4 are the system — they make it useful. Phase 5 is hardening — it makes it reliable.
+
+| Phase | Name | Milestone | Estimated Scope |
+|-------|------|-----------|-----------------|
+| **0** | Foundation | SQLite board passes concurrent read/write tests, config loads from YAML + env | New Python project, 4 modules, ~500 LOC |
+| **1** | Single Agent | One developer agent receives task via board, makes code changes, posts completion | 5 modules, tool registry, LLM integration, ~800 LOC |
+| **2** | Parallel Workers | Two workers in separate worktrees complete tasks, Beth merges sequentially | Worktree lifecycle, merge gate, ~600 LOC |
+| **3** | Orchestrator Daemon | Beth decomposes a feature, dispatches to 3+ workers, merges all results | Orchestration loop, epic decomposition, ~700 LOC |
+| **4** | Intelligence | Model routing adapts based on outcome history, cost guardrails enforce budgets | Outcomes table, routing logic, budget module, ~500 LOC |
+| **5** | Production Hardening | CLI interface, graceful shutdown, provider failover, structured logging | CLI, observability, robustness, ~600 LOC |
+
+**Total estimated scope:** ~3,700 LOC of Python (excluding tests). Tests should roughly 1:1 match production code.
+
+---
+
 ### Phase 0: Foundation
-- [ ] Set up Python project structure (`swarm/` package, pyproject.toml, tests)
-- [ ] Implement `config.py` with environment variable loading
-- [ ] Implement `board.py` — SQLite WAL message board with channel/post/reply CRUD
-- [ ] Unit tests for board (concurrent reads, write serialization, WAL recovery)
 
-### Phase 1: Single Agent Loop (Prove It Works)
-- [ ] Implement `llm.py` — Azure OpenAI client with tool-use loop
-- [ ] Implement `tools.py` — basic tools (read_file, write_file, edit_file, run_command)
-- [ ] Implement `agents.py` — parse `.agent.md` into system prompts
-- [ ] Implement `skills.py` — load SKILL.md files
-- [ ] Implement `worker.py` — single worker loop
-- [ ] **Milestone:** One developer agent can receive a task via the board, work on it, and post completion
+**Goal:** Prove the coordination layer works before touching LLMs or git.
 
-### Phase 2: Git Worktrees
-- [ ] Implement `git.py` — worktree create, merge, cleanup
-- [ ] Wire worktree creation into worker startup
-- [ ] Wire merge sequencing into Beth (manual, non-daemon)
-- [ ] **Milestone:** Two workers operating in parallel on separate worktrees, Beth merges sequentially
+**Deliverables:**
+- [ ] Python project structure (`swarm/` package, `pyproject.toml`, dev dependencies)
+- [ ] `config.py` — `SwarmConfig` dataclass, loads from `swarm.yaml` with env var interpolation (`${AZURE_OPENAI_ENDPOINT}`)
+- [ ] `board.py` — SQLite WAL message board: create tables, CRUD for channels/posts/replies, `read_new()` with cursor tracking per reader
+- [ ] `outcomes` table schema (for Phase 4, but created here so the schema is complete from day 1)
+- [ ] Unit tests: concurrent reads, write serialization, busy timeout handling, WAL recovery after simulated crash
+
+**Milestone:** `pytest swarm/tests/test_board.py` passes with concurrent read/write tests. Config loads from a sample `swarm.yaml`.
+
+**Acceptance Criteria:**
+- Board supports the 7 channels (tasks, completions, claims, conflicts, learnings, blockers, heartbeats)
+- `read_new()` returns only unread posts per reader (cursor-based)
+- Two threads writing simultaneously never corrupt the database
+- Config resolves `${ENV_VAR}` references from environment
+
+---
+
+### Phase 1: Single Agent Loop
+
+**Goal:** Prove one agent can receive a task, use tools to modify code, and report back.
+
+**Deliverables:**
+- [ ] `llm.py` — Azure OpenAI client with tool-use loop (chat → tool_calls → execute → loop until `stop`)
+- [ ] `tools.py` — Tool registry: `read_file`, `write_file`, `edit_file`, `run_command`, `list_directory`, `search_files`, `post_message`, `read_messages`, `load_skill`
+- [ ] `agents.py` — Parse `.agent.md` YAML frontmatter + markdown body into system prompts; ignore Copilot-specific fields
+- [ ] `skills.py` — Load `SKILL.md` files from `.github/skills/`; skill enforcement map (agent → auto-injected skills)
+- [ ] `worker.py` — Single worker loop: load prompt → load skills → run tool loop → commit → post completion
+- [ ] Provider config in `swarm.yaml` (primary Azure OpenAI, no fallback yet)
+- [ ] Integration test: developer agent receives a task to create a file, creates it, commits, posts completion
+
+**Milestone:** One developer agent receives "Create a hello world Express server in `src/server.ts`" via the board, creates the file, and posts completion — all without human intervention.
+
+**Acceptance Criteria:**
+- Agent correctly parses `.github/agents/developer.agent.md` into a system prompt
+- Agent loads `vercel-react-best-practices` SKILL.md when referenced in task metadata
+- All 9 tools are functional (read, write, edit, run, list, search, post, read_messages, load_skill)
+- Tool execution is sandboxed to the specified working directory
+- Worker posts structured completion to the board with files_changed metadata
+
+---
+
+### Phase 2: Parallel Workers + Git Worktrees
+
+**Goal:** Prove two agents can work simultaneously on different tasks without conflicts.
+
+**Deliverables:**
+- [ ] `git.py` — Worktree lifecycle: `create_worktree()`, `merge_worker_branch()`, `cleanup_worktree()`
+- [ ] Merge sequencing: Beth merges worker branches one-at-a-time into the epic branch
+- [ ] Test validation gate: `npm test` (or configurable test command) runs after every merge; revert on failure
+- [ ] Claims channel: workers announce paths before starting; Beth checks for overlap before parallel dispatch
+- [ ] Wire worktree creation into worker startup (worker receives worktree path, operates inside it)
+- [ ] `.worktrees/` added to `.gitignore`
+
+**Milestone:** Developer agent and tester agent work simultaneously on different files in separate worktrees. Beth merges both branches sequentially into the epic branch. Tests pass.
+
+**Acceptance Criteria:**
+- Worktrees are created from `origin/main` (or specified base branch)
+- Each worker's git operations are isolated to its worktree
+- Beth merges worker A, runs tests, then merges worker B, runs tests
+- If merge B conflicts, it's aborted cleanly (no partial state)
+- Worktrees and ephemeral branches are cleaned up after merge
+- Claims channel prevents two workers from being assigned overlapping file paths
+
+---
 
 ### Phase 3: Orchestrator Daemon
-- [ ] Implement `orchestrator.py` — Beth's poll loop
-- [ ] Implement epic decomposition via LLM
-- [ ] Wire claims channel for partition-based conflict prevention
-- [ ] Implement heartbeat monitoring and stuck worker detection
-- [ ] **Milestone:** Beth daemon decomposes a feature request, dispatches to 3+ workers, merges results
 
-### Phase 4: Conflict Handling + Robustness
-- [ ] Auto-resolve trivial merge conflicts
-- [ ] Test validation gate after every merge
-- [ ] Blocker escalation (worker posts to blockers → Beth intervenes)
-- [ ] Implement `budget.py` — context window tracking and compaction
-- [ ] **Milestone:** System handles a multi-agent epic with a merge conflict and recovers gracefully
+**Goal:** Beth runs as a persistent daemon that decomposes work, dispatches tasks, and manages the full lifecycle.
+
+**Deliverables:**
+- [ ] `orchestrator.py` — Beth's async poll loop: read completions → handle blockers → merge ready work → dispatch new tasks → check heartbeats
+- [ ] Epic decomposition: Beth uses her own LLM call to break a complex request into subtasks with dependencies
+- [ ] Dependency-aware dispatch: tasks with unmet dependencies stay queued; only unblocked tasks are dispatched to idle workers
+- [ ] Heartbeat monitoring: workers post heartbeats; Beth detects stuck workers (no heartbeat for N seconds) and can kill/reassign
+- [ ] tmux session management: `swarm start` launches the daemon in a named tmux session, `swarm attach` connects, `swarm stop` sends graceful shutdown signal
+- [ ] Backlog.md auto-update: Beth runs `backlog task edit <id> -s "Done" --plain` when an epic closes (all subtasks merged, tests passing)
+
+**Milestone:** User submits "Build a JWT auth system with login and logout endpoints" to the board. Beth decomposes it into 3+ subtasks (implement, test, security review), dispatches to workers, merges results, and the epic branch has working, tested code.
+
+**Acceptance Criteria:**
+- Beth correctly decomposes a feature request into subtasks with logical dependencies
+- Subtasks are dispatched only when their dependencies are satisfied
+- Workers receive tasks, execute, and report completion autonomously
+- Beth merges all worker branches in dependency order
+- Final test suite passes on the merged epic branch
+- Stuck worker (simulated by killing a worker process) is detected within 2× heartbeat interval
+- tmux session survives terminal close; `swarm attach` reconnects
+
+---
+
+### Phase 4: Intelligence (Model Routing + Outcome Learning + Cost Guardrails)
+
+**Goal:** The system gets smarter and cheaper over time by learning from outcomes and routing work to the right models.
+
+**Deliverables:**
+- [ ] Outcome recording: after every merge (success or failure), Beth writes a row to the `outcomes` table with agent, model, tokens, duration, success
+- [ ] `suggest_model()` — query outcomes to find the best-performing model for a given agent role + task type
+- [ ] Model routing config in `swarm.yaml`: per-agent tier defaults, per-task override capability
+- [ ] `budget.py` — Token budget tracking: per-task limits, per-epic spending caps, global daily kill switch
+- [ ] Worker enforcement: if a worker exceeds its task token budget, it stops and posts a blocker
+- [ ] Beth enforcement: if epic budget exceeded, pause dispatch, notify user
+- [ ] Cost estimation: convert token counts to estimated USD using per-model pricing table in config
+- [ ] `budget.py` — Context window management: token counting via `tiktoken`, compaction trigger at threshold, conversation summarization
+
+**Milestone:** After running 10+ tasks, `suggest_model()` returns a non-default model recommendation based on historical success rates. Cost guardrails correctly halt a worker that exceeds its token budget.
+
+**Acceptance Criteria:**
+- Outcomes table captures all fields: agent, model, tokens_in, tokens_out, duration, success, task_type
+- `suggest_model()` only recommends models with ≥5 historical data points (no premature optimization)
+- Per-task budget stops a runaway worker before it burns the entire context window
+- Per-epic budget pauses dispatch (not kills workers) when threshold is crossed
+- Daily kill switch halts all work; `swarm resume` command unpauses
+- Token counting matches actual API usage within ±5%
+
+---
 
 ### Phase 5: Production Hardening
-- [ ] CLI interface (`python -m swarm start`, `swarm status`, `swarm stop`)
-- [ ] Graceful shutdown (finish in-progress work, don't accept new tasks)
-- [ ] Logging and observability (structured logs, board queries for status)
+
+**Goal:** Make the system reliable, observable, and pleasant to operate.
+
+**Deliverables:**
+- [ ] CLI interface: `swarm start` (daemon), `swarm run` (foreground), `swarm stop`, `swarm status`, `swarm resume`, `swarm attach`
+- [ ] Graceful shutdown: finish in-progress workers, don't accept new tasks, merge completed work, clean up worktrees
+- [ ] Provider failover: if primary LLM provider returns 429/500/503, retry on fallback provider (from `swarm.yaml`)
+- [ ] Structured logging: JSON-format logs with agent_id, task_id, epic_id fields for filtering
+- [ ] Board query CLI: `swarm board` shows recent messages, `swarm outcomes` shows success rates
+- [ ] Error recovery: if the daemon crashes, restart picks up where it left off (board state is durable in SQLite)
+- [ ] Documentation: `docs/SWARM-USAGE.md` with setup guide, configuration reference, troubleshooting
 - [ ] Integration with Backlog.md CLI for human-facing updates
-- [ ] Documentation and onboarding guide
+- [ ] systemd unit file (optional, documented for CI/production environments)
+
+**Milestone:** The system runs for a full work session (1+ hour), handles multiple epics, survives a simulated crash, restarts cleanly, and produces structured logs that can be grepped for specific agents or tasks.
+
+**Acceptance Criteria:**
+- `swarm status` shows: running workers, queued tasks, recent completions, current spend
+- `swarm stop` completes in-progress work (up to configurable timeout) before shutting down
+- Provider failover is transparent to workers (they don't know which provider served the request)
+- After a crash, `swarm start` resumes: reads board state, re-dispatches incomplete tasks, doesn't re-merge already-merged work
+- Logs are parseable by `jq` and include timestamps, agent IDs, and task IDs
+- README documentation is sufficient for a new developer to set up and run the swarm
 
 ---
 
@@ -783,20 +935,186 @@ swarm/
 
 ---
 
-## Open Questions
+## Open Questions (Resolved)
 
-1. **Daemon lifecycle** — systemd service? tmux session? Direct foreground process? Needs to survive terminal close but also be easy to inspect.
+> All 8 questions resolved 2026-03-13 based on competitive analysis of ruflo v3.5 and architectural reasoning.
 
-2. **Multi-repo support** — current design is one swarm per repo. Is that sufficient, or do we need a swarm that spans multiple repos?
+### 1. Daemon lifecycle → **tmux session (default), systemd optional**
 
-3. **Model routing** — should different agents use different models (e.g., GPT-4o for Beth orchestration, Claude for developer, cheaper models for tester)? The `openai` package supports this via different deployments, but needs config design.
+tmux gives us the best of both worlds: survives terminal close, trivially inspectable (`tmux attach`), and logs scroll back. No root access required. The CLI provides `swarm start` (launches tmux session), `swarm attach` (inspects), `swarm stop` (graceful shutdown). For production/CI environments, we document a systemd unit file as an optional alternative. Direct foreground mode (`swarm run`) available for debugging.
 
-4. **Cost guardrails** — budget module design: per-task token limits? Per-epic spending caps? Kill switch when costs exceed threshold?
+### 2. Multi-repo support → **One swarm per repo. Period.**
 
-5. **Backlog.md integration** — should the orchestrator auto-update Backlog.md when epics complete, or keep that manual/human-triggered?
+Sufficient for all current use cases. Cross-repo work is a different problem — it's a coordination layer above the swarm, not within it. Don't design for it until there's a real user need. ruflo supports "one project scope" as their default too.
 
-6. **Copilot coexistence** — can the swarm run alongside Copilot agent mode for ad-hoc tasks, or is it one-or-the-other? Likely both can coexist since they're independent systems sharing the same repo.
+### 3. Model routing → **Yes. 3-tier routing, stolen from ruflo.**
 
-7. **Authentication** — Azure OpenAI supports both API key and Entra ID (managed identity). Which is appropriate for a developer workstation daemon?
+Different tasks deserve different models. This is high-value, low-effort since the `openai` package already supports different deployments via `model` parameter. See [Competitive Intelligence: Model Routing](#stolen-pattern-model-routing) below for full design.
 
-8. **Existing `.agent.md` parsing** — the YAML frontmatter includes Copilot-specific fields (`tools`, `handoffs`, `infer`). The Python parser needs to extract the useful parts (name, description, personality instructions) and ignore the Copilot-specific fields, or we define a mapping.
+### 4. Cost guardrails → **Per-task token limits + per-epic spending caps + kill switch**
+
+Three layers of protection:
+- **Per-task:** Workers track token usage via the `openai` response `usage` field. If a single task exceeds its budget (configurable, default 50K input + 10K output tokens), the worker stops and posts a blocker.
+- **Per-epic:** Beth tracks cumulative token usage across all workers for an epic. If the epic budget is exceeded (configurable, default $5.00 estimated cost), Beth pauses dispatch and notifies the user.
+- **Kill switch:** Global `swarm.yaml` setting `max_daily_spend_usd`. If cumulative daily spend exceeds this, the daemon pauses all work and logs a warning. User must `swarm resume` to continue.
+
+Token costs are estimated using known per-model pricing in `config.py`. Not exact — but close enough for guardrails.
+
+### 5. Backlog.md integration → **Auto-update on epic close, manual for subtasks**
+
+When Beth closes an epic (all subtasks merged, tests passing), she runs `backlog task edit <id> -s "Done" --plain` automatically. Subtask status updates during the epic remain internal to the board — Backlog.md only reflects epic-level milestones. This keeps the human-facing view clean while the board handles the fine-grained coordination.
+
+### 6. Copilot coexistence → **Both coexist. Independent systems, shared repo.**
+
+The swarm daemon and Copilot agent mode are independent. The swarm operates on its own branches (worker worktrees, epic branches). Copilot operates on whatever branch the user has checked out. They share the same `.github/agents/` and `.github/skills/` directories (read-only for both). The only conflict risk is if a user in Copilot and a swarm worker try to push to the same branch — avoided by convention (swarm uses `worker/*` and `epic/*` branch namespaces).
+
+### 7. Authentication → **API key for v1. Entra ID documented for later.**
+
+API key (`AZURE_OPENAI_API_KEY` env var) is the right choice for Phase 0–3. It's simple, works on any workstation, no Azure AD configuration required. Entra ID (managed identity) is documented as the upgrade path for team/CI environments where key rotation is a concern. The `openai` package supports both via `AzureOpenAI(api_key=...)` vs `AzureOpenAI(azure_ad_token_provider=...)` — the switch is a config change, not a refactor.
+
+### 8. `.agent.md` parsing → **Extract what we need, ignore Copilot-specific fields**
+
+The Python parser reads `.agent.md` YAML frontmatter and extracts: `name`, `description`, and the markdown body (personality/instructions). Copilot-specific fields (`tools`, `handoffs`, `infer`, `model`) are silently ignored. The tool→callable mapping lives in `tools.py` (not in the agent definition), and handoff routing lives in `orchestrator.py`. No need for a field-by-field mapping document — the parser is three lines of YAML extraction.
+
+---
+
+## Competitive Intelligence
+
+> Analysis of [ruflo v3.5](https://github.com/ruvnet/ruflo) (formerly claude-flow) — 20.9k stars, 2.3k forks, shipping MCP-based multi-agent orchestrator for Claude Code.
+
+### What ruflo Gets Right (Stolen Patterns)
+
+Three patterns worth stealing. Everything else is feature sprawl or overengineering for our use case.
+
+### Stolen Pattern: Model Routing
+
+ruflo routes tasks through 3 tiers: WASM transforms for trivial edits ($0, <1ms), cheap models for medium tasks (Haiku-class), and full models for complex reasoning (Opus-class). We adapt this to Azure OpenAI deployments.
+
+**Design:**
+
+```yaml
+# swarm.yaml
+model_routing:
+  default: "gpt-4o"           # Default deployment for most work
+  tiers:
+    orchestrator: "gpt-4o"    # Beth decomposition and routing
+    complex: "gpt-4o"         # Architecture, security design, multi-file reasoning
+    standard: "gpt-4o-mini"   # Feature implementation, bug fixes, test writing
+    simple: "gpt-4o-mini"     # Documentation, formatting, single-file edits
+  
+  # Agent → tier mapping (overridable per-task)
+  agent_defaults:
+    beth: "orchestrator"
+    developer: "standard"
+    tester: "simple"
+    security-reviewer: "complex"
+    product-manager: "standard"
+    ux-designer: "standard"
+    researcher: "standard"
+```
+
+**Implementation in `llm.py`:**
+
+```python
+def get_model_for_task(agent_role: str, task_complexity: str | None = None) -> str:
+    """Resolve model deployment name for a task."""
+    if task_complexity:
+        return config.model_routing.tiers[task_complexity]
+    return config.model_routing.agent_defaults.get(
+        agent_role, config.model_routing.default
+    )
+```
+
+Beth can override the tier per-task based on complexity assessment. This is a config concern, not a code concern — the `openai` client already accepts different `model` values per call.
+
+**Why we skip WASM/Agent Booster:** ruflo's Agent Booster handles trivial edits (var→const, add-types) without LLM calls. Clever, but premature for us. Our agents don't do mechanical transforms — they reason about code. If we find a class of tasks that's wasting LLM calls on trivial edits, we can add a pre-routing filter later.
+
+### Stolen Pattern: Outcome-Based Learning
+
+ruflo stores successful task→agent→outcome patterns in a ReasoningBank with HNSW vector search. We steal the *concept* but implement it simply in SQLite — no vector layer, no neural networks, no SONA.
+
+**Design: `outcomes` table in the message board**
+
+```sql
+CREATE TABLE outcomes (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    epic_id     TEXT NOT NULL,
+    task_id     TEXT NOT NULL,
+    agent_role  TEXT NOT NULL,
+    task_type   TEXT,              -- 'feature', 'bugfix', 'test', 'security', 'docs'
+    model_used  TEXT NOT NULL,
+    tokens_in   INTEGER NOT NULL,
+    tokens_out  INTEGER NOT NULL,
+    duration_ms INTEGER NOT NULL,
+    success     BOOLEAN NOT NULL,  -- did tests pass after merge?
+    description TEXT,              -- one-line task summary
+    created_at  TEXT DEFAULT (datetime('now'))
+);
+
+CREATE INDEX idx_outcomes_agent ON outcomes(agent_role);
+CREATE INDEX idx_outcomes_type ON outcomes(task_type);
+CREATE INDEX idx_outcomes_success ON outcomes(success);
+```
+
+**How Beth uses it:**
+
+1. After every merge (success or failure), Beth writes an outcome row.
+2. When routing a new task, Beth queries: *"What model tier has the highest success rate for this task type with this agent role?"*
+3. If `gpt-4o-mini` has a 95% success rate for tester tasks, Beth routes tester work to the cheap model. If `gpt-4o-mini` fails 30% of security reviews, Beth routes those to `gpt-4o`.
+
+```python
+def suggest_model(agent_role: str, task_type: str) -> str:
+    """Query outcomes to find best-performing model for this work."""
+    rows = board.query("""
+        SELECT model_used, 
+               COUNT(*) as total,
+               SUM(CASE WHEN success THEN 1 ELSE 0 END) as successes
+        FROM outcomes 
+        WHERE agent_role = ? AND task_type = ?
+        GROUP BY model_used
+        HAVING total >= 5
+        ORDER BY (CAST(successes AS REAL) / total) DESC
+        LIMIT 1
+    """, (agent_role, task_type))
+    return rows[0]["model_used"] if rows else get_model_for_task(agent_role)
+```
+
+This is 20 lines of SQL, not a neural network. It gets 80% of the value of ruflo's learning loop with 0.1% of the complexity.
+
+### Stolen Pattern: Provider Abstraction
+
+ruflo supports 6 LLM providers with automatic failover. We don't need 6, but we should not hardcode Azure OpenAI.
+
+**Design:** The `openai` Python package already supports multiple backends via `base_url`:
+- Azure OpenAI: `AzureOpenAI(azure_endpoint=...)`
+- OpenAI direct: `OpenAI(api_key=...)`
+- Any OpenAI-compatible API: `OpenAI(base_url="https://your-provider/v1")`
+
+```yaml
+# swarm.yaml
+providers:
+  primary:
+    type: "azure"
+    endpoint: "${AZURE_OPENAI_ENDPOINT}"
+    api_key: "${AZURE_OPENAI_API_KEY}"
+    api_version: "2024-12-01-preview"
+  fallback:
+    type: "openai"
+    api_key: "${OPENAI_API_KEY}"
+```
+
+**Implementation:** `llm.py` creates the primary client on startup. If a call fails with a retryable error (429, 500, 503), it falls back to the secondary provider. This is ~30 lines of code on top of what we already have.
+
+### What We're NOT Stealing from ruflo
+
+| ruflo Feature | Why We Skip It |
+|---------------|---------------|
+| HNSW vector memory | Premature. SQLite text search handles our scale. Add vectors when we have 10K+ outcomes. |
+| SONA self-learning neural architecture | Academic overengineering. Our SQL-based outcome learning is sufficient. |
+| Byzantine fault-tolerant consensus | Our agents aren't adversarial Byzantine nodes. They're LLM calls on your laptop. Sequential merge is fine. |
+| 60+ agent types | Feature padding. Our 7 roles with clear IDEO boundaries are more useful than 60 vaguely-differentiated prompt variants. |
+| Queen/Worker hierarchy | We already have this — it's called Beth + 6 workers. No need for a formal "queen" abstraction. |
+| 137+ skills / IPFS marketplace | Our 40+ skills cover our domain. Marketplace is a distribution concern, not an architecture concern. |
+| Agent Booster (WASM transforms) | Our agents reason about code, not do mechanical transforms. If we need this, we add it as a pre-filter later. |
+| Agentic-Jujutsu (jj-based VCS) | Git worktrees already solve our isolation problem. Adding a second VCS is unnecessary complexity. |
+| Claims-based human-agent coordination | Our Backlog.md CLI already handles this. Don't build a second coordination layer. |
