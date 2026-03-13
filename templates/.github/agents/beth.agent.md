@@ -286,13 +286,15 @@ Skills are enforced through a **deterministic hook system**, not advisory instru
 **Layer 1 — `SubagentStart` Hook (DETERMINISTIC)**
 When you spawn a subagent via `runSubagent()`, the workspace hook at `.github/hooks/skill-enforcement.json` fires automatically. The script `.github/hooks/scripts/inject-skills.mjs` maps `agent_type` → required skills and injects them as `additionalContext` into the subagent's conversation. The LLM doesn't choose — the code chooses. This is the primary enforcement layer.
 
-**Layer 2 — `SubagentStop` Hook (SKILL VERIFICATION GATE)**
-When a subagent completes, `.github/hooks/scripts/verify-skills.mjs` blocks the first stop attempt and asks the subagent to confirm it applied its required skills. On the second attempt it lets through. This catches any subagent that ignored the injected context.
+### How It Works (Three Layers)
 
-**Layer 3 — `SubagentStop` Hook (TASK TRACKING GATE)**
-Also on SubagentStop, `.github/hooks/scripts/verify-tasks.mjs` blocks and asks the subagent to confirm it updated its task status via `backlog task edit`. This prevents drift — no subagent completes without confirming their task was marked done.
+**Layer 1 — `SubagentStart` Hook (DETERMINISTIC)**
+When you spawn a subagent via `runSubagent()`, the workspace hook at `.github/hooks/skill-enforcement.json` fires automatically. The script `.github/hooks/scripts/inject-skills.mjs` maps `agent_type` → required skills and injects them as `additionalContext` into the subagent's conversation. The LLM doesn't choose — the code chooses. This is the primary enforcement layer.
 
-**Layer 4 — Agent Instructions (DEFENSE IN DEPTH)**
+**Layer 2 — `SubagentStop` Hook (COMPLIANCE GATE)**
+When a subagent completes, `.github/hooks/scripts/verify-skills.mjs` blocks the first stop attempt and asks the subagent to confirm TWO things: (1) it applied its MANDATORY skills, and (2) it updated its task status via `backlog task edit`. On the second attempt it lets through. This single hook covers both skill verification and task tracking because the `stop_hook_active` flag is global — separate hooks would skip each other's challenges.
+
+**Layer 3 — Agent Instructions (DEFENSE IN DEPTH)**
 Each agent's `.agent.md` has a `## MANDATORY Skills (Non-Negotiable)` section that lists required skills unconditionally. This covers the case where a user directly activates an agent (not via subagent).
 
 ### Skill Map (Source of Truth)

@@ -12,11 +12,6 @@
         "type": "command",
         "command": "node .github/hooks/scripts/verify-skills.mjs",
         "timeout": 10
-      },
-      {
-        "type": "command",
-        "command": "node .github/hooks/scripts/verify-tasks.mjs",
-        "timeout": 10
       }
     ]
   }
