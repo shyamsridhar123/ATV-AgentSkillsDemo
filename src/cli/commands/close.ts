@@ -128,10 +128,12 @@ export async function close(rawArgs: string[]): Promise<void> {
     console.log(
       `  Beads has been removed. Use Backlog.md for task tracking.`,
     );
+    process.exitCode = 1;
     return;
   }
 
   for (const _id of issueIds) {
     closeIssue(_id, {});
   }
+  process.exitCode = 1;
 }
