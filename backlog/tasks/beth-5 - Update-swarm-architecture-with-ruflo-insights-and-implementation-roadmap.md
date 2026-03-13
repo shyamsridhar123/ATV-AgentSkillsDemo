@@ -1,10 +1,10 @@
 ---
 id: BETH-5
 title: Update swarm architecture with ruflo insights and implementation roadmap
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-03-13 22:00'
-updated_date: '2026-03-13 22:00'
+updated_date: '2026-03-13 22:08'
 labels: []
 dependencies: []
 ---
