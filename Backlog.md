@@ -8,10 +8,183 @@ Last updated: 2026-03-13 (Tech debt assessment: 13 items documented across 3 pri
 
 ## In Progress
 
-| Task | Epic | Status |
-|------|------|--------|
-| **Migrate beads to no-db mode + Backlog.md tool** | beth-ajg | `.1` complete (no-db enabled). `.2` complete (concurrent write safety — found duplication race, documented). `.3`/`.4`/`.5` unblocked. `.7`/`.8` (tests) → `.6` (Dolt cleanup). |
-| **BEADS-NO-DB.md cleanup: fix inconsistencies, fill gaps, deduplicate, codify processes** | beth-3uo | 14 subtasks planned. 5 inconsistency fixes (config path, .gitignore, close command, version pins, doctor output). 3 gap fills (close enforcement, backup/restore, JSONL formats). 1 dedup pass. 4 code-as-process tasks (doctor --deep, init safety, migrate-to-nodb cmd, init --no-db flag). 1 structural restructure (target ≤250 lines from ~395). |
+### EPIC: Drop Beads — Migrate to Backlog.md-only Tracking
+
+Beads is being removed entirely. All task tracking moves to Backlog.md CLI. All existing agent logic, skills, handoffs, and workflows are preserved — only the tracking layer changes.
+
+**Previous beads epics (beth-ajg, beth-3uo) are superseded by this work.**
+
+---
+
+#### Task 1: Remove beads from CLI init/quickstart flow
+
+**Objective:** The `npx beth-copilot init` and `npx beth-copilot quickstart` commands no longer install, check for, or initialize beads. The `--skip-beads` flag is removed (no longer needed).
+
+**Files to modify:**
+- `bin/cli.js` — Remove `getBeadsPath()`, `isBeadsInstalled()`, `isBeadsInitialized()`, `installBeads()`, `showBeadsAlternatives()`, `initializeBeads()`, `runBeadsDoctor()`. Remove all beads-related init flow (lines ~1110-1230). Remove `--skip-beads` from `ALLOWED_FLAGS`. Remove beads from help text.
+- `bin/lib/pathValidation.js` — Remove `validateBeadsPath()` export
+- `bin/lib/pathValidation.test.js` — Remove `validateBeadsPath` tests
+- `src/lib/pathValidation.ts` — Remove `validateBeadsPath()` function
+- `src/lib/pathValidation.test.ts` — Remove `validateBeadsPath` tests
+
+**Acceptance criteria:**
+- [ ] `npx beth-copilot init` completes without mentioning beads
+- [ ] `npx beth-copilot quickstart` completes without beads check
+- [ ] `--skip-beads` flag is gone from ALLOWED_FLAGS and help text
+- [ ] `validateBeadsPath` function and tests removed from both JS and TS
+- [ ] All existing non-beads init functionality preserved (agents, skills, VS Code settings, MCP, hooks)
+
+---
+
+#### Task 2: Remove beads from `close` command
+
+**Objective:** The `npx beth-copilot close` command is either removed entirely or repurposed. Currently it wraps `bd close` with 3-layer enforcement (deps, children, test subtasks). Since `bd` no longer exists, this command needs to go or be redesigned for Backlog.md.
+
+**Files to modify:**
+- `src/cli/commands/close.ts` — Remove or rewrite. Currently shells out to `bd` CLI for issue info, children, deps.
+- `src/cli/commands/close.e2e.test.ts` — Remove (all tests depend on beads)
+- `src/__tests__/` — Check for close-related unit tests
+- `bin/cli.js` — Remove `close` from ALLOWED_COMMANDS and help text, OR rewire to new implementation
+
+**Acceptance criteria:**
+- [ ] `npx beth-copilot close` either removed or repurposed (no `bd` calls)
+- [ ] All `BeadsChild`, `BeadsDep`, `BeadsIssue` interfaces removed
+- [ ] E2E tests that depend on beads CLI removed
+- [ ] Help text updated
+
+---
+
+#### Task 3: Remove beads from `land` command
+
+**Objective:** The `npx beth-copilot land` command currently has a "Beads backup" step that calls `bd backup`. Remove this step while preserving all other landing functionality (tests, git add/commit/push, epic branch verification).
+
+**Files to modify:**
+- `src/cli/commands/land.ts` — Remove `runBeadsBackup()` function, remove Step 3 "Beads backup" from the landing sequence, remove beads-related console output. Remove `--skip-backup` flag (was beads-specific).
+- `src/cli/commands/land.e2e.test.ts` (if exists) — Update tests
+- `bin/cli.js` — Remove `--skip-backup` from ALLOWED_FLAGS if beads-only
+
+**Acceptance criteria:**
+- [ ] `npx beth-copilot land` no longer calls `bd backup`
+- [ ] Beads backup step removed from landing sequence
+- [ ] All other landing steps preserved (test run, git commit, git push, epic branch check)
+- [ ] `--skip-backup` flag removed or repurposed
+
+---
+
+#### Task 4: Remove beads from `doctor` command
+
+**Objective:** The `npx beth-copilot doctor` command currently checks for beads CLI installation, `.beads/` directory, `config.yaml`, no-db mode, JSONL health, and Dolt databases. Remove all beads health checks while preserving Node.js, agent frontmatter, and skills validation.
+
+**Files to modify:**
+- `src/cli/commands/doctor.ts` — Remove `parseDoltDatabases()`, `checkDoltDatabases()`, beads init check, beads CLI check, no-db check, JSONL health check, metadata check. Keep: Node.js version check, agents frontmatter validation, skills directory validation, git hooks check.
+- `src/cli/commands/doctor.e2e.test.ts` — Remove all `.beads` directory setup/teardown, beads initialization tests, no-db config tests, Dolt database tests. Keep: agent/skill validation tests.
+- `src/cli/commands/doctor.test.ts` — Remove `parseDoltDatabases()` unit tests and beads-related tests
+
+**Acceptance criteria:**
+- [ ] `npx beth-copilot doctor` runs without mentioning beads, .beads, bd, or Dolt
+- [ ] Node.js check, agent frontmatter validation, skills validation still work
+- [ ] Git hooks check still works
+- [ ] All beads-specific E2E test fixtures removed
+- [ ] `parseDoltDatabases` and related exports removed
+
+---
+
+#### Task 5: Remove beads from agent instructions (source + templates)
+
+**Objective:** Update all 14 agent files (7 source in `.github/agents/`, 7 templates in `templates/.github/agents/`) and both AGENTS.md files (root + template) to remove beads references. Replace "dual tracking (beads + Backlog.md)" with "Backlog.md" as the sole tracking system. All handoff patterns, skill enforcement, and agent roles remain unchanged.
+
+**Files to modify:**
+- `.github/agents/beth.agent.md` — Remove beads MCP tools from frontmatter (`beads/admin`, `beads/blocked`, `beads/close`, `beads/context`, `beads/create`, `beads/dep`, `beads/discover_tools`, `beads/get_tool_info`, `beads/list`, `beads/ready`, `beads/reopen`, `beads/show`, `beads/stats`, `beads/update`). Rewrite Dual Tracking, Session Startup, Multi-Agent Coordination, Beads Quick Reference, and Landing sections to use Backlog.md only. Remove `bd` commands.
+- `.github/agents/{developer,tester,security-reviewer,ux-designer,researcher,product-manager}.agent.md` — Replace "dual tracking (beads + Backlog.md)" with "Follow the workflow in AGENTS.md — Backlog.md tracking...". Remove `bd create` and `npx beth-copilot close` references where they link to beads operations.
+- `templates/.github/agents/` — Mirror all changes from source agents
+- `AGENTS.md` (root) — Rewrite from "dual tracking system" to Backlog.md-only. Remove Quick Setup (`bd init`, `bd doctor`), Quick Reference (`bd create`, `bd list`, `bd ready`, `bd dep tree`), Session Startup beads sync step, all Beads Known Issues war stories, workflow `bd` commands, and Landing the Plane beads steps.
+- `templates/AGENTS.md` — Mirror root AGENTS.md changes
+
+**Acceptance criteria:**
+- [ ] Zero references to `beads`, `bd`, `.beads`, or "dual tracking" remain in any `.agent.md` file
+- [ ] Zero references to `beads`, `bd`, `.beads` remain in either AGENTS.md
+- [ ] Beth's frontmatter tools list has no `beads/*` entries
+- [ ] All agent handoff patterns (`send: true`, Escalate to Beth) preserved
+- [ ] All skill enforcement references preserved
+- [ ] All IDEO workflow references preserved
+- [ ] Session Startup still checks for uncommitted changes and unpushed commits (just not beads sync)
+- [ ] Landing the Plane still runs tests, commits, pushes, creates PR (just no `bd backup`)
+
+---
+
+#### Task 6: Remove beads from documentation and README
+
+**Objective:** Update all documentation files to remove beads references. Historical context can be preserved in an archive note, but active instructions must not reference beads.
+
+**Files to modify:**
+- `README.md` — Remove beads from Prerequisites, Tech Stack table, CLI commands table, Architecture section, Tool Layer table, CLI Setup mermaid diagram, File tree, Dependencies section, "Installing Beads" section, troubleshooting. Replace with Backlog.md references where appropriate.
+- `.github/copilot-instructions.md` — Remove beads from Architecture Overview if referenced
+- `docs/INSTALLATION.md` — Remove beads installation steps
+- `docs/CLI-ARCHITECTURE.md` — Remove beads from tool layer diagram and file tree
+- `docs/CLI-IMPLEMENTATION-PLAN.md` — Remove beads check/init references
+- `docs/quality-gate-plan.md` — Replace "Close beads issues" with Backlog.md equivalent
+- `docs/SYSTEM-FLOW.md` — Remove beads tracking references if any
+- `docs/BEADS-NO-DB.md` — Archive or delete (entire doc is beads-specific)
+- `docs/BD-BACKUP-PARSER-FAILURE.md` — Archive or delete (beads-specific incident doc)
+- `docs/DOCKER-SWARM.md` — Remove "Beads Integration" section
+- `CONTRIBUTING.md` — Remove beads branch naming example and commit message example
+- `SECURITY.md` — Remove `installBeads()`, `initializeBeads()`, `getBeadsPath()` from security audit table and path validation section
+- `DEMO.md` — Remove beads references if present
+
+**Acceptance criteria:**
+- [ ] Zero active beads/bd references in README.md
+- [ ] Zero active beads/bd references in docs/*.md (BEADS-NO-DB.md and BD-BACKUP-PARSER-FAILURE.md archived or deleted)
+- [ ] SECURITY.md updated to reflect removed functions
+- [ ] CONTRIBUTING.md updated
+- [ ] All non-beads documentation content preserved
+
+---
+
+#### Task 7: Remove beads infrastructure files
+
+**Objective:** Clean up beads-specific configuration and infrastructure files from the repo.
+
+**Files to modify/delete:**
+- `.beads/` directory — Delete entirely (config.yaml, backup/, metadata.json, dolt/, hooks/)
+- `.vscode/mcp.json` — Remove the `beads` MCP server entry (`"beads": { "command": "beads-mcp", ... }`)
+- `.gitignore` — Remove Dolt database and beads backup sections
+- `.gitattributes` — Remove `.beads/issues.jsonl merge=beads` line
+- `tsconfig.json` — Remove `src/cli/commands/beads.e2e.test.ts` from exclude list
+- `mcp.json.example` — Remove beads MCP entry if present
+- `src/cli/commands/beads.e2e.test.ts` — Delete (entire file is beads E2E tests)
+- `backlog/tasks/beth-1*` — Archive or delete (all are beads migration subtasks)
+- `.beads/hooks/pre-push` — Git hooks need to move from `.beads/hooks/` to `.git/hooks/` or a new location (since `.beads/` is being deleted). Update `configureGitHooks()` in `bin/cli.js` accordingly.
+
+**Acceptance criteria:**
+- [ ] `.beads/` directory removed from working tree and git tracking
+- [ ] `.vscode/mcp.json` no longer references beads MCP server
+- [ ] `.gitignore` cleaned of beads/Dolt entries
+- [ ] `.gitattributes` cleaned of beads merge driver
+- [ ] `tsconfig.json` exclude list cleaned
+- [ ] `beads.e2e.test.ts` deleted
+- [ ] Git hooks relocated from `.beads/hooks/` to a new home (e.g., `.githooks/`)
+- [ ] `core.hooksPath` updated to new location
+- [ ] Pre-push guard still functional after hook relocation
+
+---
+
+#### Task 8: Update tests and verify clean build
+
+**Objective:** After all beads references are removed, run the full test suite, fix any broken tests, and verify the build is green. Tests that were beads-specific should已 been removed in prior tasks. This task catches anything missed.
+
+**Files to modify:**
+- `src/__tests__/smoke.test.ts` — Verify no beads imports
+- `src/cli/commands/mcp.e2e.test.ts` — Remove `--skip-beads` from init flags
+- Any other test files referencing beads discovered during test run
+- `vitest.config.ts` / `vitest.e2e.config.ts` — Remove beads-specific exclusions if any
+- `package.json` — Remove any beads-related scripts if present
+
+**Acceptance criteria:**
+- [ ] `npm run build` (tsc) succeeds with zero errors
+- [ ] `npm test` passes all unit tests
+- [ ] `npm run test:e2e` passes all E2E tests (minus deleted beads tests)
+- [ ] `grep -ri "beads" src/ bin/ .github/ templates/ AGENTS.md README.md` returns zero results (excluding `docs/SWARM-ARCHITECTURE.md` which documents the historical decision)
+- [ ] No runtime references to `bd` CLI remain in any executable code
 
 ## Completed
 
