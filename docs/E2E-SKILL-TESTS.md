@@ -199,24 +199,52 @@ These skill pairs share semantic space. Tests MUST verify the correct one fires:
 
 ### Test Infrastructure Needed
 
-1. **Hook unit tests** — Feed mock `SubagentStart` events to `inject-skills.mjs`, verify output contains correct `additionalContext` for each agent type. These are pure functions, fully deterministic.
+1. **Hook unit tests** ✅ — Feed mock `SubagentStart` events to `inject-skills.mjs`, verify output contains correct `additionalContext` for each agent type. These are pure functions, fully deterministic.
+   - `inject-skills.test.ts` (20 tests): Unit tests for inject-skills.mjs in isolation
+   - `hook-injection.test.ts` (51 tests): Parameterized tests for all Category 1 matrix entries
 
-2. **Skill resolution tests** — Verify VS Code's skill matching engine maps each test prompt to the expected skill file. May need to mock the VS Code extension API.
+2. **Skill trigger coverage tests** ✅ — Verify each of the 72 test prompts' keywords appear in the expected skill's SKILL.md content. Catches missing triggers, wrong descriptions, keyword drift.
+   - `trigger-coverage.test.ts` (147 tests): All 72 test prompts with required keywords validated against actual skill content
 
-3. **Agent routing integration tests** — Verify Beth selects the correct `agentName` when given each test prompt. Requires either:
+3. **Pipeline integration tests** ✅ — Test inject-skills.mjs → verify-skills.mjs as a complete enforcement system. Verifies round-trip behavior, malformed input resilience, cross-hook consistency, and agent-specific context differentiation.
+   - `pipeline-integration.test.ts` (41 tests): Full hook round-trip for all 6 agent types
+
+4. **Agent-skill mapping completeness** ✅ — Verify no orphan skills, all hook references resolve, agent definitions exist, SKILL.md content quality.
+   - `mapping-completeness.test.ts` (12 tests): Inventory validation, source-of-truth checks, content quality
+
+5. **Skill resolution tests** ⚠️ BLOCKED — Verify VS Code's skill matching engine maps each test prompt to the expected skill file. Requires mocking the VS Code extension API which is not accessible in vitest.
+
+6. **Agent routing integration tests** ⚠️ BLOCKED — Verify Beth selects the correct `agentName` when given each test prompt. Requires either:
    - Mocking `runSubagent` and asserting the `agentName` parameter
    - Or recording actual agent invocations in a test harness
+   - This needs the VS Code Copilot extension's runtime, which is not testable in vitest
 
-4. **External skill handling** — Skills in `~/.agents/skills/` (azure-postgres, azure-quotas) won't exist in CI. Tests should:
-   - Skip gracefully with `describe.skipIf(!existsSync(path))`
-   - Or mock the skill file existence
+7. **External skill handling** ✅ — Skills in `~/.agents/skills/` (azure-postgres, azure-quotas) skip gracefully with `it.skipIf(!existsSync(path))` in both skill-routing.test.ts and trigger-coverage.test.ts.
+
+### Implementation Status (2026-03-15)
+
+| Test File | Tests | Coverage |
+|-----------|-------|----------|
+| `hook-injection.test.ts` | 51 | Category 1 hook output per agent type |
+| `skill-routing.test.ts` | 223 | Categories 2-10 structural validation |
+| `disambiguation.test.ts` | 28 | 8 known challenge pairs |
+| `inject-skills.test.ts` | 20 | inject-skills.mjs unit tests |
+| `verify-skills.test.ts` | 9 | verify-skills.mjs unit tests |
+| `loader.test.ts` | 20 | Core SKILL.md parser |
+| `pipeline-integration.test.ts` | 41 | Full inject→verify round-trip |
+| `trigger-coverage.test.ts` | 147 | 72 prompt-to-keyword validations |
+| `mapping-completeness.test.ts` | 12 | Orphan detection, content quality |
+| **Total** | **551** | |
 
 ### Priority Order
 
-1. **Hook injection tests** (Category 1) — Highest confidence, fully deterministic
-2. **Disambiguation tests** (Known Challenges table) — Highest risk, need verification
-3. **Azure skills** (Category 2) — Most skills, keyword-dependent
-4. **Everything else** — Lower risk, standard keyword matching
+1. **Hook injection tests** (Category 1) ✅ — Highest confidence, fully deterministic
+2. **Disambiguation tests** (Known Challenges table) ✅ — Highest risk, verified
+3. **Trigger coverage** (All categories) ✅ — Keyword validation for all 72 prompts
+4. **Pipeline integration** ✅ — End-to-end hook behavior
+5. **Mapping completeness** ✅ — No orphan skills, all references valid
+6. **VS Code skill resolution** ⚠️ — Blocked on extension API access
+7. **LLM agent routing** ⚠️ — Blocked on runtime test harness
 
 ### File Structure
 
@@ -225,5 +253,13 @@ src/__tests__/
 ├── skills/
 │   ├── hook-injection.test.ts      # Category 1: deterministic hook tests
 │   ├── skill-routing.test.ts       # Categories 2-10: prompt → skill mapping
-│   └── disambiguation.test.ts      # Known challenge pairs
+│   ├── disambiguation.test.ts      # Known challenge pairs
+│   ├── pipeline-integration.test.ts # Full inject→verify round-trip
+│   ├── trigger-coverage.test.ts    # 72 prompt → keyword coverage
+│   └── mapping-completeness.test.ts # Orphan/completeness checks
+├── inject-skills.test.ts           # inject-skills.mjs unit tests
+├── verify-skills.test.ts           # verify-skills.mjs unit tests
+└── ...
+src/core/skills/
+└── loader.test.ts                  # SKILL.md parser unit tests
 ```
