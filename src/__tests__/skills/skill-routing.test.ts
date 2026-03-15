@@ -18,7 +18,6 @@ import { existsSync, readFileSync } from 'node:fs';
 
 const PROJECT_ROOT = process.cwd();
 const SKILLS_DIR = join(PROJECT_ROOT, '.github/skills');
-const PROMPTS_DIR = join(PROJECT_ROOT, '.github/prompts');
 const EXTERNAL_SKILLS_DIR = join(process.env.HOME || '~', '.agents/skills');
 
 // ─── Type definitions ──────────────────────────────────────────────────────

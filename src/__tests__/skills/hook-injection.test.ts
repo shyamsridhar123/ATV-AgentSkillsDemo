@@ -124,7 +124,7 @@ const HOOK_TEST_MATRIX: HookTest[] = [
 describe('Category 1: Hook-Enforced Mandatory Skills', () => {
   describe.each(HOOK_TEST_MATRIX)(
     'Test #$id: $skill → $agent ($enforcement)',
-    ({ skill, skillPath, agent, enforcement }) => {
+    ({ skillPath, agent, enforcement }) => {
       it('skill file exists on disk', () => {
         const fullPath = join(PROJECT_ROOT, skillPath);
         expect(existsSync(fullPath)).toBe(true);
