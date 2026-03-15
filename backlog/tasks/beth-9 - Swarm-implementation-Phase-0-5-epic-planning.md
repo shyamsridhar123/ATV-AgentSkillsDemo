@@ -1,10 +1,10 @@
 ---
 id: BETH-9
 title: Swarm implementation - Phase 0-5 epic planning
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-03-15 06:41'
-updated_date: '2026-03-15 06:41'
+updated_date: '2026-03-15 06:46'
 labels: []
 dependencies: []
 ---
