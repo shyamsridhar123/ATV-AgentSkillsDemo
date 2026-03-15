@@ -4,7 +4,7 @@ title: 'Cat 2-10: Skill routing structural tests'
 status: Done
 assignee: []
 created_date: '2026-03-15 06:59'
-updated_date: '2026-03-15 15:41'
+updated_date: '2026-03-15 15:50'
 labels: []
 dependencies: []
 ---
@@ -29,4 +29,6 @@ Objective: Verify every skill has a valid SKILL.md on disk and is mapped to a va
 Verified: 223/223 tests pass (expanded from original 36). All 10 categories covered.
 
 Added trigger-coverage.test.ts: 147 tests verifying all 72 test prompts match skill keywords. Added mapping-completeness.test.ts: 12 tests for orphan detection, hook source validation, agent definition checks
+
+UPDATED: Original 223 structural tests PLUS 147 new trigger-coverage tests verifying all 72 test prompts from E2E-SKILL-TESTS.md — each skill's SKILL.md content contains keywords that would match its designated test prompt. File: src/__tests__/skills/trigger-coverage.test.ts
 <!-- SECTION:NOTES:END -->

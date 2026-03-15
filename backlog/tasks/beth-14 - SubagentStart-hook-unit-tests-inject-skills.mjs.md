@@ -4,7 +4,7 @@ title: SubagentStart hook unit tests (inject-skills.mjs)
 status: Done
 assignee: []
 created_date: '2026-03-15 07:00'
-updated_date: '2026-03-15 15:42'
+updated_date: '2026-03-15 15:50'
 labels: []
 dependencies: []
 ---
@@ -29,4 +29,6 @@ Objective: Unit-test the inject-skills.mjs script in isolation. Verifies output 
 Verified: 20/20 tests pass. All agent types + edge cases covered.
 
 Pipeline integration now tests inject+verify as unified system (41 tests). Existing 20 unit tests verified passing
+
+UPDATED: Original 20 unit tests PLUS 12 new mapping-completeness tests verifying all agent types covered in hook, no orphan skills, every SKILL.md has valid format, agent .md files match expected skill mapping. File: src/__tests__/skills/mapping-completeness.test.ts
 <!-- SECTION:NOTES:END -->
