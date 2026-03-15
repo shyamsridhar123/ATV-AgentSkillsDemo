@@ -492,14 +492,14 @@ Based on selection:
 
 ## Example Enhancement
 
-**Before (from /workflows:plan):**
+**Before (from /ce:plan):**
 ```markdown
 ## Technical Approach
 
 Use React Query for data fetching with optimistic updates.
 ```
 
-**After (from /workflows:deepen-plan):**
+**After (from /deepen-plan):**
 ```markdown
 ## Technical Approach
 

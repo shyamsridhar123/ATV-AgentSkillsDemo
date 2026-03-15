@@ -161,9 +161,8 @@ Last updated: 2026-03-13 (Cleanup: tracking drift resolved, beads plan removed f
   - **Objective:** Zero references anywhere in codebase. The full-size `beth-portrait.txt` is only referenced by the also-dead `animation.js`. Once TD-02 removes animation.js, `beth-portrait.txt` becomes dead too.
   - **Acceptance Criteria:** (1) `assets/beth-portrait-small.txt` deleted, (2) `assets/beth-portrait.txt` deleted (if TD-02 is completed first), (3) no broken references
 
-- [ ] **TD-12: Audit and deduplicate untracked `.github/skills/` (50+ local skills)**
-  - **Objective:** 50+ untracked skill directories in `.github/skills/` include duplicates and overlapping content. Key duplicates: `skill-creator` / `create-agent-skill` / `create-agent-skills` (3 skills doing the same thing), `ce:*` / `workflows:*` (5 pairs covering same domains), `resolve_parallel` / `resolve_todo_parallel` / `resolve-pr-parallel` (3 resolve variants), `lfg` / `slfg` (both "full autonomous engineering workflow").
-  - **Acceptance Criteria:** (1) Pick one "create skill" skill, delete the other 2, (2) pick one workflow namespace (`ce:` or `workflows:`), delete the other 5, (3) clarify or consolidate the 3 resolve variants, (4) clarify `lfg` vs `slfg` distinction or merge, (5) remaining skills have unique, non-overlapping purposes
+- [x] **TD-12: Audit and deduplicate untracked `.github/skills/` (50+ local skills)** *(BETH-7)*
+  - **Completed:** Deleted 8 redundant skills: 5 deprecated `workflows:*` aliases (→ use `ce:*`), 2 redundant skill-creation skills (`create-agent-skill`, `skill-creator` → use `create-agent-skills`), 1 trigger-collision (`deploy-docs`). Resolve variants (`resolve_parallel`/`resolve_todo_parallel`/`resolve-pr-parallel`) kept — they resolve 3 different source types (code TODOs, CLI todos, PR comments). `lfg`/`slfg` kept — sequential vs swarm execution models.
 
 - [ ] **TD-13: Consider removing tracked `sbom.json` from git**
   - **Objective:** 150KB generated file that gets stale quickly. Already generated at publish time via `prepublishOnly` script. Tracking in git inflates repo size across commits with no benefit since it changes every time dependencies update.
