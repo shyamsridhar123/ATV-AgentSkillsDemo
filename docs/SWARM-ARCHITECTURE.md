@@ -1037,7 +1037,7 @@ model_routing:
     researcher: "standard"
 ```
 
-**Implementation in `llm.py`:**
+**Implementation in `routing.py`:**
 
 ```python
 def get_model_for_task(agent_role: str, task_complexity: str | None = None) -> str:
