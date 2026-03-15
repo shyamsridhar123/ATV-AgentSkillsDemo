@@ -3,14 +3,14 @@
 > *"I'm not here to wreck one thing. When I fix this, I'm fixing it for generations."*
 
 **Status:** Plan — not yet implemented (open questions resolved, implementation phases defined)  
-**Date:** 2026-03-13 (updated 2026-03-13 with ruflo competitive analysis)  
+**Date:** 2026-03-15 (updated 2026-03-15: aligned message board schema with Pied Piper source code)  
 **Supersedes:** [DOCKER-SWARM.md](DOCKER-SWARM.md) (conceptual Docker/Redis approach — abandoned in favor of this design)
 
 ---
 
 ## TL;DR
 
-Refactor Beth from a Copilot-hosted agent (synchronous `runSubagent()` calls inside VS Code) into a **persistent Python daemon swarm** where Beth orchestrates autonomous worker agents. Each worker runs in its own **git worktree**, communicates via a **SQLite WAL message board** (Pied Piper's channel/post/reply schema, implemented natively), and calls **Azure OpenAI directly** for LLM inference. All existing logic, handoffs, skills, and agent roles are preserved.
+Refactor Beth from a Copilot-hosted agent (synchronous `runSubagent()` calls inside VS Code) into a **persistent Python daemon swarm** where Beth orchestrates autonomous worker agents. Each worker runs in its own **git worktree**, communicates via a **SQLite WAL message board** (based on Pied Piper's channel/post model, with task-specific extensions), and calls **Azure OpenAI directly** for LLM inference. All existing logic, handoffs, skills, and agent roles are preserved.
 
 ---
 
@@ -105,7 +105,7 @@ Agents: .github/agents/<name>.agent.md (YAML frontmatter + instructions)
 │                                                       │
 │  ┌─────────────┐    ┌──────────────────────────────┐ │
 │  │ Orchestrator │───▶│ SQLite WAL Message Board     │ │
-│  │              │◀───│ (channels/posts/replies)     │ │
+│  │              │◀───│ (channels/posts)             │ │
 │  └──────┬───────┘    └──────────────────────────────┘ │
 │         │                                             │
 │    ┌────┼──────────┬──────────┬──────────┐           │
@@ -140,15 +140,30 @@ Agents: .github/agents/<name>.agent.md (YAML frontmatter + instructions)
 
 ### Design Source: Pied Piper / AgentHub
 
-The message board schema is adapted from [Pied Piper](https://github.com/stephschofield/piedpiper) (fork of [AgentHub](https://github.com/ygivenx/agenthub) by ygivenx). We steal their proven **channel → post → reply** model but implement it natively in Python with `sqlite3` — no Go server dependency.
+The message board's **channel → post** architecture is adopted from [Pied Piper](https://github.com/stephschofield/piedpiper) (fork of [AgentHub](https://github.com/ygivenx/agenthub) by ygivenx). We implement it natively in Python with `sqlite3` — no Go server dependency.
+
+**What we adopt from Pied Piper (verified against source code):**
+- Channel/post data model with SQLite WAL (`journal_mode=WAL`, `busy_timeout=5000`, `synchronous=NORMAL`, `foreign_keys=ON`)
+- Self-referencing `parent_id` on posts for threaded replies (no separate replies table — replies are just posts)
+- Named channels for topic separation
+- Agent identity model (agent_id per post)
+
+**What we extend beyond Pied Piper:**
+- Pied Piper posts have a single `content TEXT` field (platform-agnostic). We add structured `title`, `body`, and `metadata` (JSON) fields for task coordination.
+- `outcomes` table for model routing intelligence (inspired by ruflo, not Pied Piper).
+- Channel semantics (tasks, completions, claims, etc.) are our domain-specific design — Pied Piper channels are generic.
+- No HTTP server — Pied Piper is a Go HTTP API for remote agents. We access SQLite directly since all workers are local processes.
+- No rate limiting — Pied Piper has per-agent rate limits for its multi-tenant server. Our workers are trusted processes within the daemon.
 
 ### Schema
+
+Follows Pied Piper's self-referencing post model: replies are posts with a `parent_id` pointing to another post. No separate replies table — this is simpler, proven, and supports arbitrary threading depth.
 
 ```sql
 CREATE TABLE channels (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
     name        TEXT UNIQUE NOT NULL,
-    description TEXT,
+    description TEXT DEFAULT '',
     created_at  TEXT DEFAULT (datetime('now'))
 );
 
@@ -156,25 +171,27 @@ CREATE TABLE posts (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
     channel_id  INTEGER NOT NULL REFERENCES channels(id),
     agent_id    TEXT NOT NULL,
-    title       TEXT NOT NULL,
+    parent_id   INTEGER REFERENCES posts(id),  -- NULL = top-level post, set = reply
+    title       TEXT,           -- optional (replies may omit)
     body        TEXT NOT NULL,
-    metadata    TEXT,  -- JSON blob for structured data
-    created_at  TEXT DEFAULT (datetime('now'))
-);
-
-CREATE TABLE replies (
-    id          INTEGER PRIMARY KEY AUTOINCREMENT,
-    post_id     INTEGER NOT NULL REFERENCES posts(id),
-    agent_id    TEXT NOT NULL,
-    body        TEXT NOT NULL,
-    metadata    TEXT,
+    metadata    TEXT,           -- JSON blob for structured data (our extension)
     created_at  TEXT DEFAULT (datetime('now'))
 );
 
 CREATE INDEX idx_posts_channel ON posts(channel_id);
-CREATE INDEX idx_replies_post ON replies(post_id);
+CREATE INDEX idx_posts_parent ON posts(parent_id);
 CREATE INDEX idx_posts_agent ON posts(agent_id);
 ```
+
+**Comparison with Pied Piper's actual schema:**
+
+| Aspect | Pied Piper | Beth Swarm | Rationale |
+|--------|-----------|------------|----------|
+| Channels | `name TEXT UNIQUE`, `description TEXT` | Same | Direct adoption |
+| Posts | `channel_id`, `agent_id`, `parent_id`, `content TEXT` | Same + `title`, `body`, `metadata` (replaces `content`) | Structured fields for task coordination |
+| Replies | Self-referencing `parent_id` on posts | Same | Direct adoption |
+| Rate limits | `rate_limits` table (per-agent, per-action) | Not needed | Workers are trusted local processes |
+| Agents | `agents` table with `api_key` | No table — agent roles are config | No HTTP auth needed |
 
 ### SQLite WAL Configuration
 
@@ -185,10 +202,13 @@ def connect_board(db_path: str) -> sqlite3.Connection:
     conn = sqlite3.connect(db_path)
     conn.execute("PRAGMA journal_mode=WAL")
     conn.execute("PRAGMA busy_timeout=5000")
+    conn.execute("PRAGMA foreign_keys=ON")
     conn.execute("PRAGMA synchronous=NORMAL")
     conn.row_factory = sqlite3.Row
     return conn
 ```
+
+All four pragmas match Pied Piper's configuration (see `internal/db/db.go:Open()`).
 
 **Why WAL mode:**
 - Writers never block readers (concurrent read access while one writer is active)
@@ -666,7 +686,7 @@ swarm/
 ├── __init__.py
 ├── main.py              # Entry point: CLI + daemon startup
 ├── config.py            # SwarmConfig dataclass, env vars, defaults
-├── board.py             # SQLite WAL message board (channels, posts, replies, outcomes)
+├── board.py             # SQLite WAL message board (channels, posts with threading, outcomes)
 ├── llm.py               # LLM client wrapper, agent_loop(), provider failover
 ├── routing.py           # Model routing: tier resolution, outcome-based suggestion
 ├── tools.py             # Tool definitions and execution (read/write/edit/run/search)
@@ -693,7 +713,7 @@ swarm/
 |--------|---------------|-----------------|
 | `main.py` | CLI parsing, daemon mode (tmux), signal handling, `swarm start/stop/status/attach/resume` | `orchestrator`, `config` |
 | `config.py` | Load config from `swarm.yaml` or env vars; model routing tiers; provider definitions; budget thresholds | stdlib only |
-| `board.py` | SQLite WAL CRUD for channels/posts/replies/outcomes; `read_new()` with cursor tracking | `sqlite3` |
+| `board.py` | SQLite WAL CRUD for channels/posts/outcomes; `read_new()` with cursor tracking; `get_replies()` via `parent_id` | `sqlite3` |
 | `llm.py` | LLM chat completions with tool-use loop; provider failover (primary → fallback on 429/500/503) | `openai` |
 | `routing.py` | Resolve model deployment for a task; query outcomes for learned routing; `suggest_model()` | `board`, `config` |
 | `tools.py` | Tool function registry; maps function names → callables; sandboxed to worktree | `board`, `git` |
@@ -765,7 +785,7 @@ Six phases, each gated by a concrete milestone that must be demonstrated before 
 **Deliverables:**
 - [ ] Python project structure (`swarm/` package, `pyproject.toml`, dev dependencies)
 - [ ] `config.py` — `SwarmConfig` dataclass, loads from `swarm.yaml` with env var interpolation (`${AZURE_OPENAI_ENDPOINT}`)
-- [ ] `board.py` — SQLite WAL message board: create tables, CRUD for channels/posts/replies, `read_new()` with cursor tracking per reader
+- [ ] `board.py` — SQLite WAL message board: create tables, CRUD for channels/posts (self-referencing `parent_id` for threading), `read_new()` with cursor tracking per reader
 - [ ] `outcomes` table schema (for Phase 4, but created here so the schema is complete from day 1)
 - [ ] Unit tests: concurrent reads, write serialization, busy timeout handling, WAL recovery after simulated crash
 
