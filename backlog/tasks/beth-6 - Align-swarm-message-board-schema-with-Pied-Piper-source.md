@@ -1,10 +1,10 @@
 ---
 id: BETH-6
 title: Align swarm message board schema with Pied Piper source
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-03-15 05:03'
-updated_date: '2026-03-15 05:03'
+updated_date: '2026-03-15 05:06'
 labels: []
 dependencies: []
 ---

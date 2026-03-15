@@ -239,15 +239,19 @@ CREATE TABLE outcomes (
     epic_id     TEXT NOT NULL,
     task_id     TEXT NOT NULL,
     agent_role  TEXT NOT NULL,
-    task_type   TEXT,
+    task_type   TEXT,              -- 'feature', 'bugfix', 'test', 'security', 'docs'
     model_used  TEXT NOT NULL,
     tokens_in   INTEGER NOT NULL,
     tokens_out  INTEGER NOT NULL,
     duration_ms INTEGER NOT NULL,
-    success     BOOLEAN NOT NULL,
-    description TEXT,
+    success     BOOLEAN NOT NULL,  -- did tests pass after merge?
+    description TEXT,              -- one-line task summary
     created_at  TEXT DEFAULT (datetime('now'))
 );
+
+CREATE INDEX idx_outcomes_agent ON outcomes(agent_role);
+CREATE INDEX idx_outcomes_type ON outcomes(task_type);
+CREATE INDEX idx_outcomes_success ON outcomes(success);
 ```
 
 ### Message Protocol
@@ -1053,28 +1057,7 @@ Beth can override the tier per-task based on complexity assessment. This is a co
 
 ruflo stores successful task→agent→outcome patterns in a ReasoningBank with HNSW vector search. We steal the *concept* but implement it simply in SQLite — no vector layer, no neural networks, no SONA.
 
-**Design: `outcomes` table in the message board**
-
-```sql
-CREATE TABLE outcomes (
-    id          INTEGER PRIMARY KEY AUTOINCREMENT,
-    epic_id     TEXT NOT NULL,
-    task_id     TEXT NOT NULL,
-    agent_role  TEXT NOT NULL,
-    task_type   TEXT,              -- 'feature', 'bugfix', 'test', 'security', 'docs'
-    model_used  TEXT NOT NULL,
-    tokens_in   INTEGER NOT NULL,
-    tokens_out  INTEGER NOT NULL,
-    duration_ms INTEGER NOT NULL,
-    success     BOOLEAN NOT NULL,  -- did tests pass after merge?
-    description TEXT,              -- one-line task summary
-    created_at  TEXT DEFAULT (datetime('now'))
-);
-
-CREATE INDEX idx_outcomes_agent ON outcomes(agent_role);
-CREATE INDEX idx_outcomes_type ON outcomes(task_type);
-CREATE INDEX idx_outcomes_success ON outcomes(success);
-```
+**Design:** The `outcomes` table schema is defined in [Outcome Tracking](#outcome-tracking) above.
 
 **How Beth uses it:**
 
