@@ -1,10 +1,10 @@
 ---
 id: BETH-7
 title: Remove 8 redundant/deprecated skills for deterministic routing
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-03-15 06:21'
-updated_date: '2026-03-15 06:22'
+updated_date: '2026-03-15 06:25'
 labels: []
 dependencies: []
 ---
