@@ -23,7 +23,7 @@ Refactor Beth from a Copilot-hosted agent (synchronous `runSubagent()` calls ins
 5. [Message Board (SQLite WAL)](#message-board)
 6. [Git Worktree Isolation](#git-worktree-isolation)
 7. [Merge Conflict Resolution](#merge-conflict-resolution)
-8. [LLM Client (Azure OpenAI Direct)](#llm-client)
+8. [LLM Client (Provider-Abstracted)](#llm-client-provider-abstracted)
 9. [Agent Roles & Skills (Preserved)](#agent-roles--skills)
 10. [Orchestrator (Beth)](#orchestrator)
 11. [Worker Agent Loop](#worker-agent-loop)
