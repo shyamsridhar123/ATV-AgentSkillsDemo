@@ -382,14 +382,14 @@ describe('MCP doctor edge cases', () => {
       })
     );
 
-    // Should not throw — it checks for key existence, not structure
+    // Should not throw — it checks for key existence, then validates structure
     const result = checkMcpServers(testDir);
-    // The current implementation checks `!servers[s.key]` which is truthy for strings/numbers
-    // So both servers are "present" — this documents that behavior
+    // The implementation now validates server structure and warns on invalid entries
     assert.strictEqual(
       result.status,
-      'pass',
-      'Current implementation accepts any truthy value for server entries'
+      'warn',
+      'Doctor should warn when server entries have invalid structure'
     );
+    assert.ok(result.message.includes('invalid structure'));
   });
 });
