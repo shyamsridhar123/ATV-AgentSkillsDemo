@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 
 import { fileURLToPath } from 'url';
-import { dirname, join, relative } from 'path';
-import { existsSync, mkdirSync, readdirSync, statSync, copyFileSync, readFileSync, writeFileSync, unlinkSync, chmodSync } from 'fs';
+import { basename, dirname, join, relative } from 'path';
+import { existsSync, mkdirSync, readdirSync, statSync, copyFileSync, readFileSync, writeFileSync, unlinkSync, chmodSync, rmSync } from 'fs';
 import { createRequire } from 'module';
-import { execSync, spawn } from 'child_process';
+import { execSync, execFileSync, spawn } from 'child_process';
 
 const require = createRequire(import.meta.url);
 const __filename = fileURLToPath(import.meta.url);
@@ -586,6 +586,7 @@ ${COLORS.bright}Commands:${COLORS.reset}
   ${COLORS.cyan}npx beth-copilot land${COLORS.reset} [options]     Automated session completion (test, commit, push)
   ${COLORS.cyan}npx beth-copilot quickstart${COLORS.reset}         Run init + doctor
   ${COLORS.cyan}npx beth-copilot pre-push-guard${COLORS.reset}     Run branch discipline checks (used by git hook)
+  ${COLORS.cyan}npx beth-copilot uninstall${COLORS.reset}          Remove all Beth files from current project
   ${COLORS.cyan}npx beth-copilot help${COLORS.reset}               Show this help message
 
 ${COLORS.bright}Init Options:${COLORS.reset}
@@ -678,6 +679,44 @@ function copyDirRecursive(src, dest, options = {}) {
   }
   
   return copiedFiles;
+}
+
+/**
+ * Derive a task prefix from the project name.
+ * Uses package.json "name" field, falls back to directory name.
+ * Takes the first segment (split on - _ . space), lowercased, up to 6 letters.
+ */
+function deriveTaskPrefix(cwd) {
+  let projectName = '';
+
+  // Try package.json name field
+  const pkgPath = join(cwd, 'package.json');
+  if (existsSync(pkgPath)) {
+    try {
+      const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'));
+      if (pkg.name && typeof pkg.name === 'string') {
+        projectName = pkg.name;
+      }
+    } catch {
+      // Ignore parse errors — fall through to directory name
+    }
+  }
+
+  // Fall back to directory name
+  if (!projectName) {
+    projectName = basename(cwd);
+  }
+
+  // Strip npm scope (e.g. @scope/package -> package)
+  projectName = projectName.replace(/^@[^/]+\//, '');
+
+  // Split on common delimiters, take first segment
+  const firstSegment = projectName.split(/[-_. ]+/)[0] || '';
+
+  // Lowercase, keep only letters, take up to 6
+  const prefix = firstSegment.toLowerCase().replace(/[^a-z]/g, '').slice(0, 6);
+
+  return prefix || 'task'; // fallback to 'task' if nothing usable
 }
 
 async function init(options = {}) {
@@ -817,6 +856,30 @@ ${COLORS.yellow}╔════════════════════�
     }
   }
 
+  // Initialize Backlog.md project with derived task prefix (unless skipped)
+  if (!skipBacklog) {
+    const backlogConfigPath = join(cwd, 'backlog', 'config.yml');
+    if (!existsSync(backlogConfigPath) || force) {
+      const taskPrefix = deriveTaskPrefix(cwd);
+      const dirName = basename(cwd);
+      try {
+        execFileSync(
+          'backlog',
+          ['init', dirName, '--defaults', '--task-prefix', taskPrefix.toUpperCase(), '--integration-mode', 'mcp', '--auto-open-browser', 'false', '--bypass-git-hooks', 'true'],
+          { cwd, stdio: 'pipe', encoding: 'utf-8' }
+        );
+        logSuccess(`Initialized Backlog.md with task prefix: ${taskPrefix.toUpperCase()}`);
+        copiedFiles.push('backlog/config.yml');
+      } catch (err) {
+        logWarning('Could not initialize Backlog.md — is the backlog CLI installed?');
+        logInfo('Install with: npm install -g backlog-md');
+        logDebug(err.message || String(err));
+      }
+    } else {
+      logSuccess('Backlog.md already initialized (backlog/config.yml exists)');
+    }
+  }
+
   // Summary
   console.log('');
   if (copiedFiles.length > 0) {
@@ -855,8 +918,201 @@ ${COLORS.bright}Commands:${COLORS.reset}
   console.log('');
 }
 
+/**
+ * Uninstall Beth from the current project.
+ * Removes all files/directories that init installed.
+ */
+async function uninstall() {
+  const cwd = process.cwd();
+  const args = process.argv.slice(3);
+  const forceFlag = args.includes('--force') || args.includes('-f');
+
+  showBethBannerStatic();
+
+  console.log(`${COLORS.bright}${COLORS.red}Uninstalling Beth...${COLORS.reset}\n`);
+
+  // Verify there's actually a Beth installation here
+  const githubDir = join(cwd, '.github');
+  const agentsDir = join(githubDir, 'agents');
+  const hasInstallation = existsSync(agentsDir) || existsSync(join(cwd, 'AGENTS.md'));
+
+  if (!hasInstallation) {
+    logWarning('No Beth installation detected in this directory.');
+    console.log('Are you in the right project? Beth installs into .github/agents/ and AGENTS.md.');
+    process.exit(0);
+  }
+
+  // --- Build the removal manifest ---
+  // Only remove files/dirs that Beth actually installs (from templates)
+
+  // Directories Beth owns entirely
+  const bethOwnedDirs = [
+    join(githubDir, 'agents'),
+    join(githubDir, 'skills'),
+    join(githubDir, 'hooks'),
+  ];
+
+  // Individual files Beth installs
+  const bethOwnedFiles = [
+    join(githubDir, 'copilot-instructions.md'),
+    join(githubDir, 'copilot-mcp-config.json'),
+    join(githubDir, 'pull_request_template.md'),
+    join(githubDir, 'dependabot.yml'),
+    join(cwd, 'AGENTS.md'),
+    join(cwd, 'Backlog.md'),
+    join(cwd, 'mcp.json.example'),
+    join(cwd, '.vscode', 'settings.json'),
+    join(cwd, '.vscode', 'mcp.json'),
+  ];
+
+  // Git pre-push hook (Beth appends a guard block)
+  const prePushHook = join(cwd, '.git', 'hooks', 'pre-push');
+
+  // Backlog.md directory (created by `backlog init`)
+  const backlogDir = join(cwd, 'backlog');
+
+  // --- Collect what actually exists ---
+  const dirsToRemove = bethOwnedDirs.filter(d => existsSync(d));
+  const filesToRemove = bethOwnedFiles.filter(f => existsSync(f));
+  const hasBacklogDir = existsSync(backlogDir);
+  const hasPrePushGuard = existsSync(prePushHook) && readFileSync(prePushHook, 'utf-8').includes(BETH_GUARD_BEGIN);
+
+  if (dirsToRemove.length === 0 && filesToRemove.length === 0 && !hasBacklogDir && !hasPrePushGuard) {
+    logWarning('Nothing to remove — Beth files have already been cleaned up.');
+    process.exit(0);
+  }
+
+  // --- Show what will be removed ---
+  console.log(`${COLORS.bright}The following will be removed:${COLORS.reset}\n`);
+
+  for (const dir of dirsToRemove) {
+    logInfo(`${relative(cwd, dir)}/  (directory)`);
+  }
+  for (const file of filesToRemove) {
+    logInfo(`${relative(cwd, file)}`);
+  }
+  if (hasBacklogDir) {
+    logInfo('backlog/  (directory — Backlog.md task data)');
+  }
+  if (hasPrePushGuard) {
+    logInfo('.git/hooks/pre-push  (Beth guard block will be removed)');
+  }
+
+  console.log('');
+
+  // --- Confirm unless --force ---
+  if (!forceFlag) {
+    const confirmed = await promptYesNo(`${COLORS.yellow}Are you sure you want to remove Beth from this project?${COLORS.reset}`);
+    if (!confirmed) {
+      console.log('\nUninstall cancelled. Beth lives to fight another day.');
+      process.exit(0);
+    }
+  }
+
+  console.log('');
+  const removed = [];
+
+  // --- Remove directories ---
+  for (const dir of dirsToRemove) {
+    try {
+      rmSync(dir, { recursive: true, force: true });
+      removed.push(relative(cwd, dir) + '/');
+      logSuccess(`Removed ${relative(cwd, dir)}/`);
+    } catch (err) {
+      logError(`Failed to remove ${relative(cwd, dir)}/: ${err.message}`);
+    }
+  }
+
+  // --- Remove files ---
+  for (const file of filesToRemove) {
+    try {
+      unlinkSync(file);
+      removed.push(relative(cwd, file));
+      logSuccess(`Removed ${relative(cwd, file)}`);
+    } catch (err) {
+      logError(`Failed to remove ${relative(cwd, file)}: ${err.message}`);
+    }
+  }
+
+  // --- Remove backlog directory ---
+  if (hasBacklogDir) {
+    try {
+      rmSync(backlogDir, { recursive: true, force: true });
+      removed.push('backlog/');
+      logSuccess('Removed backlog/');
+    } catch (err) {
+      logError(`Failed to remove backlog/: ${err.message}`);
+    }
+  }
+
+  // --- Clean pre-push hook ---
+  if (hasPrePushGuard) {
+    try {
+      const hookContent = readFileSync(prePushHook, 'utf-8');
+      const beginIdx = hookContent.indexOf(BETH_GUARD_BEGIN);
+      const endIdx = hookContent.indexOf(BETH_GUARD_END);
+
+      if (beginIdx !== -1 && endIdx !== -1) {
+        const cleaned = hookContent.slice(0, beginIdx) + hookContent.slice(endIdx + BETH_GUARD_END.length + 1);
+        const trimmed = cleaned.trim();
+
+        if (trimmed === '' || trimmed === '#!/bin/sh' || trimmed === '#!/bin/bash') {
+          // Hook is now empty — remove the whole file
+          unlinkSync(prePushHook);
+          logSuccess('Removed .git/hooks/pre-push (was Beth-only)');
+        } else {
+          writeFileSync(prePushHook, cleaned);
+          logSuccess('Removed Beth guard block from .git/hooks/pre-push');
+        }
+        removed.push('.git/hooks/pre-push (guard block)');
+      }
+    } catch (err) {
+      logError(`Failed to clean pre-push hook: ${err.message}`);
+    }
+  }
+
+  // --- Clean up empty parent directories ---
+  // If .github/ is now empty, remove it
+  if (existsSync(githubDir)) {
+    try {
+      const remaining = readdirSync(githubDir);
+      if (remaining.length === 0) {
+        rmSync(githubDir, { recursive: true, force: true });
+        logSuccess('Removed empty .github/');
+      }
+    } catch {
+      // Not critical
+    }
+  }
+
+  // If .vscode/ is now empty, remove it
+  const vscodeDir = join(cwd, '.vscode');
+  if (existsSync(vscodeDir)) {
+    try {
+      const remaining = readdirSync(vscodeDir);
+      if (remaining.length === 0) {
+        rmSync(vscodeDir, { recursive: true, force: true });
+        logSuccess('Removed empty .vscode/');
+      }
+    } catch {
+      // Not critical
+    }
+  }
+
+  // --- Summary ---
+  console.log('');
+  if (removed.length > 0) {
+    logSuccess(`Removed ${removed.length} items. Beth has left the building.`);
+    console.log(`\n${COLORS.dim}To reinstall: npx beth-copilot init${COLORS.reset}`);
+  } else {
+    logWarning('No items were removed. Check file permissions.');
+  }
+
+  console.log(`\n${COLORS.cyan}"I'm not leaving. I'm choosing to go."${COLORS.reset}\n`);
+}
+
 // Input validation constants
-const ALLOWED_COMMANDS = ['init', 'help', '--help', '-h', 'doctor', 'quickstart', 'pre-push-guard', 'update', 'land'];
+const ALLOWED_COMMANDS = ['init', 'help', '--help', '-h', 'doctor', 'quickstart', 'pre-push-guard', 'update', 'land', 'uninstall'];
 const ALLOWED_FLAGS = ['--force', '--skip-backlog', '--skip-mcp', '--verbose', '--reason', '-r', '-f', '--skip-tests', '--message', '-m', '--dry-run', '--check-only'];
 const MAX_ARG_LENGTH = 50;
 
@@ -864,7 +1120,7 @@ const MAX_ARG_LENGTH = 50;
 function validateArgs(args) {
   // The 'land' and 'update' commands handle their own arg validation
   const command = args[0]?.toLowerCase();
-  if (command === 'land' || command === 'update') return;
+  if (command === 'land' || command === 'update' || command === 'uninstall') return;
 
   for (const arg of args) {
     // Prevent excessively long arguments (log injection, DoS)
@@ -898,7 +1154,7 @@ globalThis.VERBOSE = options.verbose;
 
 // Validate unknown flags (exclude --help which is handled as a command)
 // Skip for 'land' and 'update' commands which handle their own arg parsing
-if (command !== 'land' && command !== 'update') {
+if (command !== 'land' && command !== 'update' && command !== 'uninstall') {
   const unknownFlags = args.filter(arg => arg.startsWith('--') && !ALLOWED_FLAGS.includes(arg) && arg !== '--help');
   if (unknownFlags.length > 0) {
     logError(`Unknown flag: ${unknownFlags[0].slice(0, MAX_ARG_LENGTH)}`);
@@ -950,6 +1206,17 @@ switch (command) {
     {
       const { prePushGuard } = await loadTsCommand('pre-push-guard');
       await prePushGuard();
+    }
+    break;
+  case 'uninstall':
+    try {
+      await uninstall();
+    } catch (error) {
+      if (error instanceof UserError) {
+        showUserError(error);
+        process.exit(1);
+      }
+      throw error;
     }
     break;
   case 'help':

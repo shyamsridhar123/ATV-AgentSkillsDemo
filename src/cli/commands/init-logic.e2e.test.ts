@@ -431,3 +431,171 @@ describe('init logic: template integrity', () => {
     }
   });
 });
+
+describe('init logic: backlog prefix derivation', () => {
+  let testDir: string;
+
+  beforeEach(() => {
+    testDir = join(
+      tmpdir(),
+      `beth-prefix-${Date.now()}-${Math.random().toString(36).slice(2)}`
+    );
+    mkdirSync(testDir, { recursive: true });
+    // backlog init requires a git repo
+    execSync('git init', { cwd: testDir, stdio: 'pipe' });
+  });
+
+  afterEach(() => {
+    if (existsSync(testDir)) {
+      rmSync(testDir, { recursive: true, force: true });
+    }
+  });
+
+  /**
+   * Helper to check if backlog CLI is available.
+   * Tests are skipped if backlog isn't installed.
+   */
+  function backlogAvailable(): boolean {
+    try {
+      execSync('backlog --version', { stdio: 'pipe', timeout: 5000 });
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  it('should derive prefix from package.json name field', () => {
+    if (!backlogAvailable()) return; // skip if backlog not installed
+
+    // Create a package.json with a hyphenated name
+    writeFileSync(
+      join(testDir, 'package.json'),
+      JSON.stringify({ name: 'Claude-Opus-Model' })
+    );
+
+    const result = runInit(testDir);
+    assert.strictEqual(result.code, 0, `Init should succeed. stdout: ${result.stdout}`);
+
+    const configPath = join(testDir, 'backlog', 'config.yml');
+    assert.ok(existsSync(configPath), 'backlog/config.yml should be created');
+    const config = readFileSync(configPath, 'utf-8');
+    assert.ok(
+      config.includes('task_prefix: "CLAUDE"'),
+      `Expected prefix CLAUDE, got config: ${config}`
+    );
+  });
+
+  it('should truncate prefix to 6 characters', () => {
+    if (!backlogAvailable()) return;
+
+    writeFileSync(
+      join(testDir, 'package.json'),
+      JSON.stringify({ name: 'enterprise-application-server' })
+    );
+
+    const result = runInit(testDir);
+    assert.strictEqual(result.code, 0);
+
+    const config = readFileSync(join(testDir, 'backlog', 'config.yml'), 'utf-8');
+    assert.ok(
+      config.includes('task_prefix: "ENTERP"'),
+      `Expected prefix ENTERP (6 chars), got config: ${config}`
+    );
+  });
+
+  it('should use short prefix as-is when under 6 characters', () => {
+    if (!backlogAvailable()) return;
+
+    writeFileSync(
+      join(testDir, 'package.json'),
+      JSON.stringify({ name: 'api-gateway' })
+    );
+
+    const result = runInit(testDir);
+    assert.strictEqual(result.code, 0);
+
+    const config = readFileSync(join(testDir, 'backlog', 'config.yml'), 'utf-8');
+    assert.ok(
+      config.includes('task_prefix: "API"'),
+      `Expected prefix API, got config: ${config}`
+    );
+  });
+
+  it('should strip npm scope from package name', () => {
+    if (!backlogAvailable()) return;
+
+    writeFileSync(
+      join(testDir, 'package.json'),
+      JSON.stringify({ name: '@myorg/widget-factory' })
+    );
+
+    const result = runInit(testDir);
+    assert.strictEqual(result.code, 0);
+
+    const config = readFileSync(join(testDir, 'backlog', 'config.yml'), 'utf-8');
+    assert.ok(
+      config.includes('task_prefix: "WIDGET"'),
+      `Expected prefix WIDGET (scope stripped), got config: ${config}`
+    );
+  });
+
+  it('should fall back to directory name when no package.json', () => {
+    if (!backlogAvailable()) return;
+
+    // No package.json — should use directory name
+    // Directory name is something like beth-prefix-<timestamp>-<random>
+    // First segment before hyphen would be "beth"
+    const result = runInit(testDir);
+    assert.strictEqual(result.code, 0);
+
+    const config = readFileSync(join(testDir, 'backlog', 'config.yml'), 'utf-8');
+    // Directory starts with "beth-prefix-..." so prefix should be "BETH"
+    assert.ok(
+      config.includes('task_prefix: "BETH"'),
+      `Expected prefix BETH from dir name, got config: ${config}`
+    );
+  });
+
+  it('should skip backlog init when --skip-backlog is used', () => {
+    if (!backlogAvailable()) return;
+
+    writeFileSync(
+      join(testDir, 'package.json'),
+      JSON.stringify({ name: 'test-project' })
+    );
+
+    const result = runInit(testDir, ['--skip-backlog']);
+    assert.strictEqual(result.code, 0);
+
+    const configPath = join(testDir, 'backlog', 'config.yml');
+    assert.ok(!existsSync(configPath), 'backlog/config.yml should NOT exist with --skip-backlog');
+  });
+
+  it('should not re-init if backlog/config.yml already exists', () => {
+    if (!backlogAvailable()) return;
+
+    writeFileSync(
+      join(testDir, 'package.json'),
+      JSON.stringify({ name: 'first-project' })
+    );
+
+    // First init
+    runInit(testDir);
+    const config1 = readFileSync(join(testDir, 'backlog', 'config.yml'), 'utf-8');
+    assert.ok(config1.includes('task_prefix: "FIRST"'));
+
+    // Change package.json name
+    writeFileSync(
+      join(testDir, 'package.json'),
+      JSON.stringify({ name: 'second-project' })
+    );
+
+    // Second init without --force should preserve existing config
+    runInit(testDir);
+    const config2 = readFileSync(join(testDir, 'backlog', 'config.yml'), 'utf-8');
+    assert.ok(
+      config2.includes('task_prefix: "FIRST"'),
+      'Should preserve existing prefix without --force'
+    );
+  });
+});
