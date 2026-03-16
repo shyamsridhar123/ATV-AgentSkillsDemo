@@ -26,8 +26,6 @@ She commands seven specialized agents, each with their own expertise, tools, and
 | **Agent Tools** | Copilot built-ins (codebase, readFile, editFiles, runSubagent) + optional MCP servers | Live |
 | **LLM Provider** | Azure OpenAI with Entra ID auth, streaming, retry, tool calling | Live |
 
-**860 tests.** All passing.
-
 ---
 
 ## Architecture
@@ -55,7 +53,7 @@ flowchart LR
 | **LLM Provider** | Azure OpenAI via `openai` SDK | Entra ID auth (no API keys), streaming + tool calling |
 | **Auth** | `@azure/identity` DefaultAzureCredential | az login, managed identity, VS Code creds |
 | **Frontmatter** | `gray-matter` | Parses `.agent.md` and `SKILL.md` YAML |
-| **Testing** | vitest | 860 tests — unit, integration, E2E |
+| **Testing** | vitest | Unit, integration, E2E |
 | **Task Tracking** | Backlog.md (`backlog` CLI) | Markdown-based task tracking for agents and humans |
 | **Package Manager** | npm | Lockfile committed |
 
@@ -92,12 +90,13 @@ For detailed setup (prerequisites, task tracking, MCP servers): [docs/INSTALLATI
 
 | Command | What It Does |
 |---------|-------------|
-| `beth init` | Install agents, skills, VS Code settings, Backlog.md tracking, pre-push hook |
+| `beth init` | Install agents, skills, VS Code settings, MCP config, Backlog.md tracking, pre-push hook. Auto-derives backlog prefix from project name. |
 | `beth init --force` | Overwrite existing files |
-| `beth doctor` | Validate Node.js ≥18, agents frontmatter, skills |
+| `beth doctor` | Validate Node.js ≥18, agents frontmatter, skills, required MCP servers |
 | `beth quickstart` | Run init + doctor in one shot |
 | `beth land` | Automate session completion: tests, commit, push, verify sync |
 | `beth update` | Update project files to latest templates without full re-init |
+| `beth uninstall` | Remove all Beth files from current project (agents, skills, hooks, config) |
 | `beth help` | Show all commands and options |
 
 **Flags:** `--force`, `--skip-backlog`, `--skip-mcp`, `--verbose`, `--skip-tests`, `--message/-m`, `--dry-run`, `--check-only`
@@ -334,18 +333,20 @@ flowchart LR
     CLI --> QS["quickstart"]
     CLI --> Land["land"]
     CLI --> Update["update"]
-    Init --> Templates[".agent.md · SKILL.md · settings"]
-    Doctor --> Checks["Node ≥18 · agents · skills"]
+    CLI --> Uninstall["uninstall"]
+    Init --> Templates[".agent.md · SKILL.md · MCP · settings"]
+    Doctor --> Checks["Node ≥18 · agents · skills · MCP"]
     QS --> Init & Doctor
     Update --> Diff["Template diffing"]
 ```
 
 **Commands:**
-- `beth init` — Scaffold agents, skills, VS Code settings, Backlog.md tracking
-- `beth doctor` — Validate Node.js, agent frontmatter, skill directories
+- `beth init` — Scaffold agents, skills, VS Code settings, MCP config, Backlog.md tracking. Auto-derives backlog prefix from project name.
+- `beth doctor` — Validate Node.js, agent frontmatter, skill directories, required MCP servers
 - `beth quickstart` — Run init + doctor in one shot
 - `beth land` — Automated session completion: tests, commit, push, verify sync
 - `beth update` — Update project files to latest templates (supports `--check-only`)
+- `beth uninstall` — Remove all Beth files from current project (agents, skills, hooks, config, backlog)
 
 ---
 
@@ -358,14 +359,15 @@ The engine that powers Beth. Parses agent and skill definitions, provides typed 
 ```
 beth/
 ├── bin/
-│   └── cli.js                      # CLI entry point (init, doctor, quickstart, land, update, help)
+│   └── cli.js                      # CLI entry point (init, doctor, quickstart, land, update, uninstall, help)
 ├── src/
 │   ├── index.ts                    # Barrel exports (all public API)
 │   ├── cli/commands/
-│   │   ├── doctor.ts               # System health validation
+│   │   ├── doctor.ts               # System health validation (incl. MCP server checks)
 │   │   ├── land.ts                 # Automated session completion
 │   │   ├── pre-push-guard.ts       # Branch discipline enforcement
 │   │   ├── quickstart.ts           # Guided setup flow
+│   │   ├── uninstall.ts            # Clean removal of all Beth files
 │   │   └── update.ts               # Template update diffing
 │   ├── core/
 │   │   ├── agents/
@@ -393,44 +395,13 @@ beth/
 
 ### Test Coverage
 
-**860 tests** (860 pass, 0 fail):
-
-| Suite | Tests | What It Covers |
-|-------|-------|---------------|
-| **Skill Routing** | | |
-| Hook injection | 51 | Deterministic skill injection via SubagentStart hook |
-| Skill routing | 223 | Agent → skill mapping, trigger phrase matching |
-| Trigger coverage | 147 | All trigger phrases resolve to correct skills |
-| Disambiguation | 28 | Overlapping trigger phrase resolution |
-| Mapping completeness | 12 | Every agent has required skills mapped |
-| Pipeline integration | 41 | End-to-end skill loading through full pipeline |
-| Inject-skills hook | 20 | `inject-skills.mjs` unit tests |
-| Verify-skills hook | 9 | `verify-skills.mjs` compliance gate |
-| Smoke tests | 7 | Package exports, barrel imports |
-| **Core** | | |
-| Agent loader | 13 | `.agent.md` parsing, validation, code fence stripping |
-| Agent frontmatter | 32 | YAML frontmatter extraction, required fields |
-| Agent handoffs | 18 | Handoff chain validation, escalation patterns |
-| Agent tools | 25 | Tool declarations, permission schemas |
-| Agent types | 13 | Type definitions, discriminated unions |
-| Agent suite | 18 | Integration: load all 7 agents, validate consistency |
-| Skill loader | 20 | SKILL.md parsing, trigger extraction, query matching |
-| Path validation | 26 | Traversal detection, injection prevention, allowlists |
-| **CLI** | | |
-| Init | 24 | File scaffolding, template copying, idempotency |
-| Doctor | 15 | Node.js version, agent validation, skill checks |
-| Land | 62 | Test → commit → push pipeline, branch discipline |
-| Pre-push guard | 46 | Branch protection, main/master blocking |
-| Quickstart | 10 | Init + Doctor combined flow |
-| **CLI E2E** | | |
-| Init logic | 20 | End-to-end init with real filesystem |
-| Doctor | 21 | Health checks against real project structure |
-| Pipeline | 14 | Init → Doctor pipeline validation |
-| Help | 24 | Help output format, command listing |
-| MCP | 13 | MCP template validation and copying |
-| Edge cases | 13 | Flag combinations, error scenarios |
-| Pre-push guard | 11 | Git hook integration with temp repos |
-| Quickstart expanded | 11 | Full quickstart flow E2E |
+| Area | What It Covers |
+|------|---------------|
+| **Skill Routing** | Hook injection, agent→skill mapping, trigger phrase matching, disambiguation, pipeline integration |
+| **Core** | Agent/skill loader parsing, frontmatter validation, handoff chains, tool declarations, type safety |
+| **Security** | Path traversal detection, shell injection prevention, input validation allowlists |
+| **CLI** | Init scaffolding, doctor health checks, land pipeline, pre-push guard, quickstart, uninstall |
+| **CLI E2E** | End-to-end init/doctor/pipeline with real filesystem, MCP validation, edge cases |
 
 ---
 
