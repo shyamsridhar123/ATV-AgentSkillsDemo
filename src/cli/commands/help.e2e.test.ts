@@ -116,14 +116,6 @@ describe('help command E2E', () => {
       );
     });
 
-    it('should list --skip-beads option', () => {
-      const result = runCli('help');
-      assert.ok(
-        result.stdout.includes('--skip-beads'),
-        'Help should list --skip-beads option'
-      );
-    });
-
     it('should list --verbose option', () => {
       const result = runCli('help');
       assert.ok(

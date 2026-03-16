@@ -1,10 +1,10 @@
 ---
 id: BETH-19
 title: Delete dead bin/lib files
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-03-16 03:11'
-updated_date: '2026-03-16 04:46'
+updated_date: '2026-03-16 05:01'
 labels: []
 dependencies: []
 priority: high
