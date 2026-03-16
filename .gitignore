@@ -45,6 +45,9 @@ docs/test-reports/test-report-*.md
 # Generated artifacts
 sbom.json
 
+# Swarm worktrees (parallel agent sandboxes)
+.worktrees/
+
 # Dolt database files (added by bd init)
 .dolt/
 *.db
