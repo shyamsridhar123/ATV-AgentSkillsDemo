@@ -1,9 +1,10 @@
 ---
 id: BETH-33
 title: Remove beads stub functions from bin/cli.js
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-03-16 03:44'
+updated_date: '2026-03-16 05:06'
 labels: []
 dependencies: []
 priority: high

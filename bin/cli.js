@@ -5,7 +5,6 @@ import { dirname, join, relative } from 'path';
 import { existsSync, mkdirSync, readdirSync, statSync, copyFileSync, readFileSync, writeFileSync, unlinkSync, chmodSync } from 'fs';
 import { createRequire } from 'module';
 import { execSync, spawn } from 'child_process';
-// pathValidation.js removed — beads no longer used
 
 const require = createRequire(import.meta.url);
 const __filename = fileURLToPath(import.meta.url);
@@ -518,12 +517,6 @@ async function checkForUpdates() {
   }
 }
 
-// ─── Beads functions removed ─────────────────────────────────────────────────
-// Stubs kept for backward compatibility (beads has been removed)
-function getBeadsPath() { return null; }
-function isBeadsInstalled() { return false; }
-function isBeadsInitialized(_cwd) { return false; }
-
 async function promptYesNo(question) {
   const readline = await import('readline');
   const rl = readline.createInterface({
@@ -614,7 +607,6 @@ ${COLORS.bright}Options:${COLORS.reset}
   --force                             Overwrite existing files
   --skip-backlog                      Don't create Backlog.md
   --skip-mcp                          Don't create mcp.json.example
-  --skip-beads                        (Deprecated) No-op, kept for compatibility
   --verbose                           Show detailed diagnostics on errors
   --check-only                        Check for updates without modifying files
 
@@ -828,7 +820,7 @@ ${COLORS.cyan}"They broke my wings and forgot I had claws."${COLORS.reset}
 
 // Input validation constants
 const ALLOWED_COMMANDS = ['init', 'help', '--help', '-h', 'doctor', 'quickstart', 'close', 'pre-push-guard', 'update', 'land'];
-const ALLOWED_FLAGS = ['--force', '--skip-backlog', '--skip-mcp', '--skip-beads', '--verbose', '--reason', '-r', '-f', '--skip-tests', '--message', '-m', '--dry-run', '--check-only'];
+const ALLOWED_FLAGS = ['--force', '--skip-backlog', '--skip-mcp', '--verbose', '--reason', '-r', '-f', '--skip-tests', '--message', '-m', '--dry-run', '--check-only'];
 const MAX_ARG_LENGTH = 50;
 
 // Validate and sanitize input

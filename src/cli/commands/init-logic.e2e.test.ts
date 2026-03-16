@@ -75,7 +75,7 @@ function runInit(
   cwd: string,
   flags: string[] = []
 ): { stdout: string; stderr: string; code: number } {
-  const allFlags = ['--skip-beads', ...flags];
+  const allFlags = [...flags];
   try {
     const stdout = execSync(
       `node "${CLI_PATH}" init ${allFlags.join(' ')}`,

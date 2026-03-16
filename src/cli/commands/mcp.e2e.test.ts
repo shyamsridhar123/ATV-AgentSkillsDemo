@@ -19,10 +19,10 @@ const CLI_PATH = join(PROJECT_ROOT, 'bin', 'cli.js');
 const TEMPLATE_MCP = join(PROJECT_ROOT, 'templates', 'mcp.json.example');
 
 /**
- * Run init command in a directory (with --skip-beads to avoid interactive prompts).
+ * Run init command in a directory.
  */
 function runInit(cwd: string, flags: string[] = []): { stdout: string; stderr: string; exitCode: number } {
-  const allFlags = ['--skip-beads', ...flags];
+  const allFlags = [...flags];
   const command = `node "${CLI_PATH}" init ${allFlags.join(' ')}`;
 
   try {

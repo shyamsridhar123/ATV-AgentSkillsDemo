@@ -55,7 +55,7 @@ describe('init → doctor pipeline E2E', () => {
   describe('init creates what doctor checks', () => {
     it('should pass agent check after init', () => {
       // Step 1: Run init
-      const initResult = runCli(testDir, 'init', ['--skip-beads']);
+      const initResult = runCli(testDir, 'init', []);
       assert.strictEqual(initResult.code, 0, `Init should succeed. Output: ${initResult.stdout}`);
 
       // Step 2: Run doctor
@@ -73,7 +73,7 @@ describe('init → doctor pipeline E2E', () => {
     });
 
     it('should pass skills check after init', () => {
-      const initResult = runCli(testDir, 'init', ['--skip-beads']);
+      const initResult = runCli(testDir, 'init', []);
       assert.strictEqual(initResult.code, 0, 'Init should succeed');
 
       const doctorResult = runCli(testDir, 'doctor');
@@ -89,7 +89,7 @@ describe('init → doctor pipeline E2E', () => {
     });
 
     it('should not warn about beads (beads removed)', () => {
-      runCli(testDir, 'init', ['--skip-beads']);
+      runCli(testDir, 'init', []);
       const doctorResult = runCli(testDir, 'doctor');
 
       // beads was removed — doctor should not produce beads-specific warnings
@@ -101,7 +101,7 @@ describe('init → doctor pipeline E2E', () => {
     });
 
     it('Node.js check should always pass', () => {
-      runCli(testDir, 'init', ['--skip-beads']);
+      runCli(testDir, 'init', []);
       const doctorResult = runCli(testDir, 'doctor');
 
       assert.ok(
@@ -113,7 +113,7 @@ describe('init → doctor pipeline E2E', () => {
 
   describe('doctor detects init --skip-* gaps', () => {
     it('should still pass agent/skills checks with --skip-mcp', () => {
-      runCli(testDir, 'init', ['--skip-beads', '--skip-mcp']);
+      runCli(testDir, 'init', ['--skip-mcp']);
       const doctorResult = runCli(testDir, 'doctor');
 
       // Agents and skills should still be checked and pass
@@ -124,7 +124,7 @@ describe('init → doctor pipeline E2E', () => {
     });
 
     it('should still pass agent/skills checks with --skip-backlog', () => {
-      runCli(testDir, 'init', ['--skip-beads', '--skip-backlog']);
+      runCli(testDir, 'init', ['--skip-backlog']);
       const doctorResult = runCli(testDir, 'doctor');
 
       assert.ok(
@@ -137,7 +137,7 @@ describe('init → doctor pipeline E2E', () => {
   describe('init --force then doctor', () => {
     it('should pass doctor after init --force over existing files', () => {
       // First init
-      runCli(testDir, 'init', ['--skip-beads']);
+      runCli(testDir, 'init', []);
 
       // Corrupt an agent file
       const bethAgent = join(testDir, '.github', 'agents', 'beth.agent.md');
@@ -151,7 +151,7 @@ describe('init → doctor pipeline E2E', () => {
       );
 
       // Re-init with --force
-      runCli(testDir, 'init', ['--skip-beads', '--force']);
+      runCli(testDir, 'init', ['--force']);
 
       // Doctor should now be healthy again
       const doctorAfter = runCli(testDir, 'doctor');
@@ -164,7 +164,7 @@ describe('init → doctor pipeline E2E', () => {
 
   describe('full installed structure validation', () => {
     it('should have complete directory structure after init', () => {
-      runCli(testDir, 'init', ['--skip-beads']);
+      runCli(testDir, 'init', []);
 
       // Verify the full expected structure
       assert.ok(existsSync(join(testDir, '.github', 'agents')), '.github/agents should exist');
@@ -177,7 +177,7 @@ describe('init → doctor pipeline E2E', () => {
     });
 
     it('all installed agent files should have valid frontmatter', () => {
-      runCli(testDir, 'init', ['--skip-beads']);
+      runCli(testDir, 'init', []);
 
       const agentsDir = join(testDir, '.github', 'agents');
       const agentFiles = readdirSync(agentsDir).filter(f => f.endsWith('.agent.md'));
@@ -202,7 +202,7 @@ describe('init → doctor pipeline E2E', () => {
     });
 
     it('all installed skill directories should have SKILL.md', () => {
-      runCli(testDir, 'init', ['--skip-beads']);
+      runCli(testDir, 'init', []);
 
       const skillsDir = join(testDir, '.github', 'skills');
       const skillDirs = readdirSync(skillsDir, { withFileTypes: true })
@@ -228,7 +228,7 @@ describe('init → doctor pipeline E2E', () => {
     });
 
     it('installed mcp.json.example should be valid JSON', () => {
-      runCli(testDir, 'init', ['--skip-beads']);
+      runCli(testDir, 'init', []);
 
       const mcpPath = join(testDir, 'mcp.json.example');
       const content = readFileSync(mcpPath, 'utf-8');
@@ -239,7 +239,7 @@ describe('init → doctor pipeline E2E', () => {
     });
 
     it('installed .vscode/settings.json should be valid JSONC', () => {
-      runCli(testDir, 'init', ['--skip-beads']);
+      runCli(testDir, 'init', []);
 
       const settingsPath = join(testDir, '.vscode', 'settings.json');
       const content = readFileSync(settingsPath, 'utf-8');
@@ -252,7 +252,7 @@ describe('init → doctor pipeline E2E', () => {
     });
 
     it('installed .vscode/settings.json should enable subagent delegation', () => {
-      runCli(testDir, 'init', ['--skip-beads']);
+      runCli(testDir, 'init', []);
 
       const settingsPath = join(testDir, '.vscode', 'settings.json');
       const content = readFileSync(settingsPath, 'utf-8');
@@ -269,7 +269,7 @@ describe('init → doctor pipeline E2E', () => {
 
   describe('doctor output after complete init', () => {
     it('doctor summary should show no failures after full init', () => {
-      runCli(testDir, 'init', ['--skip-beads']);
+      runCli(testDir, 'init', []);
 
       const doctorResult = runCli(testDir, 'doctor');
 
