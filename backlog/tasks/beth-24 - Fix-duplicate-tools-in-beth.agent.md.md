@@ -1,10 +1,10 @@
 ---
 id: BETH-24
 title: Fix duplicate tools in beth.agent.md
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-03-16 03:11'
-updated_date: '2026-03-16 04:45'
+updated_date: '2026-03-16 05:16'
 labels: []
 dependencies: []
 priority: medium
