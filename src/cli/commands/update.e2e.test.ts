@@ -100,9 +100,7 @@ tools:
 // Test suites
 // ─────────────────────────────────────────────────────────
 
-// Skipped: update command not yet implemented in bin/cli.js (beth-r08).
-// Unskip once `case 'update'` is wired into the CLI entrypoint.
-describe.skip('update command E2E', () => {
+describe('update command E2E', () => {
   let testDir: string;
 
   beforeEach(() => {
