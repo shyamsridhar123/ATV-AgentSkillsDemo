@@ -21,12 +21,12 @@ She commands seven specialized agents, each with their own expertise, tools, and
 | Layer | What It Does | Status |
 |-------|-------------|--------|
 | **Copilot Agents** | `.agent.md` definitions running in VS Code Agent Mode | Live |
-| **CLI Toolchain** | `beth init`, `beth doctor`, `beth close`, `beth land` — TypeScript commands | Live |
+| **CLI Toolchain** | `beth init`, `beth doctor`, `beth land`, `beth update` — TypeScript commands | Live |
 | **Orchestration Engine** | Fan-out routing, tool calling loop, subagent spawning, handoffs | Live |
 | **Tool Abstraction** | 6 CLI tools + MCP bridge — uniform interface for all agent capabilities | Live |
 | **LLM Provider** | Azure OpenAI with Entra ID auth, streaming, retry, tool calling | Live |
 
-**478 tests.** 477 pass, 1 skip, 0 fail.
+**860 tests.** All passing.
 
 ---
 
@@ -55,7 +55,7 @@ flowchart LR
 | **LLM Provider** | Azure OpenAI via `openai` SDK | Entra ID auth (no API keys), streaming + tool calling |
 | **Auth** | `@azure/identity` DefaultAzureCredential | az login, managed identity, VS Code creds |
 | **Frontmatter** | `gray-matter` | Parses `.agent.md` and `SKILL.md` YAML |
-| **Testing** | vitest + Node.js test runner | 478 tests — unit, integration, E2E |
+| **Testing** | vitest | 860 tests — unit, integration, E2E |
 | **Task Tracking** | Backlog.md (`backlog` CLI) | Markdown-based task tracking for agents and humans |
 | **Package Manager** | npm | Lockfile committed |
 
@@ -97,9 +97,10 @@ For detailed setup (prerequisites, task tracking, MCP servers): [docs/INSTALLATI
 | `beth doctor` | Validate Node.js ≥18, agents frontmatter, skills |
 | `beth quickstart` | Run init + doctor in one shot |
 | `beth land` | Automate session completion: tests, commit, push, verify sync |
+| `beth update` | Update project files to latest templates without full re-init |
 | `beth help` | Show all commands and options |
 
-**Flags:** `--force`, `--skip-backlog`, `--skip-mcp`, `--verbose`, `--skip-tests`, `--message/-m`, `--dry-run`
+**Flags:** `--force`, `--skip-backlog`, `--skip-mcp`, `--verbose`, `--skip-tests`, `--message/-m`, `--dry-run`, `--check-only`
 
 ---
 
@@ -234,7 +235,7 @@ Skills are domain-knowledge modules that agents load automatically when trigger 
 | **React/Next.js Best Practices** | React performance, Next.js patterns | Developer |
 | **shadcn/ui** | "shadcn", "ui component" | Developer |
 | **Security Analysis** | "security review", "OWASP", "threat model" | Security Reviewer |
-| **Azure Operations** | Azure resource management | Developer |
+| **Azure Operations** | Azure resource management (27+ Azure skills) | Developer |
 | **Web Search** | Internet research via Brave | Researcher |
 
 ### Design & UI Skills
@@ -287,19 +288,21 @@ flowchart LR
 
 ---
 
-## Tool Abstraction Layer
+## Agent Tools
 
-A uniform interface for all agent capabilities — file I/O, terminal, search, task tracking, subagent spawning, and MCP server tools. Tools expose OpenAI-compatible function calling schemas so the LLM can invoke them directly.
+Beth's agents leverage VS Code Copilot's built-in tools alongside task tracking through the `backlog` CLI. The orchestration layer delegates to these capabilities:
 
-| Tool | What It Does | Key Features |
-|------|-------------|-------------- |
-| **readFile** | Read file contents | Line ranges, path validation, traversal guards |
-| **editFile** | Atomic string replacement | Single-match enforcement, whitespace-safe |
-| **search** | Ripgrep search | Node.js fallback, regex support, file filtering |
-| **terminal** | Execute shell commands | `execFile('/bin/sh')` — no shell injection, timeouts |
-| **backlog** | Task tracking | `backlog task create`, `backlog board`, `backlog task edit` via CLI |
-| **subagent** | Spawn nested agents | Returns structured result for orchestrator to process |
-| **MCP Bridge** | External tool servers | JSON-RPC 2.0 over stdio, JSONC config, namespaced tools |
+| Tool | What It Does |
+|------|-------------|
+| **codebase** | Semantic code search across the workspace |
+| **readFile** | Read file contents with line ranges |
+| **editFiles** | Atomic file modifications |
+| **runInTerminal** | Shell command execution |
+| **runSubagent** | Spawn specialist agents autonomously |
+| **backlog CLI** | `backlog task create`, `backlog board`, `backlog task edit` for tracking |
+| **MCP servers** | Optional external tools (shadcn, Playwright, Azure, Brave Search) |
+
+### Public API
 
 ```typescript
 import { loadAgents, loadSkills, getInferableAgents, buildTriggerMap } from 'beth-copilot';
@@ -329,112 +332,105 @@ flowchart LR
     CLI["beth"] --> Init["init"]
     CLI --> Doctor["doctor"]
     CLI --> QS["quickstart"]
+    CLI --> Land["land"]
+    CLI --> Update["update"]
     Init --> Templates[".agent.md · SKILL.md · settings"]
     Doctor --> Checks["Node ≥18 · agents · skills"]
     QS --> Init & Doctor
+    Update --> Diff["Template diffing"]
 ```
 
 **Commands:**
 - `beth init` — Scaffold agents, skills, VS Code settings, Backlog.md tracking
 - `beth doctor` — Validate Node.js, agent frontmatter, skill directories
 - `beth quickstart` — Run init + doctor in one shot
+- `beth land` — Automated session completion: tests, commit, push, verify sync
+- `beth update` — Update project files to latest templates (supports `--check-only`)
 
 ---
 
 ## TypeScript Core
 
-The engine that powers everything. Parses agent and skill definitions, manages conversations, routes requests, executes tools, and provides typed APIs for the full agentic loop.
+The engine that powers Beth. Parses agent and skill definitions, provides typed APIs for the agentic loop, and drives the CLI toolchain.
 
 ### Project Structure
 
 ```
 beth/
 ├── bin/
-│   └── cli.js                      # CLI entry point (init, doctor, quickstart, help)
+│   └── cli.js                      # CLI entry point (init, doctor, quickstart, land, update, help)
 ├── src/
 │   ├── index.ts                    # Barrel exports (all public API)
 │   ├── cli/commands/
 │   │   ├── doctor.ts               # System health validation
-│   │   └── quickstart.ts           # Guided setup flow
+│   │   ├── land.ts                 # Automated session completion
+│   │   ├── pre-push-guard.ts       # Branch discipline enforcement
+│   │   ├── quickstart.ts           # Guided setup flow
+│   │   └── update.ts               # Template update diffing
 │   ├── core/
-│   │   ├── orchestrator.ts         # Agentic loop: route → LLM → tools → response
-│   │   ├── router.ts               # @mention routing, skill matching, agent lookup
-│   │   ├── context.ts              # Conversation state, token truncation, skill injection
-│   │   ├── handoffs.ts             # Agent handoff transfers, loop detection
 │   │   ├── agents/
 │   │   │   ├── types.ts            # AgentDefinition, AgentFrontmatter, AgentHandoff
 │   │   │   └── loader.ts           # Parse .agent.md → typed definitions
 │   │   └── skills/
 │   │       ├── types.ts            # SkillDefinition, TriggerMap
 │   │       └── loader.ts           # Parse SKILL.md, extract triggers, match queries
-│   ├── lib/
-│   │   └── pathValidation.ts       # Traversal/injection guards
-│   ├── tools/
-│   │   ├── interface.ts            # Tool interface + toToolDefinition()
-│   │   ├── types.ts                # ToolError, ToolResult, ToolContext, ToolPermissions
-│   │   ├── registry.ts             # ToolRegistry: register, get, list, getDefinitions
-│   │   ├── cli/
-│   │   │   ├── readFile.ts         # File reading with line ranges
-│   │   │   ├── editFile.ts         # Atomic string replacement
-│   │   │   ├── search.ts           # Ripgrep with Node.js fallback
-│   │   │   ├── terminal.ts         # Secure command execution
-│   │   │   ├── backlog.ts           # Task tracking via backlog CLI
-│   │   │   └── subagent.ts         # Agent spawning interface
-│   │   └── mcp/
-│   │       ├── client.ts           # JSON-RPC 2.0 over stdio
-│   │       └── bridge.ts           # JSONC config, tool namespacing
-│   └── providers/
-│       ├── interface.ts            # LLMProviderBase abstract class
-│       ├── azure.ts                # AzureOpenAIProvider (Entra ID, streaming, tools)
-│       ├── types.ts                # 17 types: ChatMessage, ToolCall, LLMError, etc.
-│       ├── retry.ts                # Exponential backoff with jitter
-│       ├── config.ts               # Environment + dotfile config loader
-│       └── streaming.ts            # StreamAccumulator, collectStream, mapStream
+│   └── lib/
+│       └── pathValidation.ts       # Traversal/injection guards
 ├── templates/
 │   └── .github/
 │       ├── agents/                 # 7 agent definitions (.agent.md)
-│       └── skills/                 # 8 skill modules (SKILL.md)
+│       └── skills/                 # 6 core skill modules (SKILL.md)
 └── docs/
     ├── INSTALLATION.md
     ├── MCP-SETUP.md
     ├── CLI-ARCHITECTURE.md
-    └── SYSTEM-FLOW.md
+    ├── SYSTEM-FLOW.md
+    ├── HOOKS-AND-HANDOFF-ENFORCEMENT.md
+    ├── E2E-SKILL-TESTS.md
+    ├── PR-REVIEW-PROCESS.md
+    └── SWARM-ARCHITECTURE.md
 ```
 
 ### Test Coverage
 
-**814 tests** (813 pass, 1 skip, 0 fail):
+**860 tests** (860 pass, 0 fail):
 
 | Suite | Tests | What It Covers |
 |-------|-------|---------------|
-| **Orchestration** | | |
-| Orchestrator | 30+ | Agentic loop, tool calling, subagent spawning, iteration limits |
-| AgentRouter | 30+ | @mention routing, skill matching, agent resolution |
-| ConversationContext | 30+ | Token truncation, skill injection, tool call repair |
-| HandoffManager | 30+ | Context transfer, depth limits, ping-pong detection |
-| **Tools** | | |
-| Tool interface | 20+ | Tool → ToolDefinition conversion, schema validation |
-| ToolRegistry | 20+ | Register, get, list, definitions, duplicate detection |
-| readFile | 30+ | Line ranges, path validation, encoding |
-| editFile | 30+ | String replacement, single-match enforcement |
-| search | 30+ | Ripgrep, Node.js fallback, regex, file filtering |
-| terminal | 30+ | Command execution, timeouts, output capture |
-| backlog | 30+ | Backlog.md CLI wrapper, task tracking |
-| subagent | 30+ | Spawn interface, result marking, agent validation |
-| MCP client | 30+ | JSON-RPC 2.0, protocol handshake, tool listing |
-| MCP bridge | 30+ | JSONC parsing, tool namespacing, error handling |
-| Tool suite | 10+ | createDefaultRegistry, integration tests |
-| **Providers** | | |
-| Provider types | 40+ | LLMError codes, ChatMessage shapes, ToolDefinition schemas |
-| Provider retry | 40+ | Exponential backoff, jitter, transient error detection |
-| Provider config | 30+ | Env precedence, dotenv parsing, URL validation |
-| Provider streaming | 40+ | Chunk accumulation, tool call delta assembly |
-| Provider Azure | 30+ | Message mapping, response mapping, error wrapping |
-| **Core & CLI** | | |
-| Agent loader | 30+ | Frontmatter parsing, validation, code fence stripping, handoffs |
-| Skill loader | 30+ | Trigger extraction, query matching, trigger map building |
-| CLI E2E | 52 | Init/doctor pipeline, MCP template validation, help output |
-| Path validation | 33 | Traversal detection, injection prevention, allowlists |
+| **Skill Routing** | | |
+| Hook injection | 51 | Deterministic skill injection via SubagentStart hook |
+| Skill routing | 223 | Agent → skill mapping, trigger phrase matching |
+| Trigger coverage | 147 | All trigger phrases resolve to correct skills |
+| Disambiguation | 28 | Overlapping trigger phrase resolution |
+| Mapping completeness | 12 | Every agent has required skills mapped |
+| Pipeline integration | 41 | End-to-end skill loading through full pipeline |
+| Inject-skills hook | 20 | `inject-skills.mjs` unit tests |
+| Verify-skills hook | 9 | `verify-skills.mjs` compliance gate |
+| Smoke tests | 7 | Package exports, barrel imports |
+| **Core** | | |
+| Agent loader | 13 | `.agent.md` parsing, validation, code fence stripping |
+| Agent frontmatter | 32 | YAML frontmatter extraction, required fields |
+| Agent handoffs | 18 | Handoff chain validation, escalation patterns |
+| Agent tools | 25 | Tool declarations, permission schemas |
+| Agent types | 13 | Type definitions, discriminated unions |
+| Agent suite | 18 | Integration: load all 7 agents, validate consistency |
+| Skill loader | 20 | SKILL.md parsing, trigger extraction, query matching |
+| Path validation | 26 | Traversal detection, injection prevention, allowlists |
+| **CLI** | | |
+| Init | 24 | File scaffolding, template copying, idempotency |
+| Doctor | 15 | Node.js version, agent validation, skill checks |
+| Land | 62 | Test → commit → push pipeline, branch discipline |
+| Pre-push guard | 46 | Branch protection, main/master blocking |
+| Quickstart | 10 | Init + Doctor combined flow |
+| **CLI E2E** | | |
+| Init logic | 20 | End-to-end init with real filesystem |
+| Doctor | 21 | Health checks against real project structure |
+| Pipeline | 14 | Init → Doctor pipeline validation |
+| Help | 24 | Help output format, command listing |
+| MCP | 13 | MCP template validation and copying |
+| Edge cases | 13 | Flag combinations, error scenarios |
+| Pre-push guard | 11 | Git hook integration with temp repos |
+| Quickstart expanded | 11 | Full quickstart flow E2E |
 
 ---
 
@@ -535,6 +531,10 @@ See [MCP Integrations](#mcp-integrations) above or [docs/MCP-SETUP.md](docs/MCP-
 | [MCP Setup](docs/MCP-SETUP.md) | Optional server integrations |
 | [CLI Architecture](docs/CLI-ARCHITECTURE.md) | Dual-interface design, implementation phases |
 | [System Flow](docs/SYSTEM-FLOW.md) | Agent orchestration diagrams |
+| [Hooks & Handoffs](docs/HOOKS-AND-HANDOFF-ENFORCEMENT.md) | Skill injection hooks, hub-and-spoke enforcement |
+| [E2E Skill Tests](docs/E2E-SKILL-TESTS.md) | Behavioral skill routing test plan |
+| [PR Review Process](docs/PR-REVIEW-PROCESS.md) | Code review checklist and workflow |
+| [Swarm Architecture](docs/SWARM-ARCHITECTURE.md) | Multi-agent swarm design (planned) |
 | [Contributing Guide](CONTRIBUTING.md) | How to contribute (PR process, review checklist) |
 | [Changelog](CHANGELOG.md) | Version history |
 | [Security Policy](SECURITY.md) | Vulnerability reporting |
