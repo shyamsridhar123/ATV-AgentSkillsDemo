@@ -9,7 +9,7 @@ import { execSync } from 'child_process';
 import { existsSync, mkdirSync, writeFileSync, rmSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
-import { getMinNodeVersion, checkMcpServers } from './doctor.js';
+import { getMinNodeVersion, checkMcpServers, isValidServerEntry } from './doctor.js';
 
 // Test utilities - we can't import the private functions from doctor.ts
 // but we can test the overall behavior
@@ -276,5 +276,226 @@ describe('checkMcpServers', () => {
     const result = checkMcpServers(testDir);
     assert.strictEqual(result.status, 'pass');
     assert.ok(result.message.includes('4 servers'));
+  });
+});
+
+describe('isValidServerEntry', () => {
+  describe('valid entries', () => {
+    it('should accept command + args (local process server)', () => {
+      assert.strictEqual(isValidServerEntry({ command: 'npx', args: ['@playwright/mcp@0.0.68'] }), true);
+    });
+
+    it('should accept type + url (HTTP server)', () => {
+      assert.strictEqual(isValidServerEntry({ type: 'http', url: 'https://mcp.deepwiki.com/mcp' }), true);
+    });
+
+    it('should accept command + args with extra properties', () => {
+      assert.strictEqual(isValidServerEntry({ command: 'npx', args: ['pkg'], timeout: 5000, env: { DEBUG: '1' } }), true);
+    });
+
+    it('should accept type + url with extra properties', () => {
+      assert.strictEqual(isValidServerEntry({ type: 'sse', url: 'http://localhost:3000', headers: {} }), true);
+    });
+
+    it('should accept empty args array', () => {
+      assert.strictEqual(isValidServerEntry({ command: 'my-server', args: [] }), true);
+    });
+  });
+
+  describe('invalid entries', () => {
+    it('should reject a plain string', () => {
+      assert.strictEqual(isValidServerEntry('just-a-string'), false);
+    });
+
+    it('should reject a number', () => {
+      assert.strictEqual(isValidServerEntry(42), false);
+    });
+
+    it('should reject null', () => {
+      assert.strictEqual(isValidServerEntry(null), false);
+    });
+
+    it('should reject undefined', () => {
+      assert.strictEqual(isValidServerEntry(undefined), false);
+    });
+
+    it('should reject a boolean', () => {
+      assert.strictEqual(isValidServerEntry(true), false);
+    });
+
+    it('should reject an array', () => {
+      assert.strictEqual(isValidServerEntry(['npx', '@playwright/mcp']), false);
+    });
+
+    it('should reject an empty object', () => {
+      assert.strictEqual(isValidServerEntry({}), false);
+    });
+
+    it('should reject command without args', () => {
+      assert.strictEqual(isValidServerEntry({ command: 'npx' }), false);
+    });
+
+    it('should reject args without command', () => {
+      assert.strictEqual(isValidServerEntry({ args: ['@playwright/mcp'] }), false);
+    });
+
+    it('should reject type without url', () => {
+      assert.strictEqual(isValidServerEntry({ type: 'http' }), false);
+    });
+
+    it('should reject url without type', () => {
+      assert.strictEqual(isValidServerEntry({ url: 'https://example.com' }), false);
+    });
+
+    it('should reject command as number', () => {
+      assert.strictEqual(isValidServerEntry({ command: 123, args: [] }), false);
+    });
+
+    it('should reject args as string (not array)', () => {
+      assert.strictEqual(isValidServerEntry({ command: 'npx', args: '@playwright/mcp' }), false);
+    });
+
+    it('should reject type as number', () => {
+      assert.strictEqual(isValidServerEntry({ type: 123, url: 'https://example.com' }), false);
+    });
+
+    it('should reject url as number', () => {
+      assert.strictEqual(isValidServerEntry({ type: 'http', url: 8080 }), false);
+    });
+  });
+});
+
+describe('checkMcpServers — server structure validation', () => {
+  let testDir: string;
+
+  beforeEach(() => {
+    testDir = join(tmpdir(), `beth-mcp-struct-${Date.now()}`);
+    mkdirSync(testDir, { recursive: true });
+  });
+
+  afterEach(() => {
+    if (existsSync(testDir)) {
+      rmSync(testDir, { recursive: true, force: true });
+    }
+  });
+
+  it('should warn when required server is a string instead of object', () => {
+    const vsDir = join(testDir, '.vscode');
+    mkdirSync(vsDir, { recursive: true });
+    writeFileSync(join(vsDir, 'mcp.json'), JSON.stringify({
+      servers: {
+        playwright: 'just-a-string',
+        backlog: { command: 'backlog', args: ['mcp', 'start'] },
+      },
+    }));
+
+    const result = checkMcpServers(testDir);
+    assert.strictEqual(result.status, 'warn');
+    assert.ok(result.message.includes('invalid structure'));
+    assert.ok(result.message.includes('Playwright'));
+  });
+
+  it('should warn when required server is a number', () => {
+    const vsDir = join(testDir, '.vscode');
+    mkdirSync(vsDir, { recursive: true });
+    writeFileSync(join(vsDir, 'mcp.json'), JSON.stringify({
+      servers: {
+        playwright: { command: 'npx', args: ['@playwright/mcp@0.0.68'] },
+        backlog: 42,
+      },
+    }));
+
+    const result = checkMcpServers(testDir);
+    assert.strictEqual(result.status, 'warn');
+    assert.ok(result.message.includes('Backlog'));
+  });
+
+  it('should warn when required server has command but no args', () => {
+    const vsDir = join(testDir, '.vscode');
+    mkdirSync(vsDir, { recursive: true });
+    writeFileSync(join(vsDir, 'mcp.json'), JSON.stringify({
+      servers: {
+        playwright: { command: 'npx' },
+        backlog: { command: 'backlog', args: ['mcp', 'start'] },
+      },
+    }));
+
+    const result = checkMcpServers(testDir);
+    assert.strictEqual(result.status, 'warn');
+    assert.ok(result.message.includes('Playwright'));
+  });
+
+  it('should warn when both required servers have invalid structure', () => {
+    const vsDir = join(testDir, '.vscode');
+    mkdirSync(vsDir, { recursive: true });
+    writeFileSync(join(vsDir, 'mcp.json'), JSON.stringify({
+      servers: {
+        playwright: {},
+        backlog: true,
+      },
+    }));
+
+    const result = checkMcpServers(testDir);
+    assert.strictEqual(result.status, 'warn');
+    assert.ok(result.message.includes('Playwright'));
+    assert.ok(result.message.includes('Backlog'));
+  });
+
+  it('should pass when required servers have valid command+args structure', () => {
+    const vsDir = join(testDir, '.vscode');
+    mkdirSync(vsDir, { recursive: true });
+    writeFileSync(join(vsDir, 'mcp.json'), JSON.stringify({
+      servers: {
+        playwright: { command: 'npx', args: ['@playwright/mcp@0.0.68'] },
+        backlog: { command: 'backlog', args: ['mcp', 'start'] },
+      },
+    }));
+
+    const result = checkMcpServers(testDir);
+    assert.strictEqual(result.status, 'pass');
+  });
+
+  it('should pass when required server uses type+url structure', () => {
+    const vsDir = join(testDir, '.vscode');
+    mkdirSync(vsDir, { recursive: true });
+    writeFileSync(join(vsDir, 'mcp.json'), JSON.stringify({
+      servers: {
+        playwright: { type: 'http', url: 'http://localhost:3000/playwright' },
+        backlog: { type: 'sse', url: 'http://localhost:4000/backlog' },
+      },
+    }));
+
+    const result = checkMcpServers(testDir);
+    assert.strictEqual(result.status, 'pass');
+  });
+
+  it('should not validate structure of optional servers', () => {
+    const vsDir = join(testDir, '.vscode');
+    mkdirSync(vsDir, { recursive: true });
+    writeFileSync(join(vsDir, 'mcp.json'), JSON.stringify({
+      servers: {
+        playwright: { command: 'npx', args: ['@playwright/mcp@0.0.68'] },
+        backlog: { command: 'backlog', args: ['mcp', 'start'] },
+        'broken-optional': 'this-is-fine-for-optional',
+      },
+    }));
+
+    const result = checkMcpServers(testDir);
+    assert.strictEqual(result.status, 'pass', 'Optional servers with bad structure should not cause warnings');
+  });
+
+  it('should include fix hint in warn details', () => {
+    const vsDir = join(testDir, '.vscode');
+    mkdirSync(vsDir, { recursive: true });
+    writeFileSync(join(vsDir, 'mcp.json'), JSON.stringify({
+      servers: {
+        playwright: 'broken',
+        backlog: { command: 'backlog', args: ['mcp', 'start'] },
+      },
+    }));
+
+    const result = checkMcpServers(testDir);
+    assert.strictEqual(result.status, 'warn');
+    assert.ok(result.details?.includes('command'), 'Details should suggest correct structure');
   });
 });

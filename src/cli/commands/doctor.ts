@@ -259,6 +259,18 @@ const REQUIRED_MCP_SERVERS: Array<{ key: string; label: string; hint: string }> 
 ];
 
 /**
+ * Validate that a server entry has the expected structure:
+ * either { command: string, args: string[] } or { type: string, url: string }
+ */
+export function isValidServerEntry(entry: unknown): boolean {
+  if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return false;
+  const s = entry as Record<string, unknown>;
+  const hasCommandArgs = typeof s.command === 'string' && Array.isArray(s.args);
+  const hasTypeUrl = typeof s.type === 'string' && typeof s.url === 'string';
+  return hasCommandArgs || hasTypeUrl;
+}
+
+/**
  * Check .vscode/mcp.json for required MCP servers
  */
 export function checkMcpServers(cwd: string): CheckResult {
@@ -303,6 +315,21 @@ export function checkMcpServers(cwd: string): CheckResult {
       status: 'fail',
       message: `missing required server(s): ${missing.map(m => m.label).join(', ')}`,
       details: missing.map(m => `Add to .vscode/mcp.json servers: ${m.hint}`).join('\n    '),
+    };
+  }
+
+  // Validate structure of required servers
+  const malformed = REQUIRED_MCP_SERVERS.filter(s => {
+    const entry = servers[s.key];
+    return !isValidServerEntry(entry);
+  });
+
+  if (malformed.length > 0) {
+    return {
+      name: 'MCP Servers',
+      status: 'warn',
+      message: `server(s) with invalid structure: ${malformed.map(m => m.label).join(', ')}`,
+      details: `Each server needs { command, args } or { type, url }. Fix: ${malformed.map(m => m.hint).join('; ')}`,
     };
   }
 
