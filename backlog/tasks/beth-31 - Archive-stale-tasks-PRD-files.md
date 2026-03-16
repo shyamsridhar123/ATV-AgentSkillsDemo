@@ -1,10 +1,10 @@
 ---
 id: BETH-31
 title: Archive stale tasks/ PRD files
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-03-16 03:13'
-updated_date: '2026-03-16 04:45'
+updated_date: '2026-03-16 06:30'
 labels: []
 dependencies: []
 priority: low

@@ -35,11 +35,15 @@ yarn-error.log*
 # Testing
 coverage/
 .nyc_output/
+docs/test-reports/test-report-*.md
 
 # Misc
 *.tmp
 *.temp
 .cache/
+
+# Generated artifacts
+sbom.json
 
 # Dolt database files (added by bd init)
 .dolt/

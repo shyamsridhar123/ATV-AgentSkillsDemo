@@ -1,10 +1,10 @@
 ---
 id: BETH-27
 title: Delete empty backlog directories
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-03-16 03:12'
-updated_date: '2026-03-16 04:45'
+updated_date: '2026-03-16 06:26'
 labels: []
 dependencies: []
 priority: low

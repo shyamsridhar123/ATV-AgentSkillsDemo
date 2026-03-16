@@ -1,10 +1,10 @@
 ---
 id: BETH-29
 title: 'Migrate tests from node:test to vitest imports'
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-03-16 03:12'
-updated_date: '2026-03-16 04:45'
+updated_date: '2026-03-16 06:27'
 labels: []
 dependencies: []
 priority: low

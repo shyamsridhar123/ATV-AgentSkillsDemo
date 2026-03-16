@@ -4,7 +4,7 @@
  * Tests for parsing SKILL.md files into typed SkillDefinition objects.
  */
 
-import { describe, it } from 'node:test';
+import { describe, it } from 'vitest';
 import assert from 'node:assert';
 import { join } from 'node:path';
 import {

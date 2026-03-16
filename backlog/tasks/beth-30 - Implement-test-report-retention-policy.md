@@ -1,10 +1,10 @@
 ---
 id: BETH-30
 title: Implement test report retention policy
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-03-16 03:12'
-updated_date: '2026-03-16 04:45'
+updated_date: '2026-03-16 06:29'
 labels: []
 dependencies: []
 priority: low

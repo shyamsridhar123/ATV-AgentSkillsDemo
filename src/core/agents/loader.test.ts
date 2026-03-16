@@ -4,7 +4,7 @@
  * Tests for parsing .agent.md files into typed AgentDefinition objects.
  */
 
-import { describe, it, beforeEach, afterEach } from 'node:test';
+import { describe, it, beforeEach, afterEach } from 'vitest';
 import assert from 'node:assert';
 import { join } from 'node:path';
 import { writeFileSync, mkdirSync, rmSync, existsSync } from 'node:fs';

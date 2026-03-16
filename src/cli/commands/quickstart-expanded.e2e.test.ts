@@ -20,7 +20,7 @@
  * Expected outcomes documented inline per test case.
  */
 
-import { describe, it, beforeEach, afterEach } from 'node:test';
+import { describe, it, beforeEach, afterEach } from 'vitest';
 import assert from 'node:assert';
 import { spawnSync } from 'child_process';
 import { existsSync, mkdirSync, rmSync, writeFileSync } from 'fs';

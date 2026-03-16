@@ -5,7 +5,7 @@
  * Run with: node --test dist/core/agents/tools.test.js
  */
 
-import { describe, it } from 'node:test';
+import { describe, it } from 'vitest';
 import assert from 'node:assert';
 import { join } from 'node:path';
 import type { AgentTool, AgentFrontmatter } from './types.js';

@@ -206,11 +206,6 @@ export function runTests(): { passed: boolean; output: string } {
   }
 }
 
-/** @deprecated Beads removed — stub kept for API compat. */
-export function runBeadsBackup(): { success: boolean; output: string } {
-  return { success: true, output: 'beads removed — no backup needed' };
-}
-
 /**
  * Stage all changes (git add -A).
  */

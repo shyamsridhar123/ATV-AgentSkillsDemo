@@ -1,9 +1,10 @@
 ---
 id: BETH-37
 title: Evaluate sbom.json retention
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-03-16 03:46'
+updated_date: '2026-03-16 06:35'
 labels: []
 dependencies: []
 priority: low

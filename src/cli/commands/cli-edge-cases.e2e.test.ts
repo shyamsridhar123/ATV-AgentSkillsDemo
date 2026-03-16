@@ -29,7 +29,7 @@
  * Expected outcomes documented inline per test case.
  */
 
-import { describe, it } from 'node:test';
+import { describe, it } from 'vitest';
 import assert from 'node:assert';
 import { execSync } from 'child_process';
 import { resolve, join } from 'path';
