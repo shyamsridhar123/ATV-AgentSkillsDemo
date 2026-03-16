@@ -26,7 +26,6 @@ import { join } from 'node:path';
 import { readFileSync, existsSync } from 'node:fs';
 
 const PROJECT_ROOT = process.cwd();
-const SKILLS_DIR = join(PROJECT_ROOT, '.github/skills');
 const EXTERNAL_SKILLS_DIR = join(process.env.HOME || '~', '.agents/skills');
 
 // ─── Types ─────────────────────────────────────────────────────────────────
@@ -656,7 +655,7 @@ describe('Skill Trigger Coverage — Keyword Matching', () => {
 
         it('skill content contains ALL required keywords', () => {
           const content = readSkillContent(test);
-          const { hits, misses } = countKeywordHits(content, test.requiredKeywords);
+          const { misses } = countKeywordHits(content, test.requiredKeywords);
           expect(misses).toHaveLength(0);
         });
       },
@@ -675,7 +674,7 @@ describe('Skill Trigger Coverage — Keyword Matching', () => {
 
         it.skipIf(shouldSkip)('skill content contains ALL required keywords', () => {
           const content = readSkillContent(test);
-          const { hits, misses } = countKeywordHits(content, test.requiredKeywords);
+          const { misses } = countKeywordHits(content, test.requiredKeywords);
           expect(misses).toHaveLength(0);
         });
       },
@@ -692,7 +691,7 @@ describe('Skill Trigger Coverage — Keyword Matching', () => {
 
         it('skill content contains ALL required keywords', () => {
           const content = readSkillContent(test);
-          const { hits, misses } = countKeywordHits(content, test.requiredKeywords);
+          const { misses } = countKeywordHits(content, test.requiredKeywords);
           expect(misses).toHaveLength(0);
         });
       },
@@ -709,7 +708,7 @@ describe('Skill Trigger Coverage — Keyword Matching', () => {
 
         it('skill content contains ALL required keywords', () => {
           const content = readSkillContent(test);
-          const { hits, misses } = countKeywordHits(content, test.requiredKeywords);
+          const { misses } = countKeywordHits(content, test.requiredKeywords);
           expect(misses).toHaveLength(0);
         });
       },
@@ -726,7 +725,7 @@ describe('Skill Trigger Coverage — Keyword Matching', () => {
 
         it('skill content contains ALL required keywords', () => {
           const content = readSkillContent(test);
-          const { hits, misses } = countKeywordHits(content, test.requiredKeywords);
+          const { misses } = countKeywordHits(content, test.requiredKeywords);
           expect(misses).toHaveLength(0);
         });
       },
@@ -743,7 +742,7 @@ describe('Skill Trigger Coverage — Keyword Matching', () => {
 
         it('skill content contains ALL required keywords', () => {
           const content = readSkillContent(test);
-          const { hits, misses } = countKeywordHits(content, test.requiredKeywords);
+          const { misses } = countKeywordHits(content, test.requiredKeywords);
           expect(misses).toHaveLength(0);
         });
       },
@@ -760,7 +759,7 @@ describe('Skill Trigger Coverage — Keyword Matching', () => {
 
         it('skill content contains ALL required keywords', () => {
           const content = readSkillContent(test);
-          const { hits, misses } = countKeywordHits(content, test.requiredKeywords);
+          const { misses } = countKeywordHits(content, test.requiredKeywords);
           expect(misses).toHaveLength(0);
         });
       },
@@ -777,7 +776,7 @@ describe('Skill Trigger Coverage — Keyword Matching', () => {
 
         it('skill content contains ALL required keywords', () => {
           const content = readSkillContent(test);
-          const { hits, misses } = countKeywordHits(content, test.requiredKeywords);
+          const { misses } = countKeywordHits(content, test.requiredKeywords);
           expect(misses).toHaveLength(0);
         });
       },
@@ -794,7 +793,7 @@ describe('Skill Trigger Coverage — Keyword Matching', () => {
 
         it('skill content contains ALL required keywords', () => {
           const content = readSkillContent(test);
-          const { hits, misses } = countKeywordHits(content, test.requiredKeywords);
+          const { misses } = countKeywordHits(content, test.requiredKeywords);
           expect(misses).toHaveLength(0);
         });
       },
@@ -811,7 +810,7 @@ describe('Skill Trigger Coverage — Keyword Matching', () => {
 
         it('skill content contains ALL required keywords', () => {
           const content = readSkillContent(test);
-          const { hits, misses } = countKeywordHits(content, test.requiredKeywords);
+          const { misses } = countKeywordHits(content, test.requiredKeywords);
           expect(misses).toHaveLength(0);
         });
       },

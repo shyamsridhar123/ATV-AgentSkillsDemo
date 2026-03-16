@@ -44,7 +44,7 @@ These skills are **deterministically injected** by `inject-skills.mjs`. No promp
 | 8 | `security-analysis` | security-reviewer | readFile | "Run an OWASP security review on the auth module" |
 | 9 | `web-design-guidelines` | tester | inject | "Audit the checkout flow for WCAG 2.1 AA compliance" |
 
-> **Note:** `web-search` is injected for `researcher` but has no corresponding test prompt since it's a capability (Brave Search MCP), not domain knowledge.
+> **Note:** `web-search` is injected for `researcher` via hook. It is a capability wrapper (Brave Search MCP) rather than domain knowledge, but is tested as prompt #37 in Category 4.
 
 ---
 
