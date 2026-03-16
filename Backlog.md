@@ -112,7 +112,7 @@ Last updated: 2026-03-13 (Cleanup: tracking drift resolved, beads plan removed f
 
 ### Tech Debt — Critical (P1)
 
-- [ ] **TD-01: Remove `bs-buster` unused production dependency**
+- [x] **TD-01: Remove `bs-buster` unused production dependency** ✅ Done (BETH-17)
   - **Objective:** Eliminate dead runtime dependency that inflates install size (22MB local) and ships in `npm publish`
   - **Acceptance Criteria:** (1) `bs-buster` removed from `dependencies` in package.json, (2) `npm install` succeeds, (3) all tests pass, (4) `npx beth-copilot init`, `doctor`, `close`, `land` commands work without `bs-buster`, (5) `.bs-buster/` directory documented as optional local artifact in .gitignore comment
 

@@ -59,7 +59,7 @@ flowchart LR
 | **Task Tracking** | Backlog.md (`backlog` CLI) | Markdown-based task tracking for agents and humans |
 | **Package Manager** | npm | Lockfile committed |
 
-**Production dependencies:** 2 (`gray-matter`, `bs-buster`). Minimal attack surface by design.
+**Production dependencies:** 1 (`gray-matter`). Minimal attack surface by design.
 
 ---
 

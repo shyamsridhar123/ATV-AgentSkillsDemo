@@ -34,7 +34,7 @@ The following are in scope for security reports:
 
 ### Supply Chain
 
-- This package has **2 runtime dependencies** (`gray-matter`, `bs-buster`) to minimize attack surface
+- This package has **1 runtime dependency** (`gray-matter`) to minimize attack surface
 - Always verify you're installing from the official npm registry
 - Check `package-lock.json` is present and matches expected checksums
 

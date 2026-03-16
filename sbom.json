@@ -3,9 +3,9 @@
   "bomFormat": "CycloneDX",
   "specVersion": "1.6",
   "version": 1,
-  "serialNumber": "urn:uuid:f6226e96-e5bf-497f-9732-f0cac000695f",
+  "serialNumber": "urn:uuid:a4bb0e4d-222f-4e8d-96a9-38c83e8abf0f",
   "metadata": {
-    "timestamp": "2026-03-10T06:54:57.884Z",
+    "timestamp": "2026-03-16T02:53:15.499Z",
     "tools": {
       "components": [
         {
@@ -229,57 +229,6 @@
         {
           "name": "cdx:npm:package:path",
           "value": "node_modules/@vitest/coverage-v8"
-        }
-      ]
-    },
-    {
-      "type": "library",
-      "name": "bs-buster",
-      "version": "0.1.8",
-      "bom-ref": "beth-copilot@1.1.0|bs-buster@0.1.8",
-      "author": "Shyam Sridhar",
-      "description": "BS Buster - Don't blame the model. Measure the harness. Passive observer CLI for evaluating GitHub Copilot, VS Code, Codex, and Claude Code agent harnesses.",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT",
-            "acknowledgement": "declared"
-          }
-        }
-      ],
-      "purl": "pkg:npm/bs-buster@0.1.8",
-      "externalReferences": [
-        {
-          "url": "git+https://github.com/shyamsridhar123/bs-buster.git",
-          "type": "vcs",
-          "comment": "as detected from PackageJson property \"repository.url\""
-        },
-        {
-          "url": "https://github.com/shyamsridhar123/bs-buster#readme",
-          "type": "website",
-          "comment": "as detected from PackageJson property \"homepage\""
-        },
-        {
-          "url": "https://github.com/shyamsridhar123/bs-buster/issues",
-          "type": "issue-tracker",
-          "comment": "as detected from PackageJson property \"bugs.url\""
-        },
-        {
-          "url": "https://registry.npmjs.org/bs-buster/-/bs-buster-0.1.8.tgz",
-          "type": "distribution",
-          "hashes": [
-            {
-              "alg": "SHA-512",
-              "content": "5e7889a7cf4cdfc1c0e6a7f861171529b2f0c352d8540df564523cd4d4cbc615e045eeddb8913945603eba3e083bc84ce44e0cc1339c1438e12fe09fc28b9044"
-            }
-          ],
-          "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
-        }
-      ],
-      "properties": [
-        {
-          "name": "cdx:npm:package:path",
-          "value": "node_modules/bs-buster"
         }
       ]
     },
@@ -1043,57 +992,6 @@
         {
           "name": "cdx:npm:package:path",
           "value": "node_modules/tinyrainbow"
-        }
-      ]
-    },
-    {
-      "type": "library",
-      "name": "zod",
-      "version": "4.3.6",
-      "bom-ref": "beth-copilot@1.1.0|zod@4.3.6",
-      "author": "Colin McDonnell",
-      "description": "TypeScript-first schema declaration and validation library with static type inference",
-      "licenses": [
-        {
-          "license": {
-            "id": "MIT",
-            "acknowledgement": "declared"
-          }
-        }
-      ],
-      "purl": "pkg:npm/zod@4.3.6",
-      "externalReferences": [
-        {
-          "url": "git+https://github.com/colinhacks/zod.git",
-          "type": "vcs",
-          "comment": "as detected from PackageJson property \"repository.url\""
-        },
-        {
-          "url": "https://zod.dev",
-          "type": "website",
-          "comment": "as detected from PackageJson property \"homepage\""
-        },
-        {
-          "url": "https://github.com/colinhacks/zod/issues",
-          "type": "issue-tracker",
-          "comment": "as detected from PackageJson property \"bugs.url\""
-        },
-        {
-          "url": "https://registry.npmjs.org/zod/-/zod-4.3.6.tgz",
-          "type": "distribution",
-          "hashes": [
-            {
-              "alg": "SHA-512",
-              "content": "adfb65ae484764e7230f090696752d65992f68f1c2b03013a78a46a6e38e3036937430d717dd70b950c9a16a0fb0a5ffdd83d0e5f1ee1774938dc6322abf9086"
-            }
-          ],
-          "comment": "as detected from npm-ls property \"resolved\" and property \"integrity\""
-        }
-      ],
-      "properties": [
-        {
-          "name": "cdx:npm:package:path",
-          "value": "node_modules/zod"
         }
       ]
     },
@@ -4209,7 +4107,6 @@
       "dependsOn": [
         "beth-copilot@1.1.0|@types/node@20.19.37",
         "beth-copilot@1.1.0|@vitest/coverage-v8@4.0.18",
-        "beth-copilot@1.1.0|bs-buster@0.1.8",
         "beth-copilot@1.1.0|gray-matter@4.0.3",
         "beth-copilot@1.1.0|typescript@5.9.3",
         "beth-copilot@1.1.0|vitest@4.0.18"
@@ -4235,12 +4132,6 @@
         "beth-copilot@1.1.0|std-env@3.10.0",
         "beth-copilot@1.1.0|tinyrainbow@3.0.3",
         "beth-copilot@1.1.0|vitest@4.0.18"
-      ]
-    },
-    {
-      "ref": "beth-copilot@1.1.0|bs-buster@0.1.8",
-      "dependsOn": [
-        "beth-copilot@1.1.0|zod@4.3.6"
       ]
     },
     {
@@ -4336,9 +4227,6 @@
     },
     {
       "ref": "beth-copilot@1.1.0|tinyrainbow@3.0.3"
-    },
-    {
-      "ref": "beth-copilot@1.1.0|zod@4.3.6"
     },
     {
       "ref": "beth-copilot@1.1.0|js-yaml@3.14.2",
