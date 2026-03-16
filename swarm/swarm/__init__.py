@@ -10,4 +10,10 @@ from .git import (
     merge_worker,
     remove_worktree,
 )
+from .orchestrator import (
+    EpicState,
+    Orchestrator,
+    TaskNode,
+    TaskStatus,
+)
 from .worker import WorkerResult, run_worker_in_worktree
