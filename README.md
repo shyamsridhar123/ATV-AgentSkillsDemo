@@ -23,7 +23,7 @@ She commands seven specialized agents, each with their own expertise, tools, and
 | **Copilot Agents** | `.agent.md` definitions running in VS Code Agent Mode | Live |
 | **CLI Toolchain** | `beth init`, `beth doctor`, `beth land`, `beth update` — TypeScript commands | Live |
 | **Orchestration Engine** | Fan-out routing, tool calling loop, subagent spawning, handoffs | Live |
-| **Tool Abstraction** | 6 CLI tools + MCP bridge — uniform interface for all agent capabilities | Live |
+| **Agent Tools** | Copilot built-ins (codebase, readFile, editFiles, runSubagent) + optional MCP servers | Live |
 | **LLM Provider** | Azure OpenAI with Entra ID auth, streaming, retry, tool calling | Live |
 
 **860 tests.** All passing.
