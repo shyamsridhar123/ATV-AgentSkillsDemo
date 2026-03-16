@@ -11,13 +11,7 @@
  * - Hook script generation
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import * as child_process from 'child_process';
-
-// Mock child_process before importing the module under test
-vi.mock('child_process', () => ({
-  execFileSync: vi.fn(),
-}));
+import { describe, it, expect, beforeEach } from 'vitest';
 
 import {
   parsePushRefs,
@@ -32,10 +26,7 @@ import {
   BETH_GUARD_END,
 } from './pre-push-guard.js';
 
-const mockedExecFileSync = vi.mocked(child_process.execFileSync);
-
 beforeEach(() => {
-  vi.clearAllMocks();
 });
 
 // ─── parsePushRefs ─────────────────────────────────────────────────────────────
