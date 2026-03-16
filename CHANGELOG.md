@@ -7,6 +7,43 @@ All notable changes to Beth are documented here. Format based on [Keep a Changel
 ---
 
 ## [Unreleased]
+
+## [2.0.0] - 2026-03-16
+
+### Breaking Changes
+- **Beads removed — Backlog.md is the sole task tracker.** The entire beads/Dolt database layer has been removed. All agent instructions, hooks, and CLI commands now use `backlog` CLI exclusively. If you were using `bd` commands in scripts, they will no longer be referenced by Beth agents.
+- **`npx beth-copilot close` command removed** (~560 lines deleted). This command enforced beads-specific close logic (blocker deps, child issues, mandatory test subtasks via `bd`). The workflow is now handled by `backlog task edit BETH-X -s "Done" --plain`.
+
+### Added
+- **Backlog.md CLI integration** — All agent instructions now reference `backlog task create`, `backlog task edit`, `backlog task list`, `backlog board`, and `backlog overview` commands. The `--plain` flag is enforced everywhere to prevent TUI mode in agent contexts.
+- **`npx beth-copilot update` command** — Updates project files to latest templates without full re-init. Supports `--check-only` for dry-run inspection.
+- **Behavioral skill tests** — 302 E2E skill routing tests across 3 files validating deterministic hook injection, trigger coverage, and mapping completeness.
+- **SubagentStart/SubagentStop hook enforcement** — `inject-skills.mjs` deterministically maps agent types to required skills. `verify-skills.mjs` gates subagent completion on both skill compliance and task tracking.
+- **Hub-and-spoke agent coordination** — Replaced 15 lateral handoffs across 6 agents with single "Escalate to Beth" handoff per agent. All agents now report to Beth.
+- **Community skills** — Added brainstorming, framer-components, frontend-design, proof, rclone, feature-video, and other community-contributed skill modules.
+- **27+ Azure skills** — Full Azure skill suite: compute, storage, AI, messaging, diagnostics, compliance, RBAC, cost optimization, cloud migration, resource lookup/visualizer, Entra ID, Copilot SDK, Foundry, and more.
+- **860 tests** — Up from 438 in v1.1.0. Comprehensive coverage for CLI commands, skill routing, hook injection, pipeline integration, and path validation.
+
+### Changed
+- **Agent instructions rewritten for Backlog.md** — All 7 agent files (`beth.agent.md`, `developer.agent.md`, etc.) and `AGENTS.md` updated to reference `backlog` CLI instead of `bd` commands.
+- **Hook enforcement updated** — `verify-skills.mjs` now checks for `backlog task edit` compliance instead of `bd` commands.
+- **Templates synced** — All template files in `templates/` now match live `.github/` configuration.
+- **Test framework consolidated** — Migrated from mixed `node:test`/vitest to vitest-only imports across all test files.
+
+### Removed
+- **`beth-copilot close` command** — Entire close command and its 560-line implementation deleted.
+- **Beads stub functions** — Removed `bd`-related stubs from `bin/cli.js`.
+- **Dead code cleanup** — Removed 8 redundant/deprecated skills, unused `bs-buster` dependency, dead `bin/lib` files, legacy test scripts, empty barrel exports, and orphaned documentation.
+- **Dolt/beads references** — Purged from all production source code, agent instructions, templates, and documentation.
+
+### Fixed
+- **Template drift** — Templates now stay in sync with live `.github/` config via the `update` command.
+- **Duplicate tools in beth.agent.md** — Removed duplicate tool entries in frontmatter.
+- **Dead pathValidation.ts exports** — Cleaned unused exports that inflated the public API surface.
+- **Pre-push guard test isolation** — Removed unused `child_process` mock that caused CI failures.
+
+---
+
 ## [1.1.0] - 2026-03-10
 
 ### Added
