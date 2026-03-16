@@ -27,6 +27,7 @@ from .board import MessageBoard
 from .claims import ClaimsRegistry
 from .config import SwarmConfig
 from .git import MergeResult, cleanup_all_worktrees, merge_worker, remove_worktree
+from .intelligence import BudgetExceeded, CostTracker, estimate_cost_usd
 from .llm import CompletionResult, agent_loop, create_client
 from .worker import Task, WorkerResult, run_worker_in_worktree
 
@@ -574,11 +575,13 @@ class Orchestrator:
         board: MessageBoard,
         repo_root: Path,
         claims: ClaimsRegistry | None = None,
+        cost_tracker: CostTracker | None = None,
     ) -> None:
         self.config = config
         self.board = board
         self.repo_root = repo_root
         self.claims = claims or ClaimsRegistry(board)
+        self.cost_tracker = cost_tracker or CostTracker(config=config)
         self.epics: dict[str, EpicState] = {}
         self._running = False
         self._reader_id = "orchestrator"
@@ -657,11 +660,34 @@ class Orchestrator:
             "dispatched": [],
             "stuck": [],
             "epics_closed": [],
+            "budget_paused": [],
+            "killed": False,
         }
 
+        # Check daily kill switch first
+        if self.cost_tracker.is_killed():
+            summary["killed"] = True
+            logger.warning("Daily kill switch active — skipping tick")
+            return summary
+
         for epic_id, epic in list(self.epics.items()):
-            # 1. Handle completions
+            # 1. Handle completions + record costs
             completed = handle_completions(epic, self.board, self._reader_id)
+            for t in completed:
+                # Record cost from completion metadata
+                comp_post = self.board.get_post(t.completion_post_id)
+                if comp_post and comp_post.metadata:
+                    meta = comp_post.metadata
+                    try:
+                        self.cost_tracker.record_usage(
+                            task_id=t.id,
+                            epic_id=epic_id,
+                            model=meta.get("model_used", "gpt-4o-mini"),
+                            tokens_in=meta.get("tokens_in", 0),
+                            tokens_out=meta.get("tokens_out", 0),
+                        )
+                    except BudgetExceeded:
+                        logger.warning("Task %s exceeded budget (post-completion)", t.id)
             summary["completions"].extend(
                 {"epic": epic_id, "task": t.id} for t in completed
             )
@@ -685,13 +711,18 @@ class Orchestrator:
                 for r in merge_results
             )
 
-            # 4. Dispatch ready tasks
-            ready = get_ready_tasks(epic)
-            for task in ready:
-                post_id = dispatch_task(task, epic, self.config, self.board)
-                summary["dispatched"].append(
-                    {"epic": epic_id, "task": task.id, "post_id": post_id}
-                )
+            # 4. Check epic budget before dispatching
+            if self.cost_tracker.is_epic_paused(epic_id):
+                summary["budget_paused"].append(epic_id)
+                logger.info("Epic %s paused — budget exceeded, skipping dispatch", epic_id)
+            else:
+                # Dispatch ready tasks
+                ready = get_ready_tasks(epic)
+                for task in ready:
+                    post_id = dispatch_task(task, epic, self.config, self.board)
+                    summary["dispatched"].append(
+                        {"epic": epic_id, "task": task.id, "post_id": post_id}
+                    )
 
             # 5. Check heartbeats
             stuck = check_heartbeats(

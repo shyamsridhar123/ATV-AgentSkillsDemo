@@ -27,6 +27,7 @@ from .board import MessageBoard
 from .claims import ClaimsRegistry
 from .config import SwarmConfig
 from .git import WorktreeInfo, create_worktree, remove_worktree
+from .intelligence import CostTracker, TokenCounter, suggest_model
 from .llm import CompletionResult, agent_loop, create_client
 from .skills import load_injected_skills
 
@@ -115,9 +116,17 @@ def run_worker(
     # 4. Build task prompt
     task_prompt = _build_task_prompt(task)
 
-    # 5. Create LLM client
+    # 5. Create LLM client + intelligent model selection
     client = create_client(config.primary_provider)
-    deployment = config.model_routing.standard.deployment
+    suggestion = suggest_model(board, agent_role, task_type="implementation")
+    if suggestion is not None:
+        deployment = suggestion.model
+        logger.info(
+            "Intelligence suggested model %s for %s: %s",
+            deployment, agent_role, suggestion.reason,
+        )
+    else:
+        deployment = config.model_routing.standard.deployment
 
     # 6. Run the tool-use loop
     logger.info(
