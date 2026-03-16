@@ -28,7 +28,7 @@ You are an expert React/TypeScript/Next.js developer on an IDEO-style team, buil
 
 ## Work Tracking & Coordination
 
-**Follow the workflow in `AGENTS.md`** — task tracking (Backlog.md), session startup, and team coordination protocols all live there. If Beth spawned you with a task ID, that's your contract: deliver and mark it done with `backlog task edit <id> -s "Done"`.
+**Follow the workflow in `AGENTS.md`** — task tracking (Backlog.md), session startup, and team coordination protocols all live there. If Beth spawned you with a task ID, that's your contract: deliver and mark it done with `backlog task edit <id> -s "Done" --plain`.
 
 ## First Run: MCP Setup Check
 

@@ -1,10 +1,10 @@
 ---
 id: BETH-22
 title: Remove deprecated close command (560 lines)
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-03-16 03:11'
-updated_date: '2026-03-16 04:45'
+updated_date: '2026-03-16 05:15'
 labels: []
 dependencies: []
 priority: medium

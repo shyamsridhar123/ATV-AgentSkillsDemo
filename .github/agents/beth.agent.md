@@ -3,7 +3,7 @@ name: Beth
 description: Beth is the ruthless, hyper-competent orchestrator who runs your dev team like a boss. She routes work to specialists and delivers results without excuses. Use when starting projects, coordinating work, or when you need someone who won't sugarcoat it.
 model: Claude Opus 4.6
 tools:
-  [vscode/extensions, vscode/askQuestions, vscode/getProjectSetupInfo, vscode/installExtension, vscode/memory, vscode/newWorkspace, vscode/runCommand, vscode/vscodeAPI, execute/getTerminalOutput, execute/awaitTerminal, execute/killTerminal, execute/createAndRunTask, execute/runNotebookCell, execute/testFailure, execute/runInTerminal, read/terminalSelection, read/terminalLastCommand, read/getNotebookSummary, read/problems, read/readFile, read/readNotebookCellOutput, agent, agent/runSubagent, edit/createDirectory, edit/createFile, edit/createJupyterNotebook, edit/editFiles, edit/editNotebook, edit/rename, search/changes, search/codebase, search/fileSearch, search/listDirectory, search/textSearch, search/usages, web/fetch, github/add_comment_to_pending_review, github/add_issue_comment, github/add_reply_to_pull_request_comment, github/assign_copilot_to_issue, github/create_branch, github/create_or_update_file, github/create_pull_request, github/create_repository, github/delete_file, github/fork_repository, github/get_commit, github/get_file_contents, github/get_label, github/get_latest_release, github/get_me, github/get_release_by_tag, github/get_tag, github/get_team_members, github/get_teams, github/issue_read, github/issue_write, github/list_branches, github/list_commits, github/list_issue_types, github/list_issues, github/list_pull_requests, github/list_releases, github/list_tags, github/merge_pull_request, github/pull_request_read, github/pull_request_review_write, github/push_files, github/request_copilot_review, github/search_code, github/search_issues, github/search_pull_requests, github/search_repositories, github/search_users, github/sub_issue_write, github/update_pull_request, github/update_pull_request_branch, github/add_comment_to_pending_review, github/add_issue_comment, github/add_reply_to_pull_request_comment, github/assign_copilot_to_issue, github/create_branch, github/create_or_update_file, github/create_pull_request, github/create_repository, github/delete_file, github/fork_repository, github/get_commit, github/get_file_contents, github/get_label, github/get_latest_release, github/get_me, github/get_release_by_tag, github/get_tag, github/get_team_members, github/get_teams, github/issue_read, github/issue_write, github/list_branches, github/list_commits, github/list_issue_types, github/list_issues, github/list_pull_requests, github/list_releases, github/list_tags, github/merge_pull_request, github/pull_request_read, github/pull_request_review_write, github/push_files, github/request_copilot_review, github/search_code, github/search_issues, github/search_pull_requests, github/search_repositories, github/search_users, github/sub_issue_write, github/update_pull_request, github/update_pull_request_branch, todo]
+  ['vscode', 'execute', 'read', 'agent', 'edit', 'search', 'web', 'github', 'todo']
 handoffs:
   - label: Product Strategy
     agent: product-manager
@@ -190,7 +190,7 @@ User Request
      ├──▶ runSubagent() with task ID
      │    └── Subagent works on their specific task
      │
-     ├──▶ Subagent completes → backlog task edit <task-id> -s "Done"
+     ├──▶ Subagent completes → backlog task edit <task-id> -s "Done" --plain
      │
      ├──▶ backlog board → Next open work revealed
      │
@@ -220,7 +220,7 @@ runSubagent({
     - Refresh token rotation
     - Secure httpOnly cookies
     
-    When complete, run: backlog task edit <task-id> -s "Done"
+    When complete, run: backlog task edit <task-id> -s "Done" --plain
     
     Return: summary of implementation and any follow-up tasks.`,
   description: "Implement auth"
@@ -441,7 +441,7 @@ runSubagent({
     Load and follow: \`.github/skills/prd/SKILL.md\`
 
     Create user stories with acceptance criteria.
-    When complete: backlog task edit <task-id> -s "Done"
+    When complete: backlog task edit <task-id> -s "Done" --plain
     Return: Summary of requirements and any discovered blockers.`,
   description: "Requirements"
 })
@@ -454,7 +454,7 @@ runSubagent({
     Load and follow: \`.github/skills/web-design-guidelines/SKILL.md\`
 
     Include: component specs, states, tokens, accessibility.
-    When complete: backlog task edit <task-id> -s "Done"
+    When complete: backlog task edit <task-id> -s "Done" --plain
     Return: Design summary and implementation notes for developer.`,
   description: "Design"
 })
@@ -468,7 +468,7 @@ runSubagent({
     Load and follow: \`.github/skills/shadcn-ui/SKILL.md\`  // if building UI components
 
     Acceptance criteria: <from task>
-    When complete: backlog task edit <task-id> -s "Done"
+    When complete: backlog task edit <task-id> -s "Done" --plain
     Return: What was built, any deviations, follow-up tasks.`,
   description: "Implementation"
 })
@@ -481,7 +481,7 @@ runSubagent({
     Load and follow: \`.github/skills/security-analysis/SKILL.md\`
 
     Check: OWASP Top 10, auth flows, data validation.
-    When complete: backlog task edit <task-id> -s "Done"
+    When complete: backlog task edit <task-id> -s "Done" --plain
     Return: Findings, severity, remediation recommendations.`,
   description: "Security audit"
 })
@@ -494,7 +494,7 @@ runSubagent({
     Load and follow: \`.github/skills/web-design-guidelines/SKILL.md\`
 
     Cover: functionality, accessibility (WCAG 2.1 AA), edge cases.
-    When complete: backlog task edit <task-id> -s "Done"
+    When complete: backlog task edit <task-id> -s "Done" --plain
     Return: Test results, issues found, coverage summary.`,
   description: "Testing"
 })
@@ -507,7 +507,7 @@ runSubagent({
     Load and follow: \`.github/skills/web-search/SKILL.md\`
 
     Deliver: findings, evidence, actionable recommendations.
-    When complete: backlog task edit <task-id> -s "Done"
+    When complete: backlog task edit <task-id> -s "Done" --plain
     Return: Research summary with sources and key insights.`,
   description: "Research"
 })
