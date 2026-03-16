@@ -1,10 +1,10 @@
 ---
 id: BETH-20
-title: 'TD-02: Remove bs-buster zombie dependency'
+title: Remove bs-buster zombie dependency
 status: Done
 assignee: []
 created_date: '2026-03-16 03:11'
-updated_date: '2026-03-16 04:40'
+updated_date: '2026-03-16 04:45'
 labels: []
 dependencies: []
 priority: high

@@ -1,9 +1,10 @@
 ---
 id: BETH-23
-title: 'TD-05: Clean up dead pathValidation.ts exports'
+title: Clean up dead pathValidation.ts exports
 status: To Do
 assignee: []
 created_date: '2026-03-16 03:11'
+updated_date: '2026-03-16 04:45'
 labels: []
 dependencies: []
 priority: medium

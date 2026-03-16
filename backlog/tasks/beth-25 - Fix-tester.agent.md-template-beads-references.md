@@ -1,9 +1,10 @@
 ---
 id: BETH-25
-title: 'TD-07: Fix tester.agent.md template beads references'
+title: Fix tester.agent.md template beads references
 status: To Do
 assignee: []
 created_date: '2026-03-16 03:11'
+updated_date: '2026-03-16 04:45'
 labels: []
 dependencies: []
 priority: medium

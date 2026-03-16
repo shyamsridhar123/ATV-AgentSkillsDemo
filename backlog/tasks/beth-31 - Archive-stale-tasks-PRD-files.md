@@ -1,9 +1,10 @@
 ---
 id: BETH-31
-title: 'TD-13: Archive stale tasks/ PRD files'
+title: Archive stale tasks/ PRD files
 status: To Do
 assignee: []
 created_date: '2026-03-16 03:13'
+updated_date: '2026-03-16 04:45'
 labels: []
 dependencies: []
 priority: low

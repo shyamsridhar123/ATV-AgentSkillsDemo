@@ -1,9 +1,10 @@
 ---
 id: BETH-26
-title: 'TD-08: Update docs with dead beads/Dolt references'
+title: Update docs with dead beads/Dolt references
 status: To Do
 assignee: []
 created_date: '2026-03-16 03:12'
+updated_date: '2026-03-16 04:45'
 labels: []
 dependencies: []
 priority: medium

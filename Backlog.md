@@ -111,22 +111,21 @@ Last updated: 2026-03-16 (Tech debt reconciled: TD-XX numbering retired, all ite
 ## Backlog (Prioritized)
 
 > All items tracked as CLI tasks. Run `backlog task list --plain` for live status.
-> Old TD-XX numbering retired — everything is BETH-XX now.
 
 ### Tech Debt — Critical (P1)
 
-- [x] **BETH-20: Remove `bs-buster` zombie dependency** *(was TD-01)* — **Done** (PR #80, BETH-17)
+- [x] **BETH-20: Remove `bs-buster` zombie dependency** — **Done** (PR #80)
   - Eliminated dead runtime dependency (22MB local, shipped in `npm publish`). Zero imports anywhere.
 
-- [ ] **BETH-19: Delete dead `bin/lib/` files** *(was TD-02, partial)*
-  - Remove 4 files imported by nothing: `animation.js`, `pathValidation.js`, `pathValidation.test.js`, `beth-animation.sh`. Also delete `assets/beth-portrait-small.txt` + `assets/beth-portrait.txt` (zero refs once animation.js gone).
+- [ ] **BETH-19: Delete dead `bin/lib/` files + unused assets**
+  - Remove 4 dead files in `bin/lib/`: `animation.js`, `pathValidation.js`, `pathValidation.test.js`, `beth-animation.sh`. Also delete `assets/beth-portrait-small.txt` + `assets/beth-portrait.txt` (zero refs once animation.js gone). Update dead-code comment in `bin/cli.js` line 8.
   - **AC:** (1) All 6 files deleted, (2) `bin/cli.js` dead-code comment updated, (3) all tests pass, (4) CLI commands work
 
-- [ ] **BETH-21: Remove legacy test scripts from package.json** *(was TD-02, partial)*
+- [ ] **BETH-21: Remove legacy test scripts from package.json**
   - `test:legacy` runs dead `bin/lib/pathValidation.test.js`. `test:legacy:ts` duplicates `test`. `test:all` chains both.
   - **AC:** (1) `test:legacy` and `test:legacy:ts` removed, (2) `test:all` simplified to `npm run test`, (3) all remaining scripts work
 
-- [ ] **BETH-33: Remove beads stub functions from `bin/cli.js`** *(was TD-03)*
+- [ ] **BETH-33: Remove beads stub functions from `bin/cli.js`**
   - 3 dead stubs (`getBeadsPath`, `isBeadsInstalled`, `isBeadsInitialized`) at line ~522; `--skip-beads` in ALLOWED_FLAGS.
   - **AC:** (1) All 3 stubs deleted, (2) comment block removed, (3) `--skip-beads` removed from ALLOWED_FLAGS, (4) no runtime errors, (5) all tests pass
 
@@ -144,7 +143,7 @@ Last updated: 2026-03-16 (Tech debt reconciled: TD-XX numbering retired, all ite
   - Every GitHub MCP tool listed TWICE (~60 duplicate entries). Template version uses clean shorthand.
   - **AC:** (1) All duplicate tool entries removed, (2) tools array matches template's clean shorthand, (3) agent still functional
 
-- [ ] **BETH-28: Sync template AGENTS.md + copilot-instructions.md** *(was TD-04 + TD-05)*
+- [ ] **BETH-28: Sync template AGENTS.md + copilot-instructions.md**
   - Template AGENTS.md still references beads dual-tracking. Template copilot-instructions.md has stale skill tables.
   - **AC:** (1) `templates/AGENTS.md` synced from live, (2) `templates/.github/copilot-instructions.md` synced from live, (3) template-specific adjustments retained, (4) no beads references remain, (5) `npx beth-copilot init` installs correct versions
 
@@ -152,11 +151,11 @@ Last updated: 2026-03-16 (Tech debt reconciled: TD-XX numbering retired, all ite
   - Template `tester.agent.md` still says "dual tracking beads + Backlog.md".
   - **AC:** (1) Beads references removed, (2) Backlog.md CLI is sole system referenced, (3) template matches source agent
 
-- [ ] **BETH-36: Sync 4 diverged template skills** *(was TD-08)*
+- [ ] **BETH-36: Sync 4 diverged template skills**
   - `framer-components`, `prd`, `vercel-react-best-practices`, `web-design-guidelines` — template versions are stale.
   - **AC:** (1) All 4 synced from live, (2) `security-analysis` and `shadcn-ui` confirmed still identical
 
-- [ ] **BETH-34: Fix/delete empty `src/cli/commands/index.ts` barrel** *(was TD-06)*
+- [ ] **BETH-34: Fix/delete empty `src/cli/commands/index.ts` barrel**
   - All exports commented out. Re-exported from `src/index.ts` as public API but does nothing.
   - **AC:** EITHER uncomment exports OR delete file + remove from `src/index.ts`. Build + tests pass.
 
@@ -164,7 +163,7 @@ Last updated: 2026-03-16 (Tech debt reconciled: TD-XX numbering retired, all ite
   - `DOCKER-SWARM.md` (4 refs), `SWARM-ARCHITECTURE.md` (5 refs), `quality-gate-plan.md` (2 refs), `CLI-IMPLEMENTATION-PLAN.md` (2 refs).
   - **AC:** (1) All beads/Dolt references removed or updated, (2) docs accurate to current architecture
 
-- [ ] **BETH-35: Archive obsolete documentation (5 files)** *(was TD-07)*
+- [ ] **BETH-35: Archive obsolete documentation (5 files)**
   - `BD-BACKUP-PARSER-FAILURE.md` (ARCHIVED), `CLI-IMPLEMENTATION-PLAN.md` (COMPLETE), `DOCKER-SWARM.md` (vision, zero impl), `FEATURE-REQUEST-userVisible.md` (unimplemented), `quality-gate-plan.md` (Complete Phase 1-5).
   - **AC:** (1) `docs/archive/` created, (2) all 5 moved there, (3) cross-references updated, (4) no broken links
 
@@ -174,11 +173,11 @@ Last updated: 2026-03-16 (Tech debt reconciled: TD-XX numbering retired, all ite
 
 ### Tech Debt — Medium (P3)
 
-- [ ] **BETH-27: Delete 8 empty backlog directories** *(was TD-10)*
+- [ ] **BETH-27: Delete 8 empty backlog directories**
   - `archive/drafts/`, `archive/milestones/`, `archive/tasks/`, `completed/`, `decisions/`, `docs/`, `drafts/`, `milestones/` — never populated.
   - **AC:** (1) All 8 deleted, (2) tool handles missing dirs gracefully, (3) `backlog/tasks/` + `config.yml` preserved
 
-- [ ] **BETH-31: Consolidate root `tasks/` directory** *(was TD-09)*
+- [ ] **BETH-31: Consolidate root `tasks/` directory**
   - 2 orphaned PRD files while active tasks live in `backlog/tasks/`.
   - **AC:** (1) Files archived or moved, (2) root `tasks/` deleted, (3) references updated
 
@@ -190,13 +189,13 @@ Last updated: 2026-03-16 (Tech debt reconciled: TD-XX numbering retired, all ite
   - `docs/test-reports/` accumulates reports with no cleanup. 7+ reports currently.
   - **AC:** (1) Retention policy defined, (2) old reports archived or gitignored, (3) latest report always accessible
 
-- [ ] **BETH-37: Evaluate `sbom.json` retention** *(was TD-13)*
+- [ ] **BETH-37: Evaluate `sbom.json` retention**
   - 150KB generated file tracked in git. Already generated at publish via `prepublishOnly`.
   - **AC:** Decision documented. If removed: `.gitignore` updated, `git rm --cached`. If kept: rationale noted.
 
-- [x] **BETH-7: Audit untracked skills** *(was TD-12)* — **Done.** Deleted 8 redundant skills.
+- [x] **BETH-7: Audit untracked skills** — **Done.** Deleted 8 redundant skills.
 
-- [ ] Consider additional skills (API security, performance profiling)
+
 
 ---
 
@@ -235,7 +234,7 @@ Beth is fully operational — orchestrator, 6 specialist agents, 26+ skills (inc
 
 **What's Coming:**
 
-- Tech debt cleanup (20 items tracked as BETH-19 through BETH-37 — run `backlog task list --plain` for live status)
+- Tech debt cleanup (19 items tracked as BETH-19 through BETH-37 — run `backlog task list --plain` for live status)
 - Cut next npm release to ship all improvements to `npx beth-copilot init` users
 - MCP-enhanced skills (optional, graceful degradation)
 

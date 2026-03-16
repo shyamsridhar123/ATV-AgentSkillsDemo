@@ -1,9 +1,10 @@
 ---
 id: BETH-27
-title: 'TD-09: Delete empty backlog directories'
+title: Delete empty backlog directories
 status: To Do
 assignee: []
 created_date: '2026-03-16 03:12'
+updated_date: '2026-03-16 04:45'
 labels: []
 dependencies: []
 priority: low

@@ -1,9 +1,10 @@
 ---
 id: BETH-28
-title: 'TD-10: Sync templates with live .github config'
+title: Sync templates with live .github config
 status: To Do
 assignee: []
 created_date: '2026-03-16 03:12'
+updated_date: '2026-03-16 04:45'
 labels: []
 dependencies: []
 priority: medium

@@ -1,9 +1,10 @@
 ---
 id: BETH-32
-title: 'TD-14: Clean beads references from production source code'
+title: Clean beads references from production source code
 status: To Do
 assignee: []
 created_date: '2026-03-16 03:13'
+updated_date: '2026-03-16 04:45'
 labels: []
 dependencies: []
 priority: low

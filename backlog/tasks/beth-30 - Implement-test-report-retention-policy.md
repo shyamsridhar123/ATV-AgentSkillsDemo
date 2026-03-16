@@ -1,9 +1,10 @@
 ---
 id: BETH-30
-title: 'TD-12: Implement test report retention policy'
+title: Implement test report retention policy
 status: To Do
 assignee: []
 created_date: '2026-03-16 03:12'
+updated_date: '2026-03-16 04:45'
 labels: []
 dependencies: []
 priority: low

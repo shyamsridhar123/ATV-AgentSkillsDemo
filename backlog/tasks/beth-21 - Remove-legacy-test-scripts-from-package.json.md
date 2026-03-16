@@ -1,9 +1,10 @@
 ---
 id: BETH-21
-title: 'TD-03: Remove legacy test scripts from package.json'
+title: Remove legacy test scripts from package.json
 status: To Do
 assignee: []
 created_date: '2026-03-16 03:11'
+updated_date: '2026-03-16 04:45'
 labels: []
 dependencies: []
 priority: high

@@ -1,9 +1,10 @@
 ---
 id: BETH-24
-title: 'TD-06: Fix duplicate tools in beth.agent.md'
+title: Fix duplicate tools in beth.agent.md
 status: To Do
 assignee: []
 created_date: '2026-03-16 03:11'
+updated_date: '2026-03-16 04:45'
 labels: []
 dependencies: []
 priority: medium
