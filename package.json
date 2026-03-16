@@ -61,7 +61,6 @@
     "vitest": "^4.0.18"
   },
   "dependencies": {
-    "bs-buster": "^0.1.8",
     "gray-matter": "^4.0.3"
   }
 }
