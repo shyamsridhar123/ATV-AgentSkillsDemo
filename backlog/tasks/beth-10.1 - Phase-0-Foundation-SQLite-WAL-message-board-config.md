@@ -1,10 +1,10 @@
 ---
 id: BETH-10.1
 title: 'Phase 0: Foundation - SQLite WAL message board + config'
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-03-15 06:42'
-updated_date: '2026-03-15 06:43'
+updated_date: '2026-03-16 16:59'
 labels: []
 dependencies: []
 parent_task_id: BETH-10
