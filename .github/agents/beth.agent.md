@@ -190,7 +190,7 @@ User Request
      ├──▶ runSubagent() with task ID
      │    └── Subagent works on their specific task
      │
-     ├──▶ Subagent completes → backlog task edit <task-id> -s "Done"
+     ├──▶ Subagent completes → backlog task edit <task-id> -s "Done" --plain
      │
      ├──▶ backlog board → Next open work revealed
      │
@@ -220,7 +220,7 @@ runSubagent({
     - Refresh token rotation
     - Secure httpOnly cookies
     
-    When complete, run: backlog task edit <task-id> -s "Done"
+    When complete, run: backlog task edit <task-id> -s "Done" --plain
     
     Return: summary of implementation and any follow-up tasks.`,
   description: "Implement auth"
@@ -441,7 +441,7 @@ runSubagent({
     Load and follow: \`.github/skills/prd/SKILL.md\`
 
     Create user stories with acceptance criteria.
-    When complete: backlog task edit <task-id> -s "Done"
+    When complete: backlog task edit <task-id> -s "Done" --plain
     Return: Summary of requirements and any discovered blockers.`,
   description: "Requirements"
 })
@@ -454,7 +454,7 @@ runSubagent({
     Load and follow: \`.github/skills/web-design-guidelines/SKILL.md\`
 
     Include: component specs, states, tokens, accessibility.
-    When complete: backlog task edit <task-id> -s "Done"
+    When complete: backlog task edit <task-id> -s "Done" --plain
     Return: Design summary and implementation notes for developer.`,
   description: "Design"
 })
@@ -468,7 +468,7 @@ runSubagent({
     Load and follow: \`.github/skills/shadcn-ui/SKILL.md\`  // if building UI components
 
     Acceptance criteria: <from task>
-    When complete: backlog task edit <task-id> -s "Done"
+    When complete: backlog task edit <task-id> -s "Done" --plain
     Return: What was built, any deviations, follow-up tasks.`,
   description: "Implementation"
 })
@@ -481,7 +481,7 @@ runSubagent({
     Load and follow: \`.github/skills/security-analysis/SKILL.md\`
 
     Check: OWASP Top 10, auth flows, data validation.
-    When complete: backlog task edit <task-id> -s "Done"
+    When complete: backlog task edit <task-id> -s "Done" --plain
     Return: Findings, severity, remediation recommendations.`,
   description: "Security audit"
 })
@@ -494,7 +494,7 @@ runSubagent({
     Load and follow: \`.github/skills/web-design-guidelines/SKILL.md\`
 
     Cover: functionality, accessibility (WCAG 2.1 AA), edge cases.
-    When complete: backlog task edit <task-id> -s "Done"
+    When complete: backlog task edit <task-id> -s "Done" --plain
     Return: Test results, issues found, coverage summary.`,
   description: "Testing"
 })
@@ -507,7 +507,7 @@ runSubagent({
     Load and follow: \`.github/skills/web-search/SKILL.md\`
 
     Deliver: findings, evidence, actionable recommendations.
-    When complete: backlog task edit <task-id> -s "Done"
+    When complete: backlog task edit <task-id> -s "Done" --plain
     Return: Research summary with sources and key insights.`,
   description: "Research"
 })
