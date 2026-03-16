@@ -1,9 +1,10 @@
 ---
 id: BETH-34
 title: Fix/delete empty src/cli/commands/index.ts barrel
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-03-16 03:44'
+updated_date: '2026-03-16 05:53'
 labels: []
 dependencies: []
 priority: medium

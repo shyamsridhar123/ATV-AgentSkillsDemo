@@ -14,6 +14,3 @@ export * from './core/skills/index.js';
 
 // Library utilities
 export * from './lib/index.js';
-
-// CLI commands
-export * from './cli/commands/index.js';
