@@ -13,7 +13,6 @@ import {
   containsShellInjection,
   checkExecutable,
   validateBinaryPath,
-  validateBeadsPath,
   validateBacklogPath,
   type ValidationResult,
   type ExecutableCheckResult,
@@ -134,20 +133,6 @@ describe('validateBinaryPath (TypeScript)', () => {
       });
       assert.strictEqual(result.valid, true);
     });
-  });
-});
-
-describe('validateBeadsPath (TypeScript)', () => {
-  it('should reject non-bd binaries', () => {
-    const result = validateBeadsPath('/usr/bin/evil');
-    assert.strictEqual(result.valid, false);
-    assert.ok(result.error?.includes('allowed list') || result.error?.includes('not found'));
-  });
-
-  it('should reject paths with traversal even for bd', () => {
-    const result = validateBeadsPath('../../../usr/bin/bd');
-    assert.strictEqual(result.valid, false);
-    assert.ok(result.error?.includes('traversal'));
   });
 });
 

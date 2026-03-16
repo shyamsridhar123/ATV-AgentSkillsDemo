@@ -1,10 +1,10 @@
 ---
 id: BETH-26
 title: Update docs with dead beads/Dolt references
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-03-16 03:12'
-updated_date: '2026-03-16 04:45'
+updated_date: '2026-03-16 05:49'
 labels: []
 dependencies: []
 priority: medium
@@ -24,3 +24,9 @@ priority: medium
 - [ ] #4 docs/CLI-IMPLEMENTATION-PLAN.md: beads init references updated
 - [ ] #5 grep -r 'beads' docs/ returns zero results (or only clearly-marked historical references)
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Updated SWARM-ARCHITECTURE.md (surviving doc). 3 other docs (DOCKER-SWARM, CLI-IMPLEMENTATION-PLAN, quality-gate-plan) deferred to BETH-35 archive.
+<!-- SECTION:NOTES:END -->

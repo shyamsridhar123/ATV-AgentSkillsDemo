@@ -231,18 +231,6 @@ export function validateBinaryPath(
 }
 
 /**
- * Validate a binary path specifically for the beads (bd) CLI
- * @param inputPath - The path to validate
- */
-export function validateBeadsPath(inputPath: string): ValidationResult {
-  return validateBinaryPath(inputPath, {
-    checkExists: true,
-    verifyExecutable: true,
-    allowedBasenames: ['bd', 'bd.exe', 'bd.cmd'],
-  });
-}
-
-/**
  * Validate a binary path specifically for the backlog CLI
  * @param inputPath - The path to validate
  */

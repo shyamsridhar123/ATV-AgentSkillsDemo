@@ -4,7 +4,7 @@
 
 **Status:** Plan — not yet implemented (open questions resolved, implementation phases defined)  
 **Date:** 2026-03-15 (updated 2026-03-15: aligned message board schema with Pied Piper source code)  
-**Supersedes:** [DOCKER-SWARM.md](DOCKER-SWARM.md) (conceptual Docker/Redis approach — abandoned in favor of this design)
+**Supersedes:** [DOCKER-SWARM.md](archive/DOCKER-SWARM.md) (conceptual Docker/Redis approach — abandoned in favor of this design)
 
 ---
 
@@ -46,7 +46,7 @@ The current Beth system runs inside GitHub Copilot's agent mode. That gives us:
 - **No persistence** — agents die when the chat session ends; context is gone
 - **No true parallelism** — can't have two agents working simultaneously on different files
 - **Copilot session constraints** — token lifecycle tied to VS Code, no daemon capability
-- **Beads is broken** — single-writer JSONL with no locking, race conditions, data loss, metadata corruption
+- **No concurrent coordination** — Backlog.md CLI is human-facing only, no machine-to-machine coordination layer
 
 What we need:
 
@@ -67,7 +67,7 @@ What we need:
 | **Model Routing** | 3-tier routing (complex/standard/simple) per agent role | Single model for all | Different tasks deserve different models; cheap models for cheap tasks saves cost without sacrificing quality where it matters |
 | **Coordination** | SQLite WAL (native) | Pied Piper Go server, Redis, RabbitMQ, NATS | Zero external dependencies; single-file database; WAL mode gives concurrent reads + serialized writes; steal Pied Piper's proven schema without running their server |
 | **Isolation** | Git worktrees | Docker containers, separate clones | Filesystem-level isolation per worker without cloning the repo; shared `.git` directory; lightweight; native git tooling |
-| **Tracking** | SQLite message board replaces beads | Beads (no-db JSONL), Backlog.md CLI | Beads is broken at its core (TOCTOU races, metadata corruption). SQLite WAL provides the concurrency guarantees beads never had |
+| **Tracking** | SQLite message board for machine coordination | Backlog.md CLI (human-facing) | Backlog.md CLI is file-based, not designed for concurrent agent writes. SQLite WAL provides the concurrency guarantees needed for parallel workers |
 | **Orchestrator** | Beth as persistent Python daemon | Copilot agent mode, cron jobs | Must survive session boundaries; must dispatch work and monitor board continuously |
 | **Agent identity** | Same 7 roles from current system | New roles, fewer roles | Proven role decomposition; skills/handoffs already battle-tested |
 
@@ -83,7 +83,7 @@ User → VS Code → @Beth (Copilot Agent Mode)
                     ├── runSubagent("security-reviewer", prompt) → sync, blocking
                     └── ...
                     
-State: beads (JSONL, broken) + Backlog.md (human-facing)
+State: Backlog.md (human-facing task tracking)
 Skills: .github/skills/<name>/SKILL.md (loaded on-demand)
 Agents: .github/agents/<name>.agent.md (YAML frontmatter + instructions)
 ```
@@ -91,7 +91,7 @@ Agents: .github/agents/<name>.agent.md (YAML frontmatter + instructions)
 **Limitations:**
 - One agent works at a time (sequential subagent calls)
 - Session-scoped — everything dies when the chat ends
-- Beads has TOCTOU race conditions on concurrent writes
+- No machine-to-machine coordination layer for concurrent agents
 - No way to run agents outside VS Code
 - Context window is shared across all subagent invocations
 
@@ -739,7 +739,7 @@ swarm/
 | **Runtime** | VS Code Copilot agent mode | Python daemon process |
 | **LLM calls** | Copilot's built-in model routing | Azure OpenAI direct via `openai` package |
 | **Concurrency** | Sequential `runSubagent()` | Parallel workers in git worktrees |
-| **Coordination** | Beads (broken JSONL) | SQLite WAL message board |
+| **Coordination** | Backlog.md CLI (human-facing) | SQLite WAL message board |
 | **Agent definitions** | `.agent.md` → Copilot YAML schema | `.agent.md` → parsed as system prompts |
 | **Skill loading** | Hook-injected via `inject-skills.mjs` | Python module reads same files |
 | **Tool execution** | Copilot's built-in tools | Python tool registry (same capabilities) |
@@ -933,12 +933,11 @@ Six phases, each gated by a concrete milestone that must be demonstrated before 
 
 | Component | Reason |
 |-----------|--------|
-| **Beads** (`bd` CLI, `.beads/`, JSONL store) | Fundamentally broken: TOCTOU races on concurrent writes, metadata corruption, dual-tracking overhead. SQLite WAL message board replaces it entirely. |
-| **Dolt** (embedded database server) | Was beads' backend. Going away with beads. |
+| **Sequential-only execution** | Current Copilot agent mode is request/response, one-at-a-time. SQLite WAL message board enables parallel dispatch. |
 | **`runSubagent()` pattern** | Copilot-specific. Replaced by async worker dispatch via message board. |
 | **GitHub Copilot agent mode** (as the runtime) | Still usable for ad-hoc chat, but no longer the execution runtime for multi-agent work. |
 | **Skill injection hooks** (`inject-skills.mjs`, `verify-skills.mjs`) | JavaScript hooks for Copilot's SubagentStart/Stop events. Replaced by Python skill loading in worker startup. Same mapping, different runtime. |
-| **Docker Swarm architecture** ([DOCKER-SWARM.md](DOCKER-SWARM.md)) | Over-engineered for current needs. Worktrees + SQLite provide isolation and coordination without container orchestration overhead. |
+| **Docker Swarm architecture** ([DOCKER-SWARM.md](archive/DOCKER-SWARM.md)) | Over-engineered for current needs. Worktrees + SQLite provide isolation and coordination without container orchestration overhead. |
 
 ---
 
@@ -953,7 +952,7 @@ Six phases, each gated by a concrete milestone that must be demonstrated before 
 | **Backlog.md CLI** | Human-facing tracking unchanged |
 | **`/memories/` filesystem** | Per-user and per-repo notes unchanged |
 | **Quality gates** (tests, accessibility, TypeScript strict) | Enforced via test validation after every merge |
-| **Epic discipline** | Same decomposition pattern, tracked on board instead of beads |
+| **Epic discipline** | Same decomposition pattern, tracked on SQLite board for machine use + Backlog.md for human use |
 | **IDEO Design Thinking phases** | Same 5-phase workflow across agent roles |
 | **Beth's personality** | *"They broke my wings and forgot I had claws."* — unchanged and non-negotiable |
 

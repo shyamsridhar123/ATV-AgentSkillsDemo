@@ -1,9 +1,10 @@
 ---
 id: BETH-36
 title: Sync diverged template skills with live versions
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-03-16 03:46'
+updated_date: '2026-03-16 05:55'
 labels: []
 dependencies: []
 priority: medium

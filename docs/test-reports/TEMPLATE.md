@@ -28,7 +28,7 @@
 
 | Test | File | Error | Follow-up Issue |
 |------|------|-------|-----------------|
-| ... | ... | ... | bd-XXX |
+| ... | ... | ... | BETH-XXX |
 
 ## Coverage
 

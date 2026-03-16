@@ -1,9 +1,10 @@
 ---
 id: BETH-35
 title: Archive obsolete documentation
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-03-16 03:46'
+updated_date: '2026-03-16 05:54'
 labels: []
 dependencies: []
 priority: medium
