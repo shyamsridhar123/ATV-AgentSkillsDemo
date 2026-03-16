@@ -8,6 +8,18 @@ All notable changes to Beth are documented here. Format based on [Keep a Changel
 
 ## [Unreleased]
 
+## [2.1.0] - 2026-03-16
+
+### Added
+- **`npx beth-copilot uninstall` command** — Cleanly removes all Beth-installed files from a project: `.github/agents/`, `.github/skills/`, `.github/hooks/`, `AGENTS.md`, `Backlog.md`, `.github/copilot-instructions.md`, `.vscode/settings.json`, `mcp.json.example`, and `backlog/` directory. Removes Beth guard block from pre-push hook (preserving non-Beth content). Cleans up empty `.github/` and `.vscode/` directories. 17 tests covering all removal paths.
+- **Auto-derived backlog prefix** — `backlog init` during `beth-copilot init` now automatically derives a 6-letter prefix from the project name (e.g., `my-app` → `MYAPP`), eliminating the interactive prompt that blocked agent workflows.
+
+### Fixed
+- **Shell command injection in backlog init** — Fixed GHAS-flagged command injection vulnerability where unsanitized project directory names were interpolated into shell commands. Now validates input against a strict allowlist pattern before use.
+
+### Changed
+- **885 tests** — Up from 860 in v2.0.0. Added uninstall command tests and init prefix derivation coverage.
+
 ## [2.0.0] - 2026-03-16
 
 ### Breaking Changes
