@@ -119,24 +119,15 @@ export function getCurrentBranch(): string | null {
 }
 
 /**
- * @deprecated Beads removed — stub kept for API compat.
- */
-export function getInProgressIssues(): Array<{ id: string; title: string }> {
-  return [];
-}
-
-/**
  * Run all pre-push guard checks.
  *
  * @param currentBranch - Current Git branch name
  * @param refs - Optional parsed push refs from Git stdin (for remote ref validation)
- * @param _checkBeads - Deprecated, ignored. Kept for API compat.
  * @returns GuardResult with allowed status and diagnostics
  */
 export function runGuard(
   currentBranch: string | null,
   refs?: PushRef[],
-  _checkBeads = false, // Deprecated — kept for API compat
 ): GuardResult {
   const errors: string[] = [];
   const warnings: string[] = [];
@@ -223,7 +214,7 @@ export async function prePushGuard(stdinInput?: string): Promise<void> {
 }
 
 /**
- * Generate the shell script content to append to .beads/hooks/pre-push.
+ * Generate the shell script content for the pre-push hook.
  * Pure shell — no Node dependency at hook time for speed.
  */
 export function generateHookScript(): string {

@@ -9,16 +9,9 @@
  * - Release branch recognition
  * - Guard logic: errors vs warnings
  * - Hook script generation
- * - Beads in-progress issue detection
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import * as child_process from 'child_process';
-
-// Mock child_process before importing the module under test
-vi.mock('child_process', () => ({
-  execFileSync: vi.fn(),
-}));
+import { describe, it, expect, beforeEach } from 'vitest';
 
 import {
   parsePushRefs,
@@ -33,10 +26,7 @@ import {
   BETH_GUARD_END,
 } from './pre-push-guard.js';
 
-const mockedExecFileSync = vi.mocked(child_process.execFileSync);
-
 beforeEach(() => {
-  vi.clearAllMocks();
 });
 
 // ─── parsePushRefs ─────────────────────────────────────────────────────────────
@@ -220,7 +210,7 @@ describe('isRecognizedBranch', () => {
 describe('runGuard', () => {
   describe('protected branch blocking', () => {
     it('blocks push when current branch is main', () => {
-      const result = runGuard('main', undefined, false);
+      const result = runGuard('main');
       expect(result.allowed).toBe(false);
       expect(result.errors).toHaveLength(1);
       expect(result.errors[0]).toContain('main');
@@ -228,7 +218,7 @@ describe('runGuard', () => {
     });
 
     it('blocks push when current branch is master', () => {
-      const result = runGuard('master', undefined, false);
+      const result = runGuard('master');
       expect(result.allowed).toBe(false);
       expect(result.errors[0]).toContain('master');
     });
@@ -242,7 +232,7 @@ describe('runGuard', () => {
           remoteSha: '000',
         },
       ];
-      const result = runGuard('feature/x', refs, false);
+      const result = runGuard('feature/x', refs);
       expect(result.allowed).toBe(false);
       expect(result.errors[0]).toContain("'main'");
     });
@@ -256,7 +246,7 @@ describe('runGuard', () => {
           remoteSha: '000',
         },
       ];
-      const result = runGuard('feature/x', refs, false);
+      const result = runGuard('feature/x', refs);
       expect(result.allowed).toBe(false);
     });
 
@@ -269,7 +259,7 @@ describe('runGuard', () => {
           remoteSha: '000',
         },
       ];
-      const result = runGuard('main', refs, false);
+      const result = runGuard('main', refs);
       expect(result.allowed).toBe(false);
       // Should have error about remote ref + error about pushing from main
       // The current-branch check deduplicates if the branch name is already in errors
@@ -279,19 +269,19 @@ describe('runGuard', () => {
 
   describe('branch convention warnings', () => {
     it('does not warn on epic branches', () => {
-      const result = runGuard('epic/beth-abc', undefined, false);
+      const result = runGuard('epic/beth-abc');
       expect(result.allowed).toBe(true);
       expect(result.warnings).toHaveLength(0);
     });
 
     it('does not warn on release branches', () => {
-      const result = runGuard('release/v1.0.0', undefined, false);
+      const result = runGuard('release/v1.0.0');
       expect(result.allowed).toBe(true);
       expect(result.warnings).toHaveLength(0);
     });
 
     it('warns on unrecognized branch names', () => {
-      const result = runGuard('feature/random', undefined, false);
+      const result = runGuard('feature/random');
       expect(result.allowed).toBe(true);
       expect(result.warnings).toHaveLength(1);
       expect(result.warnings[0]).toContain('feature/random');
@@ -299,32 +289,16 @@ describe('runGuard', () => {
     });
 
     it('warns on branches like dev or staging', () => {
-      const result = runGuard('dev', undefined, false);
+      const result = runGuard('dev');
       expect(result.allowed).toBe(true);
       expect(result.warnings[0]).toContain('dev');
     });
 
     it('handles null currentBranch (detached HEAD)', () => {
-      const result = runGuard(null, undefined, false);
+      const result = runGuard(null);
       expect(result.allowed).toBe(true);
       expect(result.warnings).toHaveLength(0);
       expect(result.errors).toHaveLength(0);
-    });
-  });
-
-  describe('beads in-progress check (removed)', () => {
-    it('never warns about in-progress issues even with checkBeads=true', () => {
-      const result = runGuard('epic/beth-abc', undefined, true);
-      expect(result.allowed).toBe(true);
-      expect(result.warnings).toHaveLength(0);
-      expect(mockedExecFileSync).not.toHaveBeenCalled();
-    });
-
-    it('no warnings with checkBeads=false', () => {
-      const result = runGuard('epic/beth-abc', undefined, false);
-      expect(result.allowed).toBe(true);
-      expect(result.warnings).toHaveLength(0);
-      expect(mockedExecFileSync).not.toHaveBeenCalled();
     });
   });
 
@@ -338,7 +312,7 @@ describe('runGuard', () => {
           remoteSha: '000',
         },
       ];
-      const result = runGuard('epic/beth-abc', refs, false);
+      const result = runGuard('epic/beth-abc', refs);
       expect(result.allowed).toBe(true);
       expect(result.errors).toHaveLength(0);
       expect(result.warnings).toHaveLength(0);
@@ -353,12 +327,12 @@ describe('runGuard', () => {
           remoteSha: '000',
         },
       ];
-      const result = runGuard('release/v1.0.15', refs, false);
+      const result = runGuard('release/v1.0.15', refs);
       expect(result.allowed).toBe(true);
     });
 
     it('allows push with no refs (branch deletion)', () => {
-      const result = runGuard('epic/beth-abc', [], false);
+      const result = runGuard('epic/beth-abc', []);
       expect(result.allowed).toBe(true);
     });
   });

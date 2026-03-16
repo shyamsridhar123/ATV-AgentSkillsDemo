@@ -3,7 +3,7 @@
  * Run with: node --test dist/cli/commands/init.test.js
  */
 
-import { describe, it, beforeEach, afterEach } from 'node:test';
+import { describe, it, beforeEach, afterEach } from 'vitest';
 import assert from 'node:assert';
 import { execSync } from 'child_process';
 import { existsSync, mkdirSync, writeFileSync, rmSync, readFileSync, readdirSync } from 'fs';

@@ -21,7 +21,7 @@
  * separately or mocked via env vars.
  */
 
-import { describe, it, beforeEach, afterEach } from 'node:test';
+import { describe, it, beforeEach, afterEach } from 'vitest';
 import assert from 'node:assert';
 import { execSync } from 'child_process';
 import {

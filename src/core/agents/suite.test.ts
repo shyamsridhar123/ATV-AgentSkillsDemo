@@ -5,7 +5,7 @@
  * Tests all 7 agents: beth, developer, product-manager, researcher, security-reviewer, tester, ux-designer
  */
 
-import { describe, it } from 'node:test';
+import { describe, it } from 'vitest';
 import assert from 'node:assert';
 import { join } from 'node:path';
 import {

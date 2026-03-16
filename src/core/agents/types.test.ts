@@ -3,7 +3,7 @@
  * Run with: node --test dist/core/agents/types.test.js
  */
 
-import { describe, it } from 'node:test';
+import { describe, it } from 'vitest';
 import assert from 'node:assert';
 import type { 
   AgentFrontmatter, 

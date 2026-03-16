@@ -6,7 +6,7 @@
  * to ensure the TypeScript port maintains the same behavior.
  */
 
-import { describe, it } from 'node:test';
+import { describe, it } from 'vitest';
 import assert from 'node:assert';
 import {
   containsTraversal,

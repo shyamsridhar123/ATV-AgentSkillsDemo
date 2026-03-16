@@ -10,10 +10,11 @@
  */
 
 import { execSync } from 'node:child_process';
-import { writeFileSync, mkdirSync, existsSync } from 'node:fs';
+import { writeFileSync, mkdirSync, existsSync, readdirSync, unlinkSync } from 'node:fs';
 import { join } from 'node:path';
 
 const REPORT_DIR = join(process.cwd(), 'docs', 'test-reports');
+const MAX_REPORTS = 5;
 
 function getGitInfo() {
   const run = (cmd) => {
@@ -156,10 +157,6 @@ const results = [];
 console.log('  Running unit + integration tests...');
 results.push(runTests('Unit/Integration', 'npx vitest run --reporter=verbose 2>&1'));
 
-// Legacy tests (Node.js native test runner)
-console.log('  Running legacy tests...');
-results.push(runTests('Legacy (bin/)', 'node --test bin/lib/*.test.js 2>&1'));
-
 console.log('');
 
 // Generate report
@@ -172,6 +169,18 @@ if (!existsSync(REPORT_DIR)) {
 const reportPath = join(REPORT_DIR, filename);
 writeFileSync(reportPath, report, 'utf-8');
 console.log(`📄 Test report written to: docs/test-reports/${filename}`);
+
+// Prune old reports — keep only the last MAX_REPORTS
+const reports = readdirSync(REPORT_DIR)
+  .filter((f) => f.startsWith('test-report-') && f.endsWith('.md'))
+  .sort();
+if (reports.length > MAX_REPORTS) {
+  const toDelete = reports.slice(0, reports.length - MAX_REPORTS);
+  for (const old of toDelete) {
+    unlinkSync(join(REPORT_DIR, old));
+  }
+  console.log(`🗑️  Pruned ${toDelete.length} old report(s), keeping last ${MAX_REPORTS}`);
+}
 
 // Summary
 const totalResults = results.length;

@@ -6,7 +6,7 @@
  * confirming the two commands compose correctly.
  */
 
-import { describe, it, beforeEach, afterEach } from 'node:test';
+import { describe, it, beforeEach, afterEach } from 'vitest';
 import assert from 'node:assert';
 import { execSync } from 'child_process';
 import { existsSync, mkdirSync, rmSync, readdirSync, readFileSync, writeFileSync } from 'fs';
@@ -88,15 +88,15 @@ describe('init → doctor pipeline E2E', () => {
       );
     });
 
-    it('should not warn about beads (beads removed)', () => {
+    it('should not produce legacy system warnings', () => {
       runCli(testDir, 'init', []);
       const doctorResult = runCli(testDir, 'doctor');
 
-      // beads was removed — doctor should not produce beads-specific warnings
-      // It may still show other warnings (e.g. backlog not initialized)
+      // Doctor output should only reference current systems (backlog, agents, skills)
+      const output = doctorResult.stdout.toLowerCase();
       assert.ok(
-        !doctorResult.stdout.includes('Beads Init') || doctorResult.stdout.includes('beads removed'),
-        'Doctor should not produce beads initialization warnings'
+        !output.includes('dolt') && !output.includes('bead'),
+        'Doctor should not produce legacy system warnings'
       );
     });
 
