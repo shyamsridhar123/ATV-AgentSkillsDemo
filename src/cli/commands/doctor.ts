@@ -7,6 +7,7 @@
  * - .github/agents/ exists with valid frontmatter
  * - .github/skills/ exists
  * - backlog.md initialization
+ * - Required MCP servers configured (.vscode/mcp.json)
  */
 
 import { execSync } from 'child_process';
@@ -251,6 +252,68 @@ function checkBacklogInit(cwd: string): CheckResult {
   };
 }
 
+/** Required MCP servers that agents depend on */
+const REQUIRED_MCP_SERVERS: Array<{ key: string; label: string; hint: string }> = [
+  { key: 'playwright', label: 'Playwright', hint: '"playwright": { "command": "npx", "args": ["@playwright/mcp@0.0.68"] }' },
+  { key: 'backlog', label: 'Backlog.md', hint: '"backlog": { "command": "backlog", "args": ["mcp", "start"] }' },
+];
+
+/**
+ * Check .vscode/mcp.json for required MCP servers
+ */
+export function checkMcpServers(cwd: string): CheckResult {
+  const mcpPath = join(cwd, '.vscode', 'mcp.json');
+
+  if (!existsSync(mcpPath)) {
+    return {
+      name: 'MCP Servers',
+      status: 'fail',
+      message: '.vscode/mcp.json not found',
+      details: 'Run: npx beth-copilot init (or npx beth-copilot init --force to regenerate)',
+    };
+  }
+
+  let config: Record<string, unknown>;
+  try {
+    config = JSON.parse(readFileSync(mcpPath, 'utf-8'));
+  } catch {
+    return {
+      name: 'MCP Servers',
+      status: 'fail',
+      message: '.vscode/mcp.json is not valid JSON',
+      details: 'Fix the JSON syntax or run: npx beth-copilot init --force',
+    };
+  }
+
+  const servers = config.servers as Record<string, unknown> | undefined;
+  if (!servers || typeof servers !== 'object') {
+    return {
+      name: 'MCP Servers',
+      status: 'fail',
+      message: '.vscode/mcp.json missing "servers" object',
+      details: 'Run: npx beth-copilot init --force',
+    };
+  }
+
+  const missing = REQUIRED_MCP_SERVERS.filter(s => !servers[s.key]);
+
+  if (missing.length > 0) {
+    return {
+      name: 'MCP Servers',
+      status: 'fail',
+      message: `missing required server(s): ${missing.map(m => m.label).join(', ')}`,
+      details: missing.map(m => `Add to .vscode/mcp.json servers: ${m.hint}`).join('\n    '),
+    };
+  }
+
+  const totalServers = Object.keys(servers).length;
+  return {
+    name: 'MCP Servers',
+    status: 'pass',
+    message: `${totalServers} servers configured (playwright ✓, backlog ✓)`,
+  };
+}
+
 /**
  * Main doctor command
  * @param options - Command options
@@ -271,6 +334,7 @@ export async function doctor(options: DoctorOptions = {}, exitOnFailure = true):
     checkAgents(cwd),
     checkSkills(cwd),
     checkBacklogInit(cwd),
+    checkMcpServers(cwd),
   ];
   
   // Display results

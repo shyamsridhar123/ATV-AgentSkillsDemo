@@ -226,18 +226,12 @@ async function animateBethBanner() {
   console.log('"' + COLORS.reset);
   console.log('');
   
-  // Show version and quick help
+  // Show version line only — commands are shown after install completes
   console.log(`${COLORS.dim}v${CURRENT_VERSION}${COLORS.reset}                          ${COLORS.dim}AI Orchestrator for GitHub Copilot${COLORS.reset}`);
-  console.log('');
-  console.log(`${COLORS.bright}Commands:${COLORS.reset}`);
-  console.log(`  ${COLORS.cyan}npx beth-copilot init${COLORS.reset}      Install Beth in your project`);
-  console.log(`  ${COLORS.cyan}npx beth-copilot help${COLORS.reset}      Show full documentation`);
-  console.log('');
-  console.log(`${COLORS.bright}After install:${COLORS.reset} Open VS Code → Copilot Chat → ${COLORS.cyan}@Beth${COLORS.reset}`);
   console.log('');
 }
 
-function showBethBannerStatic({ showQuickHelp = true } = {}) {
+function showBethBannerStatic() {
   const bethColors = [
     '\x1b[38;5;196m',
     '\x1b[38;5;202m',
@@ -276,17 +270,9 @@ function showBethBannerStatic({ showQuickHelp = true } = {}) {
   console.log(COLORS.cyan + COLORS.bright + '"' + tagline + '"' + COLORS.reset);
   console.log('');
   
-  // Show version and quick help (optional)
-  if (showQuickHelp) {
-    console.log(`${COLORS.dim}v${CURRENT_VERSION}${COLORS.reset}                          ${COLORS.dim}AI Orchestrator for GitHub Copilot${COLORS.reset}`);
-    console.log('');
-    console.log(`${COLORS.bright}Commands:${COLORS.reset}`);
-    console.log(`  ${COLORS.cyan}npx beth-copilot init${COLORS.reset}      Install Beth in your project`);
-    console.log(`  ${COLORS.cyan}npx beth-copilot help${COLORS.reset}      Show full documentation`);
-    console.log('');
-    console.log(`${COLORS.bright}After install:${COLORS.reset} Open VS Code → Copilot Chat → ${COLORS.cyan}@Beth${COLORS.reset}`);
-    console.log('');
-  }
+  // Show version (always)
+  console.log(`${COLORS.dim}v${CURRENT_VERSION}${COLORS.reset}                          ${COLORS.dim}AI Orchestrator for GitHub Copilot${COLORS.reset}`);
+  console.log('');
 }
 
 // Compact Beth portrait with colors
@@ -590,33 +576,46 @@ ${BETH_GUARD_END}
 }
 
 function showHelp() {
-  showBethBannerStatic({ showQuickHelp: false });
+  showBethBannerStatic();
   console.log(`${COLORS.bright}Beth${COLORS.reset} - AI Orchestrator for GitHub Copilot
 
-${COLORS.bright}Usage:${COLORS.reset}
-  npx beth-copilot init [options]     Initialize Beth in current directory
-  npx beth-copilot doctor             Check system health and dependencies
-  npx beth-copilot land [opts]          Automated session completion (test, commit, push)
-  npx beth-copilot pre-push-guard      Run branch discipline checks (used by git hook)
-  npx beth-copilot update [options]    Update project files to latest templates
-  npx beth-copilot quickstart         Run init + doctor
-  npx beth-copilot help               Show this help message
+${COLORS.bright}Commands:${COLORS.reset}
+  ${COLORS.cyan}npx beth-copilot init${COLORS.reset} [options]     Initialize Beth in current directory
+  ${COLORS.cyan}npx beth-copilot update${COLORS.reset} [options]   Update project files to latest templates
+  ${COLORS.cyan}npx beth-copilot doctor${COLORS.reset}             Check system health and dependencies
+  ${COLORS.cyan}npx beth-copilot land${COLORS.reset} [options]     Automated session completion (test, commit, push)
+  ${COLORS.cyan}npx beth-copilot quickstart${COLORS.reset}         Run init + doctor
+  ${COLORS.cyan}npx beth-copilot pre-push-guard${COLORS.reset}     Run branch discipline checks (used by git hook)
+  ${COLORS.cyan}npx beth-copilot help${COLORS.reset}               Show this help message
 
-${COLORS.bright}Options:${COLORS.reset}
+${COLORS.bright}Init Options:${COLORS.reset}
   --force                             Overwrite existing files
   --skip-backlog                      Don't create Backlog.md
   --skip-mcp                          Don't create mcp.json.example
   --verbose                           Show detailed diagnostics on errors
-  --check-only                        Check for updates without modifying files
+
+${COLORS.bright}Update Options:${COLORS.reset}
+  --check-only                        Report update status without modifying files
+  --force                             Overwrite user-modified files with templates
+  --verbose                           Show per-file detail
+
+${COLORS.bright}Land Options:${COLORS.reset}
+  --message, -m <msg>                 Custom commit message
+  --skip-tests                        Skip test execution (not recommended)
+  --force, -f                         Push even if tests fail (dangerous)
+  --dry-run                           Show what would happen without executing
 
 ${COLORS.bright}Examples:${COLORS.reset}
   npx beth-copilot init               Set up Beth in current project
   npx beth-copilot init --force       Overwrite existing Beth files
+  npx beth-copilot update             Update to latest templates
+  npx beth-copilot update --check-only See what changed without modifying
   npx beth-copilot doctor             Verify installation health
+  npx beth-copilot land -m "feat: new component"  Commit and push session work
 
 ${COLORS.bright}What gets installed:${COLORS.reset}
   .github/agents/                     7 specialized AI agents
-  .github/skills/                     8 domain knowledge modules
+  .github/skills/                     Domain knowledge modules
   .github/copilot-instructions.md     Copilot configuration
   .vscode/settings.json               Recommended VS Code settings
   AGENTS.md                           Workflow documentation
@@ -700,11 +699,9 @@ ${COLORS.yellow}╔════════════════════�
   if (canAnimate()) {
     await animateBethBanner();
   } else {
-    showBethBannerStatic({ showQuickHelp: false });
+    showBethBannerStatic();
   }
   
-  log(`${COLORS.yellow}Tip: Run with --verbose for detailed diagnostics if you hit issues.${COLORS.reset}`);
-
   // Check if templates exist
   if (!existsSync(TEMPLATES_DIR)) {
     logError('Templates directory not found. Package may be corrupted.');
@@ -787,6 +784,39 @@ ${COLORS.yellow}╔════════════════════�
     }
   }
 
+  // Install .vscode/mcp.json with required MCP servers (unless --skip-mcp)
+  if (!skipMcp) {
+    const mcpJsonDest = join(cwd, '.vscode', 'mcp.json');
+    if (!existsSync(join(cwd, '.vscode'))) {
+      mkdirSync(join(cwd, '.vscode'), { recursive: true });
+    }
+    
+    if (existsSync(mcpJsonDest) && !force) {
+      // Verify existing mcp.json has the required servers
+      try {
+        const existing = JSON.parse(readFileSync(mcpJsonDest, 'utf-8'));
+        const missing = [];
+        if (!existing.servers?.playwright) missing.push('playwright');
+        if (!existing.servers?.backlog) missing.push('backlog');
+        
+        if (missing.length > 0) {
+          logWarning(`.vscode/mcp.json exists but missing required servers: ${missing.join(', ')}`);
+          logInfo('Add them manually or run with --force to overwrite');
+        } else {
+          logSuccess('.vscode/mcp.json already has required MCP servers');
+        }
+      } catch {
+        logWarning('.vscode/mcp.json exists but could not be parsed — verify it manually');
+      }
+    } else {
+      const mcpTemplateSrc = join(TEMPLATES_DIR, 'mcp.json.example');
+      if (existsSync(mcpTemplateSrc)) {
+        copyFileSync(mcpTemplateSrc, mcpJsonDest);
+        copiedFiles.push('.vscode/mcp.json');
+      }
+    }
+  }
+
   // Summary
   console.log('');
   if (copiedFiles.length > 0) {
@@ -808,13 +838,21 @@ ${COLORS.bright}Next steps:${COLORS.reset}
   2. Open Copilot Chat (${COLORS.cyan}Ctrl+Alt+I${COLORS.reset} / ${COLORS.cyan}Cmd+Alt+I${COLORS.reset})
   3. Type ${COLORS.cyan}@Beth${COLORS.reset} to start - she's your orchestrator
 
-${COLORS.bright}Pro tip:${COLORS.reset} Start every session with ${COLORS.cyan}@Beth${COLORS.reset} and let her route work to the right specialists.
+${COLORS.bright}Pro tip:${COLORS.reset} Start every session with ${COLORS.cyan}@Beth${COLORS.reset} and let her route work to the right specialists.`);
 
-${COLORS.bright}Documentation:${COLORS.reset}
-  https://github.com/stephschofield/beth
-
-${COLORS.cyan}"They broke my wings and forgot I had claws."${COLORS.reset}
+  // Commands at the bottom — easy to find and copy-paste
+  console.log(`
+${COLORS.bright}Commands:${COLORS.reset}
+  ${COLORS.cyan}npx beth-copilot update${COLORS.reset}     Update Beth to the latest templates
+  ${COLORS.cyan}npx beth-copilot doctor${COLORS.reset}     Check system health and dependencies
+  ${COLORS.cyan}npx beth-copilot land${COLORS.reset}       Automated session completion (test, commit, push)
+  ${COLORS.cyan}npx beth-copilot help${COLORS.reset}       Show all commands, options, and documentation
 `);
+
+  console.log(`${COLORS.dim}Tip: Run with --verbose for detailed diagnostics if you hit issues.${COLORS.reset}`);
+  console.log(`${COLORS.dim}Documentation: https://github.com/stephschofield/beth${COLORS.reset}`);
+  console.log(`${COLORS.cyan}"They broke my wings and forgot I had claws."${COLORS.reset}`);
+  console.log('');
 }
 
 // Input validation constants

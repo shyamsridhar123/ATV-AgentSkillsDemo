@@ -118,6 +118,31 @@ describe('MCP configuration validation', () => {
         'Should include shadcn MCP server (used by developer agent for component browsing)'
       );
     });
+
+    it('should include playwright server (required for tester agent)', () => {
+      const config = JSON.parse(readFileSync(TEMPLATE_MCP, 'utf-8'));
+
+      assert.ok(
+        config.servers.playwright,
+        'Should include playwright MCP server (required for browser automation)'
+      );
+      assert.strictEqual(config.servers.playwright.command, 'npx');
+      assert.ok(
+        config.servers.playwright.args.some((a: string) => a.includes('@playwright/mcp')),
+        'playwright server should use @playwright/mcp package'
+      );
+    });
+
+    it('should include backlog server (required for task tracking)', () => {
+      const config = JSON.parse(readFileSync(TEMPLATE_MCP, 'utf-8'));
+
+      assert.ok(
+        config.servers.backlog,
+        'Should include backlog MCP server (required for task tracking)'
+      );
+      assert.strictEqual(config.servers.backlog.command, 'backlog');
+      assert.deepStrictEqual(config.servers.backlog.args, ['mcp', 'start']);
+    });
   });
 
   describe('MCP file installation via init', () => {
@@ -139,6 +164,17 @@ describe('MCP configuration validation', () => {
 
       const mcpDest = join(testDir, 'mcp.json.example');
       assert.ok(existsSync(mcpDest), 'mcp.json.example should be copied to project');
+    });
+
+    it('should install .vscode/mcp.json with required servers', () => {
+      runInit(testDir);
+
+      const mcpJsonDest = join(testDir, '.vscode', 'mcp.json');
+      assert.ok(existsSync(mcpJsonDest), '.vscode/mcp.json should be created during init');
+
+      const config = JSON.parse(readFileSync(mcpJsonDest, 'utf-8'));
+      assert.ok(config.servers?.playwright, '.vscode/mcp.json must have playwright server');
+      assert.ok(config.servers?.backlog, '.vscode/mcp.json must have backlog server');
     });
 
     it('copied mcp.json.example should be valid JSON', () => {
@@ -166,6 +202,13 @@ describe('MCP configuration validation', () => {
 
       const mcpDest = join(testDir, 'mcp.json.example');
       assert.ok(!existsSync(mcpDest), 'mcp.json.example should NOT exist with --skip-mcp');
+    });
+
+    it('should NOT install .vscode/mcp.json when --skip-mcp is used', () => {
+      runInit(testDir, ['--skip-mcp']);
+
+      const mcpJsonDest = join(testDir, '.vscode', 'mcp.json');
+      assert.ok(!existsSync(mcpJsonDest), '.vscode/mcp.json should NOT exist with --skip-mcp');
     });
 
     it('should preserve existing mcp.json.example without --force', () => {

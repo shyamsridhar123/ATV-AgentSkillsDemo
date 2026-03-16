@@ -1,6 +1,14 @@
 {
   "$schema": "https://code.visualstudio.com/docs/copilot/chat/mcp-servers",
   "servers": {
+    "playwright": {
+      "command": "npx",
+      "args": ["@playwright/mcp@0.0.68"]
+    },
+    "backlog": {
+      "command": "backlog",
+      "args": ["mcp", "start"]
+    },
     "shadcn": {
       "command": "npx",
       "args": ["shadcn@3.7.0", "mcp"]

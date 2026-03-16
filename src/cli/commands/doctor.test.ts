@@ -9,7 +9,7 @@ import { execSync } from 'child_process';
 import { existsSync, mkdirSync, writeFileSync, rmSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
-import { getMinNodeVersion } from './doctor.js';
+import { getMinNodeVersion, checkMcpServers } from './doctor.js';
 
 // Test utilities - we can't import the private functions from doctor.ts
 // but we can test the overall behavior
@@ -168,3 +168,113 @@ describe('CLI availability checks', () => {
   });
 });
 
+describe('checkMcpServers', () => {
+  let testDir: string;
+
+  beforeEach(() => {
+    testDir = join(tmpdir(), `beth-mcp-doctor-${Date.now()}`);
+    mkdirSync(testDir, { recursive: true });
+  });
+
+  afterEach(() => {
+    if (existsSync(testDir)) {
+      rmSync(testDir, { recursive: true, force: true });
+    }
+  });
+
+  it('should fail when .vscode/mcp.json does not exist', () => {
+    const result = checkMcpServers(testDir);
+    assert.strictEqual(result.status, 'fail');
+    assert.ok(result.message.includes('not found'));
+  });
+
+  it('should fail when mcp.json is invalid JSON', () => {
+    const vsDir = join(testDir, '.vscode');
+    mkdirSync(vsDir, { recursive: true });
+    writeFileSync(join(vsDir, 'mcp.json'), '{ broken json');
+
+    const result = checkMcpServers(testDir);
+    assert.strictEqual(result.status, 'fail');
+    assert.ok(result.message.includes('not valid JSON'));
+  });
+
+  it('should fail when mcp.json has no servers object', () => {
+    const vsDir = join(testDir, '.vscode');
+    mkdirSync(vsDir, { recursive: true });
+    writeFileSync(join(vsDir, 'mcp.json'), '{}');
+
+    const result = checkMcpServers(testDir);
+    assert.strictEqual(result.status, 'fail');
+    assert.ok(result.message.includes('missing "servers"'));
+  });
+
+  it('should fail when playwright server is missing', () => {
+    const vsDir = join(testDir, '.vscode');
+    mkdirSync(vsDir, { recursive: true });
+    writeFileSync(join(vsDir, 'mcp.json'), JSON.stringify({
+      servers: { backlog: { command: 'backlog', args: ['mcp', 'start'] } }
+    }));
+
+    const result = checkMcpServers(testDir);
+    assert.strictEqual(result.status, 'fail');
+    assert.ok(result.message.includes('Playwright'));
+  });
+
+  it('should fail when backlog server is missing', () => {
+    const vsDir = join(testDir, '.vscode');
+    mkdirSync(vsDir, { recursive: true });
+    writeFileSync(join(vsDir, 'mcp.json'), JSON.stringify({
+      servers: { playwright: { command: 'npx', args: ['@playwright/mcp@0.0.68'] } }
+    }));
+
+    const result = checkMcpServers(testDir);
+    assert.strictEqual(result.status, 'fail');
+    assert.ok(result.message.includes('Backlog'));
+  });
+
+  it('should fail when both required servers are missing', () => {
+    const vsDir = join(testDir, '.vscode');
+    mkdirSync(vsDir, { recursive: true });
+    writeFileSync(join(vsDir, 'mcp.json'), JSON.stringify({
+      servers: { shadcn: { command: 'npx', args: ['shadcn@latest', 'mcp'] } }
+    }));
+
+    const result = checkMcpServers(testDir);
+    assert.strictEqual(result.status, 'fail');
+    assert.ok(result.message.includes('Playwright'));
+    assert.ok(result.message.includes('Backlog'));
+  });
+
+  it('should pass when all required servers are present', () => {
+    const vsDir = join(testDir, '.vscode');
+    mkdirSync(vsDir, { recursive: true });
+    writeFileSync(join(vsDir, 'mcp.json'), JSON.stringify({
+      servers: {
+        playwright: { command: 'npx', args: ['@playwright/mcp@0.0.68'] },
+        backlog: { command: 'backlog', args: ['mcp', 'start'] },
+      }
+    }));
+
+    const result = checkMcpServers(testDir);
+    assert.strictEqual(result.status, 'pass');
+    assert.ok(result.message.includes('playwright'));
+    assert.ok(result.message.includes('backlog'));
+  });
+
+  it('should pass with extra servers beyond required', () => {
+    const vsDir = join(testDir, '.vscode');
+    mkdirSync(vsDir, { recursive: true });
+    writeFileSync(join(vsDir, 'mcp.json'), JSON.stringify({
+      servers: {
+        playwright: { command: 'npx', args: ['@playwright/mcp@0.0.68'] },
+        backlog: { command: 'backlog', args: ['mcp', 'start'] },
+        shadcn: { command: 'npx', args: ['shadcn@latest', 'mcp'] },
+        deepwiki: { type: 'http', url: 'https://mcp.deepwiki.com/mcp' },
+      }
+    }));
+
+    const result = checkMcpServers(testDir);
+    assert.strictEqual(result.status, 'pass');
+    assert.ok(result.message.includes('4 servers'));
+  });
+});
