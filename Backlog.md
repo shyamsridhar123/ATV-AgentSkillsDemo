@@ -2,7 +2,7 @@
 
 > *"I don't have time to explain things twice. Read this."*
 
-Last updated: 2026-03-13 (Cleanup: tracking drift resolved, beads plan removed from In Progress, Status Summary and How We Track Work updated)
+Last updated: 2026-03-16 (Tech debt reconciled: TD-XX numbering retired, all items mapped to BETH-XX CLI tasks, 6 new findings added from codebase audit)
 
 ---
 
@@ -110,65 +110,92 @@ Last updated: 2026-03-13 (Cleanup: tracking drift resolved, beads plan removed f
 
 ## Backlog (Prioritized)
 
+> All items tracked as CLI tasks. Run `backlog task list --plain` for live status.
+
 ### Tech Debt — Critical (P1)
 
-- [x] **TD-01: Remove `bs-buster` unused production dependency** ✅ Done (BETH-17)
-  - **Objective:** Eliminate dead runtime dependency that inflates install size (22MB local) and ships in `npm publish`
-  - **Acceptance Criteria:** (1) `bs-buster` removed from `dependencies` in package.json, (2) `npm install` succeeds, (3) all tests pass, (4) `npx beth-copilot init`, `doctor`, `close`, `land` commands work without `bs-buster`, (5) `.bs-buster/` directory documented as optional local artifact in .gitignore comment
+- [x] **BETH-20: Remove `bs-buster` zombie dependency** — **Done** (PR #80)
+  - Eliminated dead runtime dependency (22MB local, shipped in `npm publish`). Zero imports anywhere.
 
-- [ ] **TD-02: Delete dead `bin/lib/` files — animation.js, pathValidation.js, pathValidation.test.js**
-  - **Objective:** Remove 3 files in `bin/lib/` that are imported by nothing. `animation.js` was a startup splash never wired in. `pathValidation.js` is a JS duplicate of `src/lib/pathValidation.ts` — explicitly marked dead in `bin/cli.js` line 8. Test file covers dead code.
-  - **Acceptance Criteria:** (1) `bin/lib/animation.js` deleted, (2) `bin/lib/pathValidation.js` deleted, (3) `bin/lib/pathValidation.test.js` deleted, (4) `bin/beth-animation.sh` deleted, (5) `test:legacy` and `test:legacy:ts` scripts removed from package.json, (6) `test:all` script updated to just `npm run test`, (7) `bin/cli.js` comment on line 8 removed or updated, (8) all tests pass, (9) `npx beth-copilot` commands work
+- [ ] **BETH-19: Delete dead `bin/lib/` files + unused assets**
+  - Remove 4 dead files in `bin/lib/`: `animation.js`, `pathValidation.js`, `pathValidation.test.js`, `beth-animation.sh`. Also delete `assets/beth-portrait-small.txt` + `assets/beth-portrait.txt` (zero refs once animation.js gone). Update dead-code comment in `bin/cli.js` line 8.
+  - **AC:** (1) All 6 files deleted, (2) `bin/cli.js` dead-code comment updated, (3) all tests pass, (4) CLI commands work
 
-- [ ] **TD-03: Remove beads stub functions from `bin/cli.js`**
-  - **Objective:** Delete 3 dead stub functions (`getBeadsPath`, `isBeadsInstalled`, `isBeadsInitialized`) at line ~522 of `bin/cli.js` that always return null/false and are called by nothing
-  - **Acceptance Criteria:** (1) All 3 stubs removed, (2) "Beads functions removed" comment block removed, (3) no runtime errors from any CLI command, (4) all tests pass
+- [ ] **BETH-21: Remove legacy test scripts from package.json**
+  - `test:legacy` runs dead `bin/lib/pathValidation.test.js`. `test:legacy:ts` duplicates `test`. `test:all` chains both.
+  - **AC:** (1) `test:legacy` and `test:legacy:ts` removed, (2) `test:all` simplified to `npm run test`, (3) all remaining scripts work
 
-- [ ] **TD-04: Sync `templates/AGENTS.md` from live `AGENTS.md`**
-  - **Objective:** Template AGENTS.md still references deprecated dual-tracking system (beads + Backlog.md), `bd init`, `bd create`, `bd list`. Anyone running `npx beth-copilot init` gets wrong instructions. Live version uses "Backlog.md — single source of truth" and has mandatory Session Startup section.
-  - **Acceptance Criteria:** (1) `templates/AGENTS.md` content synced from live `AGENTS.md`, (2) template-specific adjustments retained (generic epic-id examples, no beth-specific references), (3) `npx beth-copilot init` copies correct version, (4) no beads CLI references remain in template, (5) Session Startup section present
+- [ ] **BETH-33: Remove beads stub functions from `bin/cli.js`**
+  - 3 dead stubs (`getBeadsPath`, `isBeadsInstalled`, `isBeadsInitialized`) at line ~522; `--skip-beads` in ALLOWED_FLAGS.
+  - **AC:** (1) All 3 stubs deleted, (2) comment block removed, (3) `--skip-beads` removed from ALLOWED_FLAGS, (4) no runtime errors, (5) all tests pass
 
-- [ ] **TD-05: Sync `templates/.github/copilot-instructions.md` from live**
-  - **Objective:** Template copilot-instructions.md has diverged from live version. New projects get outdated skill tables, agent descriptions, and missing architecture guidance.
-  - **Acceptance Criteria:** (1) Template synced with live `.github/copilot-instructions.md`, (2) template-appropriate adjustments only (no project-specific data), (3) skill table reflects all current tracked skills
+- [ ] **BETH-22: Remove deprecated `close` command (560 lines)**
+  - `src/cli/commands/close.ts` + tests — header says "DEPRECATED", all functions return null/empty. Dead weight.
+  - **AC:** (1) `close.ts` deleted, (2) `close.test.ts` deleted, (3) `close.e2e.test.ts` deleted, (4) `bin/cli.js` case for 'close' removed, (5) help text updated, (6) build + tests pass
 
 ### Tech Debt — High (P2)
 
-- [ ] **TD-06: Fix/delete empty `src/cli/commands/index.ts` barrel export**
-  - **Objective:** All exports are commented out. This file re-exports nothing but is re-exported from `src/index.ts` as the public API surface. CLI commands are loaded dynamically by `bin/cli.js`, not through this barrel.
-  - **Acceptance Criteria:** EITHER (a) uncomment exports and make barrel functional, OR (b) delete file and remove re-export from `src/index.ts` — (1) no import errors, (2) all tests pass, (3) `npm run build` succeeds, (4) CLI commands work
+- [ ] **BETH-23: Clean dead `pathValidation.ts` exports**
+  - `validateBeadsPath()` validates paths for a dead system. Zero consumers outside own test. Exported via barrel to public API.
+  - **AC:** (1) `validateBeadsPath` removed or marked internal, (2) public API surface reduced, (3) all tests pass
 
-- [ ] **TD-07: Archive obsolete documentation (5 files)**
-  - **Objective:** 5 docs are explicitly obsolete or completed plans that clutter active documentation
-  - **Files:** `docs/BD-BACKUP-PARSER-FAILURE.md` (self-labeled "ARCHIVED"), `docs/CLI-IMPLEMENTATION-PLAN.md` (status: COMPLETE), `docs/DOCKER-SWARM.md` (vision doc, zero implementation), `docs/FEATURE-REQUEST-userVisible.md` (unimplemented feature request), `docs/quality-gate-plan.md` (status: Complete Phase 1-5)
-  - **Acceptance Criteria:** (1) Create `docs/archive/` directory, (2) move all 5 files there, (3) any cross-references updated (grep for filenames in AGENTS.md, README.md, etc.), (4) no broken links
+- [ ] **BETH-24: Fix duplicate tools in `beth.agent.md`**
+  - Every GitHub MCP tool listed TWICE (~60 duplicate entries). Template version uses clean shorthand.
+  - **AC:** (1) All duplicate tool entries removed, (2) tools array matches template's clean shorthand, (3) agent still functional
 
-- [ ] **TD-08: Review and sync 4 diverged template skills**
-  - **Objective:** 4 of 6 template skills have diverged from their live counterparts: `framer-components`, `prd`, `vercel-react-best-practices`, `web-design-guidelines`. If live is newer (likely), templates should be synced so `npx beth-copilot init` installs current versions.
-  - **Acceptance Criteria:** (1) Each divergence reviewed — determine which version is authoritative, (2) templates synced from live where live is newer, (3) `diff` between template and live shows only intentional differences (if any), (4) `security-analysis` and `shadcn-ui` confirmed still identical (no action needed)
+- [ ] **BETH-28: Sync template AGENTS.md + copilot-instructions.md**
+  - Template AGENTS.md still references beads dual-tracking. Template copilot-instructions.md has stale skill tables.
+  - **AC:** (1) `templates/AGENTS.md` synced from live, (2) `templates/.github/copilot-instructions.md` synced from live, (3) template-specific adjustments retained, (4) no beads references remain, (5) `npx beth-copilot init` installs correct versions
 
-- [ ] **TD-09: Consolidate root `tasks/` directory**
-  - **Objective:** Root `tasks/` contains 2 orphaned PRD files (`DEMO-prd-agentic-banking.md`, `prd-v1.1.1-cli-doctor-fixes.md`) while active tasks live in `backlog/tasks/`. This creates confusion about where task files belong.
-  - **Acceptance Criteria:** (1) `tasks/DEMO-prd-agentic-banking.md` moved to `backlog/archive/` or deleted (demo content), (2) `tasks/prd-v1.1.1-cli-doctor-fixes.md` moved to `backlog/tasks/` if still relevant or archived if completed, (3) root `tasks/` directory deleted, (4) any references to moved files updated
+- [ ] **BETH-25: Fix tester.agent.md template beads references**
+  - Template `tester.agent.md` still says "dual tracking beads + Backlog.md".
+  - **AC:** (1) Beads references removed, (2) Backlog.md CLI is sole system referenced, (3) template matches source agent
+
+- [ ] **BETH-36: Sync 4 diverged template skills**
+  - `framer-components`, `prd`, `vercel-react-best-practices`, `web-design-guidelines` — template versions are stale.
+  - **AC:** (1) All 4 synced from live, (2) `security-analysis` and `shadcn-ui` confirmed still identical
+
+- [ ] **BETH-34: Fix/delete empty `src/cli/commands/index.ts` barrel**
+  - All exports commented out. Re-exported from `src/index.ts` as public API but does nothing.
+  - **AC:** EITHER uncomment exports OR delete file + remove from `src/index.ts`. Build + tests pass.
+
+- [ ] **BETH-26: Update docs with dead beads/Dolt references**
+  - `DOCKER-SWARM.md` (4 refs), `SWARM-ARCHITECTURE.md` (5 refs), `quality-gate-plan.md` (2 refs), `CLI-IMPLEMENTATION-PLAN.md` (2 refs).
+  - **AC:** (1) All beads/Dolt references removed or updated, (2) docs accurate to current architecture
+
+- [ ] **BETH-35: Archive obsolete documentation (5 files)**
+  - `BD-BACKUP-PARSER-FAILURE.md` (ARCHIVED), `CLI-IMPLEMENTATION-PLAN.md` (COMPLETE), `DOCKER-SWARM.md` (vision, zero impl), `FEATURE-REQUEST-userVisible.md` (unimplemented), `quality-gate-plan.md` (Complete Phase 1-5).
+  - **AC:** (1) `docs/archive/` created, (2) all 5 moved there, (3) cross-references updated, (4) no broken links
+
+- [ ] **BETH-32: Clean beads references from production source**
+  - `pre-push-guard.ts` and `land.ts` still reference beads concepts.
+  - **AC:** (1) All beads references in src/ production code removed, (2) behavior preserved, (3) tests pass
 
 ### Tech Debt — Medium (P3)
 
-- [ ] **TD-10: Delete 8 empty backlog scaffolding directories**
-  - **Objective:** `backlog/` contains 8 empty directories created by tool initialization but never populated: `archive/drafts/`, `archive/milestones/`, `archive/tasks/`, `completed/`, `decisions/`, `docs/`, `drafts/`, `milestones/`
-  - **Acceptance Criteria:** (1) All 8 empty dirs deleted, (2) tool can recreate them if needed (verify `backlog` command handles missing dirs gracefully), (3) `backlog/tasks/` and `backlog/config.yml` preserved
+- [ ] **BETH-27: Delete 8 empty backlog directories**
+  - `archive/drafts/`, `archive/milestones/`, `archive/tasks/`, `completed/`, `decisions/`, `docs/`, `drafts/`, `milestones/` — never populated.
+  - **AC:** (1) All 8 deleted, (2) tool handles missing dirs gracefully, (3) `backlog/tasks/` + `config.yml` preserved
 
-- [ ] **TD-11: Delete unused asset `assets/beth-portrait-small.txt`**
-  - **Objective:** Zero references anywhere in codebase. The full-size `beth-portrait.txt` is only referenced by the also-dead `animation.js`. Once TD-02 removes animation.js, `beth-portrait.txt` becomes dead too.
-  - **Acceptance Criteria:** (1) `assets/beth-portrait-small.txt` deleted, (2) `assets/beth-portrait.txt` deleted (if TD-02 is completed first), (3) no broken references
+- [ ] **BETH-31: Consolidate root `tasks/` directory**
+  - 2 orphaned PRD files while active tasks live in `backlog/tasks/`.
+  - **AC:** (1) Files archived or moved, (2) root `tasks/` deleted, (3) references updated
 
-- [x] **TD-12: Audit and deduplicate untracked `.github/skills/` (50+ local skills)** *(BETH-7)*
-  - **Completed:** Deleted 8 redundant skills: 5 deprecated `workflows:*` aliases (→ use `ce:*`), 2 redundant skill-creation skills (`create-agent-skill`, `skill-creator` → use `create-agent-skills`), 1 trigger-collision (`deploy-docs`). Resolve variants (`resolve_parallel`/`resolve_todo_parallel`/`resolve-pr-parallel`) kept — they resolve 3 different source types (code TODOs, CLI todos, PR comments). `lfg`/`slfg` kept — sequential vs swarm execution models.
+- [ ] **BETH-29: Migrate tests from `node:test` to vitest imports**
+  - 22/22 test files import from `node:test` via vitest alias hack. Framework-isolation test exists solely to validate the hack.
+  - **AC:** (1) All test files import directly from vitest, (2) `node:test` alias removed from vitest.config.ts, (3) `framework-isolation.test.ts` deleted or repurposed, (4) all tests pass
 
-- [ ] **TD-13: Consider removing tracked `sbom.json` from git**
-  - **Objective:** 150KB generated file that gets stale quickly. Already generated at publish time via `prepublishOnly` script. Tracking in git inflates repo size across commits with no benefit since it changes every time dependencies update.
-  - **Acceptance Criteria:** (1) `sbom.json` added to `.gitignore`, (2) `git rm --cached sbom.json`, (3) `npm publish` still generates fresh SBOM via `prepublishOnly`, (4) document in CONTRIBUTING.md that SBOM is generated at publish time
+- [ ] **BETH-30: Implement test report retention policy**
+  - `docs/test-reports/` accumulates reports with no cleanup. 7+ reports currently.
+  - **AC:** (1) Retention policy defined, (2) old reports archived or gitignored, (3) latest report always accessible
 
-- [ ] Consider additional skills (API security, performance profiling)
+- [ ] **BETH-37: Evaluate `sbom.json` retention**
+  - 150KB generated file tracked in git. Already generated at publish via `prepublishOnly`.
+  - **AC:** Decision documented. If removed: `.gitignore` updated, `git rm --cached`. If kept: rationale noted.
+
+- [x] **BETH-7: Audit untracked skills** — **Done.** Deleted 8 redundant skills.
+
+
 
 ---
 
@@ -207,7 +234,7 @@ Beth is fully operational — orchestrator, 6 specialist agents, 26+ skills (inc
 
 **What's Coming:**
 
-- Tech debt cleanup (13 items documented in Backlog below)
+- Tech debt cleanup (19 items tracked as BETH-19 through BETH-37 — run `backlog task list --plain` for live status)
 - Cut next npm release to ship all improvements to `npx beth-copilot init` users
 - MCP-enhanced skills (optional, graceful degradation)
 
