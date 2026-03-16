@@ -1,10 +1,10 @@
 ---
 id: BETH-10.2
 title: 'Phase 1: Single Agent Loop - LLM client + tools + worker'
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-03-15 06:42'
-updated_date: '2026-03-16 17:37'
+updated_date: '2026-03-16 17:50'
 labels: []
 dependencies: []
 parent_task_id: BETH-10
