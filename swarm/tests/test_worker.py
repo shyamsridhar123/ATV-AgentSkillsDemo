@@ -145,11 +145,13 @@ class TestDetectChangedFiles:
 
 
 class TestRunWorker:
+    @patch("swarm.llm.create_client")
     @patch("swarm.worker.create_client")
-    def test_full_worker_loop(self, mock_create_client, board, work_dir, repo_root, config):
+    def test_full_worker_loop(self, mock_create_client, mock_llm_create_client, board, work_dir, repo_root, config):
         """Worker loads agent, runs tool loop, posts completion with metadata."""
         mock_client = MagicMock()
         mock_create_client.return_value = mock_client
+        mock_llm_create_client.return_value = mock_client
 
         # LLM: write a file, then stop
         first_response = _make_response(
@@ -199,11 +201,13 @@ class TestRunWorker:
         assert outcomes[0].success is True
         assert outcomes[0].model_used == "gpt-4o-mini"
 
+    @patch("swarm.llm.create_client")
     @patch("swarm.worker.create_client")
-    def test_worker_posts_structured_metadata(self, mock_create_client, board, work_dir, repo_root, config):
+    def test_worker_posts_structured_metadata(self, mock_create_client, mock_llm_create_client, board, work_dir, repo_root, config):
         """AC #5: Completion has required metadata fields."""
         mock_client = MagicMock()
         mock_create_client.return_value = mock_client
+        mock_llm_create_client.return_value = mock_client
         mock_client.chat.completions.create.return_value = _make_response(
             content="Done.", tokens_in=200, tokens_out=100,
         )
@@ -234,11 +238,13 @@ class TestRunWorker:
         assert "duration_ms" in meta
         assert "model_used" in meta
 
+    @patch("swarm.llm.create_client")
     @patch("swarm.worker.create_client")
-    def test_worker_with_task_skills(self, mock_create_client, board, work_dir, repo_root, config):
+    def test_worker_with_task_skills(self, mock_create_client, mock_llm_create_client, board, work_dir, repo_root, config):
         """Worker loads task-specific skills if they exist."""
         mock_client = MagicMock()
         mock_create_client.return_value = mock_client
+        mock_llm_create_client.return_value = mock_client
         mock_client.chat.completions.create.return_value = _make_response(content="Done.")
 
         # Create a test skill file

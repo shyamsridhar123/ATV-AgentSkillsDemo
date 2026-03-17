@@ -250,11 +250,10 @@ def cmd_outcomes(args: argparse.Namespace) -> int:
 
     try:
         outcomes = board.query_outcomes(
+            epic_id=args.epic,
             limit=args.limit,
         )
         for o in outcomes:
-            if args.epic and o.epic_id != args.epic:
-                continue
             entry = {
                 "epic": o.epic_id,
                 "task": o.task_id,

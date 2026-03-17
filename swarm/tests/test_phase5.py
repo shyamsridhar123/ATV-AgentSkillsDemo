@@ -394,7 +394,7 @@ class TestCrashRecovery:
                 "epic_id": "e1",
                 "task_id": "t1",
                 "agent_role": "developer",
-                "deps": [],
+                "dependencies": [],
             },
         )
         board.post(
@@ -406,7 +406,7 @@ class TestCrashRecovery:
                 "epic_id": "e1",
                 "task_id": "t2",
                 "agent_role": "tester",
-                "deps": ["t1"],
+                "dependencies": ["t1"],
             },
         )
 
@@ -599,7 +599,7 @@ class TestPhase5Integration:
         board.post(
             channel="tasks", agent_id="beth",
             title="t1", body="task",
-            metadata={"epic_id": "e1", "task_id": "t1", "agent_role": "developer", "deps": []},
+            metadata={"epic_id": "e1", "task_id": "t1", "agent_role": "developer", "dependencies": []},
         )
 
         with patch("swarm.orchestrator.cleanup_all_worktrees"):

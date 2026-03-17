@@ -640,6 +640,7 @@ class Orchestrator:
                 "epic_id": epic_id,
                 "task_count": len(task_list),
                 "task_ids": [t.id for t in task_list],
+                "epic_branch": epic.epic_branch,
             },
         )
 
@@ -775,8 +776,8 @@ class Orchestrator:
             loop = asyncio.get_running_loop()
             for sig in (signal.SIGINT, signal.SIGTERM):
                 loop.add_signal_handler(sig, self._handle_signal, sig)
-        except (NotImplementedError, OSError):
-            # Windows or non-main-thread — fall back to KeyboardInterrupt
+        except (NotImplementedError, OSError, ValueError, RuntimeError):
+            # Windows, non-main-thread, or restricted event loop — fall back to KeyboardInterrupt
             pass
 
         logger.info("Orchestrator starting — poll_interval=%.1fs", self.config.poll_interval_seconds)
@@ -879,9 +880,20 @@ class Orchestrator:
         """
         orch = cls(config=config, board=board, repo_root=repo_root)
 
-        # 1. Find all epic submission posts
+        # 1. Find epic announcement posts (have task_count but NOT task_id)
         all_tasks_posts = board.read_all("tasks")
-        epic_posts = [p for p in all_tasks_posts if p.metadata and "epic_id" in p.metadata]
+        epic_posts = [
+            p for p in all_tasks_posts
+            if p.metadata and "epic_id" in p.metadata
+            and "task_count" in p.metadata
+            and "task_id" not in p.metadata
+        ]
+
+        # Deduplicate by epic_id — keep the latest post per epic
+        seen_epics: dict[str, Post] = {}
+        for p in epic_posts:
+            seen_epics[p.metadata["epic_id"]] = p  # type: ignore[index]
+        epic_posts = list(seen_epics.values())
 
         if not epic_posts:
             logger.info("Crash recovery: no epics found on board — clean start")
@@ -901,7 +913,7 @@ class Orchestrator:
                         title=tp.title or tp.metadata.get("task_id", ""),
                         body=tp.body,
                         agent_role=tp.metadata.get("agent_role", "developer"),
-                        dependencies=tp.metadata.get("deps", []),
+                        dependencies=tp.metadata.get("dependencies", tp.metadata.get("deps", [])),
                     )
                     task_nodes.append(node)
 
@@ -983,7 +995,7 @@ def start_daemon(
 
     # Build the command to run inside tmux
     cmd = (
-        f"cd {repo_root} && python -m swarm.main run "
+        f"cd {repo_root} && python -m swarm run "
         f"--config {config_path}"
     )
 
