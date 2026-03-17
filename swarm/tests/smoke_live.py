@@ -17,7 +17,6 @@ Or with pytest (marked as 'live' — skipped by default):
 
 from __future__ import annotations
 
-import json
 import os
 import sys
 import tempfile
