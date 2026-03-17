@@ -16,6 +16,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import signal
 import subprocess
 import time
 from dataclasses import dataclass, field
@@ -691,6 +692,14 @@ class Orchestrator:
             summary["completions"].extend(
                 {"epic": epic_id, "task": t.id} for t in completed
             )
+
+            # Re-check kill switch after recording costs — if the
+            # daily limit was just crossed, stop all further work
+            # this tick instead of dispatching new tasks.
+            if self.cost_tracker.is_killed():
+                summary["killed"] = True
+                logger.warning("Daily kill switch triggered mid-tick — halting")
+                return summary
 
             # 2. Handle blockers
             blocked = handle_blockers(epic, self.board, self._reader_id)
