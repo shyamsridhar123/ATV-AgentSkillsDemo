@@ -27,7 +27,7 @@ from .board import MessageBoard
 from .claims import ClaimsRegistry
 from .config import SwarmConfig
 from .git import WorktreeInfo, create_worktree, remove_worktree
-from .intelligence import CostTracker, TokenCounter, suggest_model
+from .intelligence import suggest_model
 from .llm import CompletionResult, agent_loop, create_client
 from .skills import load_injected_skills
 

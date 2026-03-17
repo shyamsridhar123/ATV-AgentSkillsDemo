@@ -242,12 +242,17 @@ class TestPricingAndCost:
         assert cost == 0.0
 
     def test_estimate_cost_unknown_model(self) -> None:
+        # Unknown models use conservative fallback pricing ($30/M in, $60/M out)
+        # to prevent cost guardrails from being bypassed
         cost = estimate_cost_usd("nonexistent-model", 1000, 1000)
-        assert cost == 0.0
+        # (1000/1M * $30) + (1000/1M * $60) = $0.03 + $0.06 = $0.09
+        assert cost > 0.0
+        assert abs(cost - 0.09) < 0.001
 
     def test_get_pricing_fallback(self) -> None:
         pricing = get_pricing("unknown-model")
-        assert pricing == {"input": 0.0, "output": 0.0}
+        assert pricing["input"] > 0.0
+        assert pricing["output"] > 0.0
 
     def test_small_token_count_cost(self) -> None:
         # 1000 input + 500 output for gpt-4o
@@ -433,7 +438,7 @@ class TestTokenCounting:
     def test_count_empty_string(self) -> None:
         counter = TokenCounter("gpt-4o")
         count = counter.count_tokens("")
-        assert count == 0 or count >= 0  # tiktoken returns 0 for empty
+        assert count == 0
 
     def test_count_messages_overhead(self) -> None:
         counter = TokenCounter("gpt-4o")

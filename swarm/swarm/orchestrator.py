@@ -27,7 +27,7 @@ from .board import MessageBoard
 from .claims import ClaimsRegistry
 from .config import SwarmConfig
 from .git import MergeResult, cleanup_all_worktrees, merge_worker, remove_worktree
-from .intelligence import BudgetExceeded, CostTracker, estimate_cost_usd
+from .intelligence import BudgetExceeded, CostTracker
 from .llm import CompletionResult, agent_loop, create_client
 from .worker import Task, WorkerResult, run_worker_in_worktree
 

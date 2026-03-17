@@ -61,12 +61,24 @@ COMPACTION_THRESHOLD = 0.75
 # ---------------------------------------------------------------------------
 
 
+# Conservative fallback pricing for unknown models (fail closed — never $0)
+_UNKNOWN_MODEL_PRICING: dict[str, float] = {"input": 30.0, "output": 60.0}
+
+
 def get_pricing(model: str, config: SwarmConfig | None = None) -> dict[str, float]:
-    """Get pricing for a model. Config pricing overrides defaults."""
-    if config and hasattr(config, "pricing") and config.pricing:
-        if model in config.pricing:
-            return config.pricing[model]
-    return DEFAULT_PRICING.get(model, {"input": 0.0, "output": 0.0})
+    """Get pricing for a model.
+
+    Falls back to conservative (expensive) pricing for unknown models so
+    that cost guardrails can never be bypassed by an unmapped model name.
+    """
+    pricing = DEFAULT_PRICING.get(model)
+    if pricing is None:
+        logger.warning(
+            "Unknown model %r — using conservative fallback pricing ($%.2f/M in, $%.2f/M out)",
+            model, _UNKNOWN_MODEL_PRICING["input"], _UNKNOWN_MODEL_PRICING["output"],
+        )
+        return _UNKNOWN_MODEL_PRICING
+    return pricing
 
 
 def estimate_cost_usd(
@@ -250,13 +262,16 @@ class CostTracker:
         Sets _killed=True for daily violations.
         Adds epic to _paused_epics for epic violations.
         """
-        cost = estimate_cost_usd(model, tokens_in, tokens_out)
+        cost = estimate_cost_usd(model, tokens_in, tokens_out, self.config)
 
         # Reset daily if date changed
         today = time.strftime("%Y-%m-%d")
         if self._daily_reset_date != today:
             self._daily_cost = 0.0
+            self._killed = False
+            self._paused_epics.clear()
             self._daily_reset_date = today
+            logger.info("Daily cost reset — kill switch and epic pauses cleared")
 
         # Update accumulators
         self._task_costs[task_id] = self._task_costs.get(task_id, 0.0) + cost
@@ -338,7 +353,7 @@ class CostTracker:
 
         outcomes = board.query_outcomes(limit=10000)
         for o in outcomes:
-            cost = estimate_cost_usd(o.model_used, o.tokens_in, o.tokens_out)
+            cost = estimate_cost_usd(o.model_used, o.tokens_in, o.tokens_out, self.config)
             self._epic_costs[o.epic_id] = self._epic_costs.get(o.epic_id, 0.0) + cost
             self._task_costs[o.task_id] = self._task_costs.get(o.task_id, 0.0) + cost
 
@@ -385,6 +400,8 @@ class TokenCounter:
         if self._tiktoken_available and self._encoding:
             return len(self._encoding.encode(text))
         # Rough estimate: ~4 chars per token for English text
+        if not text:
+            return 0
         return max(1, len(text) // 4)
 
     def count_messages(self, messages: list[dict[str, Any]]) -> int:
