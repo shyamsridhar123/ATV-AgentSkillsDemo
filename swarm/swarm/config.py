@@ -10,9 +10,12 @@ import os
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import yaml
+
+AuthMode = Literal["key", "identity"]
+_VALID_AUTH_MODES: set[str] = {"key", "identity"}
 
 _ENV_VAR_PATTERN = re.compile(r"\$\{([A-Za-z_][A-Za-z0-9_]*)\}")
 
@@ -110,11 +113,17 @@ class ProviderConfig:
     endpoint: str = ""
     api_key: str = ""
     api_version: str = "2024-12-01-preview"
-    auth_mode: str = "key"  # "key" or "identity" (DefaultAzureCredential)
+    auth_mode: AuthMode = "key"
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> ProviderConfig:
-        return cls(**{k: v for k, v in data.items() if k in cls.__dataclass_fields__})
+        filtered = {k: v for k, v in data.items() if k in cls.__dataclass_fields__}
+        mode = filtered.get("auth_mode", "key")
+        if mode not in _VALID_AUTH_MODES:
+            raise ValueError(
+                f"Invalid auth_mode '{mode}' — must be one of: {', '.join(sorted(_VALID_AUTH_MODES))}"
+            )
+        return cls(**filtered)
 
 
 # ---------------------------------------------------------------------------

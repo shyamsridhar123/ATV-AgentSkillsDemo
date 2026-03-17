@@ -77,11 +77,20 @@ def create_client(provider: ProviderConfig) -> AzureOpenAI | OpenAI:
                 azure_ad_token_provider=_get_token_provider(),
                 api_version=provider.api_version,
             )
-        else:
+        elif provider.auth_mode == "key":
+            if not provider.api_key:
+                raise ValueError(
+                    "auth_mode='key' but no api_key provided. "
+                    "Set api_key in config or switch to auth_mode='identity'."
+                )
             return AzureOpenAI(
                 azure_endpoint=provider.endpoint,
                 api_key=provider.api_key,
                 api_version=provider.api_version,
+            )
+        else:
+            raise ValueError(
+                f"Unknown auth_mode '{provider.auth_mode}' — must be 'key' or 'identity'"
             )
     else:
         return OpenAI(

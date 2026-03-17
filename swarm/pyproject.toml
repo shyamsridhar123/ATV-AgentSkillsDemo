@@ -30,3 +30,6 @@ swarm = "swarm.cli:main"
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+markers = [
+    "live: marks tests that hit real Azure endpoints (deselect with '-m \"not live\"')",
+]

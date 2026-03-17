@@ -42,8 +42,16 @@ ENDPOINT = os.environ.get(
 )
 
 
+def _live_tests_enabled() -> bool:
+    """Check if live tests are explicitly enabled via env var."""
+    return os.environ.get("BETH_LIVE_TESTS", "").strip().lower() in ("1", "true", "yes")
+
+
 def _can_get_azure_token() -> bool:
-    """Check if DefaultAzureCredential can obtain a token."""
+    """Check if DefaultAzureCredential can obtain a token.
+
+    Only called when BETH_LIVE_TESTS=1 — never at import time.
+    """
     try:
         from azure.identity import DefaultAzureCredential
         cred = DefaultAzureCredential()
@@ -54,8 +62,8 @@ def _can_get_azure_token() -> bool:
 
 
 requires_live = pytest.mark.skipif(
-    not _can_get_azure_token(),
-    reason="DefaultAzureCredential cannot obtain a token (run az login first)",
+    not _live_tests_enabled(),
+    reason="Live tests disabled — set BETH_LIVE_TESTS=1 to enable",
 )
 
 pytestmark = [pytest.mark.live, requires_live]

@@ -91,6 +91,45 @@ class TestCreateClient:
             api_key="key456",
         )
 
+    @patch("swarm.llm._get_token_provider")
+    @patch("swarm.llm.AzureOpenAI")
+    def test_azure_identity_auth(self, mock_azure, mock_token_provider):
+        """auth_mode='identity' uses azure_ad_token_provider, no api_key."""
+        mock_token_provider.return_value = "fake-token-provider"
+        config = ProviderConfig(
+            name="azure",
+            endpoint="https://test.openai.azure.com",
+            auth_mode="identity",
+        )
+        create_client(config)
+        mock_azure.assert_called_once_with(
+            azure_endpoint="https://test.openai.azure.com",
+            azure_ad_token_provider="fake-token-provider",
+            api_version="2024-12-01-preview",
+        )
+
+    def test_azure_key_auth_missing_key_raises(self):
+        """auth_mode='key' with no api_key raises ValueError."""
+        config = ProviderConfig(
+            name="azure",
+            endpoint="https://test.openai.azure.com",
+            auth_mode="key",
+            api_key="",
+        )
+        with pytest.raises(ValueError, match="no api_key provided"):
+            create_client(config)
+
+    def test_azure_invalid_auth_mode_raises(self):
+        """Invalid auth_mode raises ValueError at client creation."""
+        config = ProviderConfig.__new__(ProviderConfig)
+        config.name = "azure"
+        config.endpoint = "https://test.openai.azure.com"
+        config.api_key = "key123"
+        config.api_version = "2024-12-01-preview"
+        config.auth_mode = "identitiy"  # typo
+        with pytest.raises(ValueError, match="Unknown auth_mode"):
+            create_client(config)
+
 
 # ---------------------------------------------------------------------------
 # agent_loop tests (AC #6)
