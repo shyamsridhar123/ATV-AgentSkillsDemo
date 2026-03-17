@@ -1,10 +1,10 @@
 ---
 id: BETH-10.6
 title: 'Phase 5: Production Hardening - CLI, failover, logging, recovery'
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-03-15 06:42'
-updated_date: '2026-03-15 06:45'
+updated_date: '2026-03-17 03:55'
 labels: []
 dependencies: []
 parent_task_id: BETH-10

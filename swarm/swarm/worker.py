@@ -142,6 +142,7 @@ def run_worker(
         board=board,
         agent_id=agent_role,
         repo_root=repo_root,
+        config=config,
     )
 
     # 7. Detect changed files

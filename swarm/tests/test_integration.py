@@ -60,8 +60,9 @@ class TestPhase1Integration:
         not (AGENTS_DIR / "developer.agent.md").exists(),
         reason="Real agent files not available",
     )
+    @patch("swarm.llm.create_client")
     @patch("swarm.worker.create_client")
-    def test_developer_creates_file_and_posts_completion(self, mock_create_client):
+    def test_developer_creates_file_and_posts_completion(self, mock_create_client, mock_llm_create_client):
         """End-to-end: task → worker → file created → completion posted."""
         board = MessageBoard(":memory:")
         work_dir = Path("/tmp/beth-integration-test")
@@ -76,6 +77,7 @@ class TestPhase1Integration:
             # --- Setup: Mock LLM to create an Express server ---
             mock_client = MagicMock()
             mock_create_client.return_value = mock_client
+            mock_llm_create_client.return_value = mock_client
 
             express_code = (
                 'import express from "express";\n\n'

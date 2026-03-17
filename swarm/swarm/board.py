@@ -330,6 +330,7 @@ class MessageBoard:
     def query_outcomes(
         self,
         *,
+        epic_id: str | None = None,
         agent_role: str | None = None,
         task_type: str | None = None,
         success: bool | None = None,
@@ -338,6 +339,9 @@ class MessageBoard:
         """Query outcomes with optional filters."""
         clauses: list[str] = []
         params: list[Any] = []
+        if epic_id is not None:
+            clauses.append("epic_id = ?")
+            params.append(epic_id)
         if agent_role is not None:
             clauses.append("agent_role = ?")
             params.append(agent_role)

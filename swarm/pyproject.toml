@@ -23,6 +23,9 @@ dev = [
 [tool.hatch.build.targets.wheel]
 packages = ["swarm"]
 
+[project.scripts]
+swarm = "swarm.cli:main"
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
