@@ -6,10 +6,10 @@
 import { describe, it, beforeEach, afterEach } from 'vitest';
 import assert from 'node:assert';
 import { execSync } from 'child_process';
-import { existsSync, mkdirSync, writeFileSync, rmSync } from 'fs';
+import { existsSync, mkdirSync, writeFileSync, rmSync, readFileSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
-import { getMinNodeVersion, checkMcpServers, isValidServerEntry } from './doctor.js';
+import { getMinNodeVersion, checkMcpServers, isValidServerEntry, fixMcpServers } from './doctor.js';
 
 // Test utilities - we can't import the private functions from doctor.ts
 // but we can test the overall behavior
@@ -496,6 +496,115 @@ describe('checkMcpServers — server structure validation', () => {
 
     const result = checkMcpServers(testDir);
     assert.strictEqual(result.status, 'warn');
-    assert.ok(result.details?.includes('command'), 'Details should suggest correct structure');
+    assert.ok(
+      result.issues?.some(i => i.includes('command')) || result.details?.includes('command'),
+      'Issues or details should suggest correct structure'
+    );
+  });
+});
+
+describe('fixMcpServers', () => {
+  let testDir: string;
+
+  beforeEach(() => {
+    testDir = join(tmpdir(), `beth-fix-mcp-${Date.now()}`);
+    mkdirSync(testDir, { recursive: true });
+  });
+
+  afterEach(() => {
+    if (existsSync(testDir)) {
+      rmSync(testDir, { recursive: true, force: true });
+    }
+  });
+
+  it('should create .vscode/mcp.json when it does not exist', () => {
+    const actions = fixMcpServers(testDir);
+    const mcpPath = join(testDir, '.vscode', 'mcp.json');
+
+    assert.ok(existsSync(mcpPath), 'mcp.json should be created');
+    const config = JSON.parse(readFileSync(mcpPath, 'utf-8'));
+    assert.ok(config.servers?.playwright, 'Should have playwright server');
+    assert.ok(config.servers?.backlog, 'Should have backlog server');
+    assert.ok(actions.some(a => a.includes('Playwright')), 'Should report adding Playwright');
+    assert.ok(actions.some(a => a.includes('Backlog')), 'Should report adding Backlog');
+  });
+
+  it('should add missing servers to existing config without overwriting', () => {
+    const vsDir = join(testDir, '.vscode');
+    mkdirSync(vsDir, { recursive: true });
+    writeFileSync(join(vsDir, 'mcp.json'), JSON.stringify({
+      servers: {
+        shadcn: { command: 'npx', args: ['shadcn@latest', 'mcp'] },
+      },
+    }));
+
+    const actions = fixMcpServers(testDir);
+    const config = JSON.parse(readFileSync(join(vsDir, 'mcp.json'), 'utf-8'));
+
+    assert.ok(config.servers?.playwright, 'Should add playwright');
+    assert.ok(config.servers?.backlog, 'Should add backlog');
+    assert.ok(config.servers?.shadcn, 'Should preserve existing shadcn server');
+    assert.ok(actions.some(a => a.includes('Playwright')), 'Should report adding Playwright');
+  });
+
+  it('should not modify already-correct config', () => {
+    const vsDir = join(testDir, '.vscode');
+    mkdirSync(vsDir, { recursive: true });
+    const original = {
+      servers: {
+        playwright: { command: 'npx', args: ['@playwright/mcp@0.0.68'] },
+        backlog: { command: 'backlog', args: ['mcp', 'start'] },
+      },
+    };
+    writeFileSync(join(vsDir, 'mcp.json'), JSON.stringify(original));
+
+    const actions = fixMcpServers(testDir);
+    assert.ok(actions.some(a => a.includes('already configured')), 'Should report no changes needed');
+  });
+
+  it('should backup and recover from corrupted JSON', () => {
+    const vsDir = join(testDir, '.vscode');
+    mkdirSync(vsDir, { recursive: true });
+    writeFileSync(join(vsDir, 'mcp.json'), '{ BROKEN JSON {{{{');
+
+    const actions = fixMcpServers(testDir);
+    assert.ok(existsSync(join(vsDir, 'mcp.json.bak')), 'Should backup corrupted file');
+    const config = JSON.parse(readFileSync(join(vsDir, 'mcp.json'), 'utf-8'));
+    assert.ok(config.servers?.playwright, 'Should have playwright after recovery');
+    assert.ok(actions.some(a => a.includes('Backed up')), 'Should report backup');
+  });
+
+  it('should fix malformed server entries', () => {
+    const vsDir = join(testDir, '.vscode');
+    mkdirSync(vsDir, { recursive: true });
+    writeFileSync(join(vsDir, 'mcp.json'), JSON.stringify({
+      servers: {
+        playwright: 'broken-string',
+        backlog: { command: 'backlog', args: ['mcp', 'start'] },
+      },
+    }));
+
+    fixMcpServers(testDir);
+    const config = JSON.parse(readFileSync(join(vsDir, 'mcp.json'), 'utf-8'));
+    assert.ok(
+      typeof config.servers.playwright === 'object' && config.servers.playwright.command,
+      'Should replace malformed playwright with valid config'
+    );
+  });
+
+  it('should add $schema if missing', () => {
+    const vsDir = join(testDir, '.vscode');
+    mkdirSync(vsDir, { recursive: true });
+    writeFileSync(join(vsDir, 'mcp.json'), JSON.stringify({ servers: {} }));
+
+    fixMcpServers(testDir);
+    const config = JSON.parse(readFileSync(join(vsDir, 'mcp.json'), 'utf-8'));
+    assert.ok(config['$schema'], 'Should add $schema');
+  });
+
+  it('doctor check should pass after fix', () => {
+    fixMcpServers(testDir);
+    const result = checkMcpServers(testDir);
+    assert.strictEqual(result.status, 'pass', `Should pass after fix, got: ${result.status} — ${result.message}`);
   });
 });

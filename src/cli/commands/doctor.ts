@@ -8,10 +8,12 @@
  * - .github/skills/ exists
  * - backlog.md initialization
  * - Required MCP servers configured (.vscode/mcp.json)
+ *
+ * Supports --fix to auto-repair common issues (MCP config, backlog init).
  */
 
 import { execSync } from 'child_process';
-import { existsSync, readdirSync, readFileSync } from 'fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import matter from 'gray-matter';
 
@@ -26,8 +28,9 @@ const COLORS = {
   cyan: '\x1b[36m',
 };
 
-interface DoctorOptions {
+export interface DoctorOptions {
   verbose?: boolean;
+  fix?: boolean;
 }
 
 interface CheckResult {
@@ -35,7 +38,16 @@ interface CheckResult {
   status: 'pass' | 'warn' | 'fail';
   message: string;
   details?: string;
+  /** Lines to always display below the check (not gated by --verbose) */
+  issues?: string[];
+  /** Command a user can run to fix this issue manually */
+  fixCommand?: string;
+  /** If true, --fix can auto-repair this issue */
+  fixable?: boolean;
 }
+
+/** Max agent issues shown without --verbose */
+const MAX_INLINE_ISSUES = 5;
 
 function log(message: string, color = ''): void {
   console.log(`${color}${message}${COLORS.reset}`);
@@ -46,9 +58,26 @@ function logResult(result: CheckResult, verbose: boolean): void {
   const color = result.status === 'pass' ? COLORS.green : result.status === 'warn' ? COLORS.yellow : COLORS.red;
   
   log(`${icon} ${result.name}: ${result.message}`, color);
-  
+
+  // Always show inline issues (truncated to MAX_INLINE_ISSUES unless verbose)
+  if (result.issues && result.issues.length > 0) {
+    const show = verbose ? result.issues : result.issues.slice(0, MAX_INLINE_ISSUES);
+    for (const issue of show) {
+      log(`    ${issue}`, COLORS.dim);
+    }
+    if (!verbose && result.issues.length > MAX_INLINE_ISSUES) {
+      log(`    ... and ${result.issues.length - MAX_INLINE_ISSUES} more (use --verbose to see all)`, COLORS.dim);
+    }
+  }
+
+  // Show verbose-only details
   if (verbose && result.details) {
     log(`    ${result.details}`, COLORS.dim);
+  }
+
+  // Always show fix command for non-passing checks
+  if (result.status !== 'pass' && result.fixCommand) {
+    log(`    Fix: ${result.fixCommand}`, COLORS.cyan);
   }
 }
 
@@ -130,7 +159,7 @@ function checkAgents(cwd: string): CheckResult {
       name: 'Agents',
       status: 'fail',
       message: '.github/agents/ not found',
-      details: 'Run: npx beth-copilot init',
+      fixCommand: 'npx beth-copilot init',
     };
   }
   
@@ -141,12 +170,12 @@ function checkAgents(cwd: string): CheckResult {
       name: 'Agents',
       status: 'fail',
       message: 'no .agent.md files found',
-      details: 'Run: npx beth-copilot init --force',
+      fixCommand: 'npx beth-copilot init --force',
     };
   }
   
   // Validate frontmatter for each agent
-  const errors: string[] = [];
+  const issues: string[] = [];
   
   for (const file of agentFiles) {
     try {
@@ -154,19 +183,20 @@ function checkAgents(cwd: string): CheckResult {
       const { data } = matter(content);
       
       if (!data.name) {
-        errors.push(`${file}: missing 'name' in frontmatter`);
+        issues.push(`${file}: missing 'name' in frontmatter`);
       }
     } catch (e) {
-      errors.push(`${file}: failed to parse - ${e instanceof Error ? e.message : 'unknown error'}`);
+      issues.push(`${file}: failed to parse - ${e instanceof Error ? e.message : 'unknown error'}`);
     }
   }
   
-  if (errors.length > 0) {
+  if (issues.length > 0) {
     return {
       name: 'Agents',
       status: 'warn',
-      message: `${agentFiles.length} agents, ${errors.length} with issues`,
-      details: errors.join('; '),
+      message: `${agentFiles.length} agents, ${issues.length} with issues`,
+      issues,
+      fixCommand: 'Add a "name" field to the YAML frontmatter of each listed agent file',
     };
   }
   
@@ -188,7 +218,7 @@ function checkSkills(cwd: string): CheckResult {
       name: 'Skills',
       status: 'fail',
       message: '.github/skills/ not found',
-      details: 'Run: npx beth-copilot init',
+      fixCommand: 'npx beth-copilot init',
     };
   }
   
@@ -205,21 +235,22 @@ function checkSkills(cwd: string): CheckResult {
   }
   
   // Check each skill has a SKILL.md
-  const missingSkillMd: string[] = [];
+  const missing: string[] = [];
   
   for (const dir of skillDirs) {
     const skillMd = join(skillsDir, dir, 'SKILL.md');
     if (!existsSync(skillMd)) {
-      missingSkillMd.push(dir);
+      missing.push(dir);
     }
   }
   
-  if (missingSkillMd.length > 0) {
+  if (missing.length > 0) {
     return {
       name: 'Skills',
       status: 'warn',
-      message: `${skillDirs.length} skills, ${missingSkillMd.length} missing SKILL.md`,
-      details: `Missing: ${missingSkillMd.join(', ')}`,
+      message: `${skillDirs.length} skills, ${missing.length} missing SKILL.md`,
+      issues: missing.map(d => `${d}/: no SKILL.md file`),
+      fixCommand: 'Create a SKILL.md in each listed skill directory',
     };
   }
   
@@ -248,14 +279,30 @@ function checkBacklogInit(cwd: string): CheckResult {
     name: 'Backlog.md Init',
     status: 'warn',
     message: 'backlog/ not initialized',
-    details: 'Run: backlog init',
+    fixCommand: 'backlog init',
+    fixable: true,
   };
 }
 
 /** Required MCP servers that agents depend on */
-const REQUIRED_MCP_SERVERS: Array<{ key: string; label: string; hint: string }> = [
-  { key: 'playwright', label: 'Playwright', hint: '"playwright": { "command": "npx", "args": ["@playwright/mcp@0.0.68"] }' },
-  { key: 'backlog', label: 'Backlog.md', hint: '"backlog": { "command": "backlog", "args": ["mcp", "start"] }' },
+const REQUIRED_MCP_SERVERS: Array<{
+  key: string;
+  label: string;
+  description: string;
+  config: Record<string, unknown>;
+}> = [
+  {
+    key: 'playwright',
+    label: 'Playwright',
+    description: 'Browser automation for testing, screenshots, and web scraping. Used by the tester agent for E2E tests and accessibility audits.',
+    config: { command: 'npx', args: ['@playwright/mcp@0.0.68'] },
+  },
+  {
+    key: 'backlog',
+    label: 'Backlog.md',
+    description: 'Task tracking MCP server. Lets agents create, update, and query tasks in Backlog.md directly from chat.',
+    config: { command: 'backlog', args: ['mcp', 'start'] },
+  },
 ];
 
 /**
@@ -271,7 +318,15 @@ export function isValidServerEntry(entry: unknown): boolean {
 }
 
 /**
- * Check .vscode/mcp.json for required MCP servers
+ * Format a server config as a readable JSON snippet for display.
+ */
+function formatServerHint(key: string, config: Record<string, unknown>): string {
+  return `"${key}": ${JSON.stringify(config)}`;
+}
+
+/**
+ * Check .vscode/mcp.json for required MCP servers.
+ * Returns a CheckResult and optionally an issues list with server descriptions.
  */
 export function checkMcpServers(cwd: string): CheckResult {
   const mcpPath = join(cwd, '.vscode', 'mcp.json');
@@ -281,7 +336,12 @@ export function checkMcpServers(cwd: string): CheckResult {
       name: 'MCP Servers',
       status: 'fail',
       message: '.vscode/mcp.json not found',
-      details: 'Run: npx beth-copilot init (or npx beth-copilot init --force to regenerate)',
+      issues: [
+        'This file configures MCP (Model Context Protocol) servers that VS Code Copilot agents connect to.',
+        ...REQUIRED_MCP_SERVERS.map(s => `${s.label}: ${s.description}`),
+      ],
+      fixCommand: 'npx beth-copilot doctor --fix',
+      fixable: true,
     };
   }
 
@@ -293,7 +353,7 @@ export function checkMcpServers(cwd: string): CheckResult {
       name: 'MCP Servers',
       status: 'fail',
       message: '.vscode/mcp.json is not valid JSON',
-      details: 'Fix the JSON syntax or run: npx beth-copilot init --force',
+      fixCommand: 'npx beth-copilot init --force',
     };
   }
 
@@ -303,7 +363,8 @@ export function checkMcpServers(cwd: string): CheckResult {
       name: 'MCP Servers',
       status: 'fail',
       message: '.vscode/mcp.json missing "servers" object',
-      details: 'Run: npx beth-copilot init --force',
+      fixCommand: 'npx beth-copilot doctor --fix',
+      fixable: true,
     };
   }
 
@@ -314,7 +375,11 @@ export function checkMcpServers(cwd: string): CheckResult {
       name: 'MCP Servers',
       status: 'fail',
       message: `missing required server(s): ${missing.map(m => m.label).join(', ')}`,
-      details: missing.map(m => `Add to .vscode/mcp.json servers: ${m.hint}`).join('\n    '),
+      issues: missing.map(s =>
+        `${s.label} — ${s.description}\n      Add to .vscode/mcp.json → servers: ${formatServerHint(s.key, s.config)}`
+      ),
+      fixCommand: 'npx beth-copilot doctor --fix',
+      fixable: true,
     };
   }
 
@@ -329,7 +394,11 @@ export function checkMcpServers(cwd: string): CheckResult {
       name: 'MCP Servers',
       status: 'warn',
       message: `server(s) with invalid structure: ${malformed.map(m => m.label).join(', ')}`,
-      details: `Each server needs { command, args } or { type, url }. Fix: ${malformed.map(m => m.hint).join('; ')}`,
+      issues: malformed.map(s =>
+        `${s.label}: needs { command, args } or { type, url }. Expected: ${formatServerHint(s.key, s.config)}`
+      ),
+      fixCommand: 'npx beth-copilot doctor --fix',
+      fixable: true,
     };
   }
 
@@ -337,17 +406,100 @@ export function checkMcpServers(cwd: string): CheckResult {
   return {
     name: 'MCP Servers',
     status: 'pass',
-    message: `${totalServers} servers configured (playwright ✓, backlog ✓)`,
+    message: `${totalServers} servers configured (${REQUIRED_MCP_SERVERS.map(s => `${s.label.toLowerCase()} ✓`).join(', ')})`,
   };
 }
 
 /**
+ * Auto-fix: ensure .vscode/mcp.json exists and contains all required servers.
+ * Merges missing servers into existing config without overwriting user additions.
+ * Returns the list of actions taken.
+ */
+export function fixMcpServers(cwd: string): string[] {
+  const vsDir = join(cwd, '.vscode');
+  const mcpPath = join(vsDir, 'mcp.json');
+  const actions: string[] = [];
+
+  // Ensure .vscode/ exists
+  if (!existsSync(vsDir)) {
+    mkdirSync(vsDir, { recursive: true });
+    actions.push('Created .vscode/ directory');
+  }
+
+  // Parse or create the config
+  let config: Record<string, unknown> = {};
+  if (existsSync(mcpPath)) {
+    try {
+      config = JSON.parse(readFileSync(mcpPath, 'utf-8'));
+    } catch {
+      // Backup corrupted file
+      const backupPath = mcpPath + '.bak';
+      writeFileSync(backupPath, readFileSync(mcpPath, 'utf-8'));
+      actions.push(`Backed up corrupted mcp.json to ${backupPath}`);
+      config = {};
+    }
+  }
+
+  // Ensure servers object
+  if (!config.servers || typeof config.servers !== 'object' || Array.isArray(config.servers)) {
+    config.servers = {};
+    actions.push('Created "servers" object in mcp.json');
+  }
+
+  // Add schema if missing
+  if (!config['$schema']) {
+    config = { '$schema': 'https://code.visualstudio.com/docs/copilot/chat/mcp-servers', ...config };
+  }
+
+  const servers = config.servers as Record<string, unknown>;
+
+  // Add missing required servers
+  for (const required of REQUIRED_MCP_SERVERS) {
+    if (!servers[required.key] || !isValidServerEntry(servers[required.key])) {
+      servers[required.key] = required.config;
+      actions.push(`Added ${required.label} server: ${required.description}`);
+    }
+  }
+
+  // Write the file
+  writeFileSync(mcpPath, JSON.stringify(config, null, 2) + '\n');
+
+  if (actions.length === 0) {
+    actions.push('MCP servers already configured correctly');
+  }
+
+  return actions;
+}
+
+/**
+ * Auto-fix: run backlog init if not already initialized.
+ * Returns the list of actions taken.
+ */
+function fixBacklogInit(cwd: string): string[] {
+  const configPath = join(cwd, 'backlog', 'config.yml');
+  if (existsSync(configPath)) {
+    return ['Backlog already initialized'];
+  }
+
+  try {
+    execSync('backlog init', {
+      cwd,
+      encoding: 'utf-8',
+      stdio: ['pipe', 'pipe', 'pipe'],
+    });
+    return ['Ran backlog init — backlog/ directory created'];
+  } catch (e) {
+    return [`Failed to run backlog init: ${e instanceof Error ? e.message : 'unknown error'}. Run manually: backlog init`];
+  }
+}
+
+/**
  * Main doctor command
- * @param options - Command options
+ * @param options - Command options (verbose, fix)
  * @param exitOnFailure - If false, returns result instead of calling process.exit
  */
 export async function doctor(options: DoctorOptions = {}, exitOnFailure = true): Promise<{ passed: number; warned: number; failed: number }> {
-  const { verbose = false } = options;
+  const { verbose = false, fix = false } = options;
   const cwd = process.cwd();
   
   console.log('');
@@ -355,6 +507,30 @@ export async function doctor(options: DoctorOptions = {}, exitOnFailure = true):
   log('─'.repeat(40), COLORS.dim);
   console.log('');
   
+  // --- Fix mode: apply auto-repairs before running checks ---
+  if (fix) {
+    log('🔧 Auto-fix mode enabled', COLORS.cyan);
+    console.log('');
+
+    // Fix MCP servers
+    const mcpActions = fixMcpServers(cwd);
+    for (const action of mcpActions) {
+      log(`  ✓ ${action}`, COLORS.green);
+    }
+
+    // Fix backlog init
+    const backlogActions = fixBacklogInit(cwd);
+    for (const action of backlogActions) {
+      log(`  ✓ ${action}`, COLORS.green);
+    }
+
+    console.log('');
+    log('─'.repeat(40), COLORS.dim);
+    console.log('');
+    log('Re-checking after fixes...', COLORS.bright);
+    console.log('');
+  }
+
   const results: CheckResult[] = [
     checkNodeVersion(cwd),
     checkCli('backlog.md', 'backlog', 'npm i -g backlog.md'),
@@ -376,14 +552,21 @@ export async function doctor(options: DoctorOptions = {}, exitOnFailure = true):
   const passed = results.filter(r => r.status === 'pass').length;
   const warned = results.filter(r => r.status === 'warn').length;
   const failed = results.filter(r => r.status === 'fail').length;
+  const hasFixable = results.some(r => r.status !== 'pass' && r.fixable);
   
   if (failed > 0) {
     log(`\n${failed} check(s) failed. Fix issues above and run doctor again.`, COLORS.red);
+    if (hasFixable) {
+      log(`\nTip: run ${COLORS.cyan}npx beth-copilot doctor --fix${COLORS.reset}${COLORS.red} to auto-repair fixable issues.`, COLORS.red);
+    }
     if (exitOnFailure) {
       process.exit(1);
     }
   } else if (warned > 0) {
     log(`\n${passed}/${results.length} passed, ${warned} warning(s)`, COLORS.yellow);
+    if (hasFixable) {
+      log(`\nTip: run ${COLORS.cyan}npx beth-copilot doctor --fix${COLORS.reset}${COLORS.yellow} to auto-repair fixable issues.`, COLORS.yellow);
+    }
   } else {
     log(`\nAll ${results.length} checks passed! Beth is ready.`, COLORS.green);
   }
