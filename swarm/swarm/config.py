@@ -110,6 +110,7 @@ class ProviderConfig:
     endpoint: str = ""
     api_key: str = ""
     api_version: str = "2024-12-01-preview"
+    auth_mode: str = "key"  # "key" or "identity" (DefaultAzureCredential)
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> ProviderConfig:

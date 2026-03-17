@@ -1,0 +1,57 @@
+# Beth Swarm Configuration — Example
+# Copy to swarm.yaml and configure before running.
+#
+# Auth mode: "identity" (RECOMMENDED) or "key"
+#
+# identity mode (no secrets needed):
+#   Uses DefaultAzureCredential — picks up az login, managed identity, or env vars.
+#   Requires: Cognitive Services OpenAI User role on the AOAI resource.
+#   No env vars needed for auth.
+#
+# key mode (legacy):
+#   Requires: AZURE_OPENAI_API_KEY env var
+#   Store the key in Azure Key Vault, not in files.
+
+db_path: swarm.db
+poll_interval_seconds: 2.0
+heartbeat_interval_seconds: 30.0
+
+# Budget guardrails
+max_task_tokens_in: 50000
+max_task_tokens_out: 10000
+max_epic_spend_usd: 5.0
+max_daily_spend_usd: 50.0
+
+test_command: "npm test"
+
+# Primary: Azure OpenAI with managed identity (RECOMMENDED)
+primary_provider:
+  name: azure
+  endpoint: https://your-resource.openai.azure.com/
+  auth_mode: identity  # Uses DefaultAzureCredential — no API key needed
+  api_version: "2024-12-01-preview"
+
+# Alternative: Azure OpenAI with API key (NOT recommended)
+# primary_provider:
+#   name: azure
+#   endpoint: https://your-resource.openai.azure.com/
+#   auth_mode: key
+#   api_key: ${AZURE_OPENAI_API_KEY}  # Store in Key Vault, reference via env var
+#   api_version: "2024-12-01-preview"
+
+# Fallback: OpenAI direct (optional — remove if not needed)
+# fallback_provider:
+#   name: openai
+#   api_key: ${OPENAI_API_KEY}
+
+# 3-tier model routing
+model_routing:
+  complex:
+    deployment: gpt-4o
+    max_tokens: 4096
+  standard:
+    deployment: gpt-4o-mini
+    max_tokens: 4096
+  simple:
+    deployment: gpt-4o-mini
+    max_tokens: 2048

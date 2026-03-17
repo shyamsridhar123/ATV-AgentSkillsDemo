@@ -3,6 +3,10 @@
 Implements the agent_loop: chat → tool_calls → execute → loop until stop.
 Provider-abstracted: same ``openai`` package connects to Azure OpenAI,
 OpenAI direct, or any compatible endpoint via ``base_url``.
+
+Supports two auth modes for Azure:
+  - ``key``: API key passed directly (legacy, not recommended)
+  - ``identity``: DefaultAzureCredential via ``azure-identity`` (recommended)
 """
 
 from __future__ import annotations
@@ -24,6 +28,34 @@ logger = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
+# Token provider for managed identity
+# ---------------------------------------------------------------------------
+
+_TOKEN_PROVIDER = None
+
+
+def _get_token_provider():
+    """Lazy-load a token provider backed by DefaultAzureCredential.
+
+    Uses ``azure.identity.get_bearer_token_provider`` which handles token
+    caching and refresh automatically.  The credential chain picks up:
+      1. Environment variables (AZURE_CLIENT_ID, etc.)
+      2. Managed identity (when running in Azure)
+      3. Azure CLI (``az login`` session — the dev path)
+      4. VS Code credentials
+    """
+    global _TOKEN_PROVIDER
+    if _TOKEN_PROVIDER is None:
+        from azure.identity import DefaultAzureCredential, get_bearer_token_provider
+
+        credential = DefaultAzureCredential()
+        _TOKEN_PROVIDER = get_bearer_token_provider(
+            credential, "https://cognitiveservices.azure.com/.default"
+        )
+    return _TOKEN_PROVIDER
+
+
+# ---------------------------------------------------------------------------
 # Client factory
 # ---------------------------------------------------------------------------
 
@@ -33,13 +65,24 @@ def create_client(provider: ProviderConfig) -> AzureOpenAI | OpenAI:
 
     Returns ``AzureOpenAI`` for ``name="azure"``, ``OpenAI`` for
     ``name="openai"`` (or any compatible endpoint).
+
+    When ``auth_mode="identity"`` (Azure only), uses
+    ``DefaultAzureCredential`` for token-based auth — no API key needed.
     """
     if provider.name == "azure":
-        return AzureOpenAI(
-            azure_endpoint=provider.endpoint,
-            api_key=provider.api_key,
-            api_version=provider.api_version,
-        )
+        if provider.auth_mode == "identity":
+            logger.info("Using DefaultAzureCredential for Azure OpenAI (no API key)")
+            return AzureOpenAI(
+                azure_endpoint=provider.endpoint,
+                azure_ad_token_provider=_get_token_provider(),
+                api_version=provider.api_version,
+            )
+        else:
+            return AzureOpenAI(
+                azure_endpoint=provider.endpoint,
+                api_key=provider.api_key,
+                api_version=provider.api_version,
+            )
     else:
         return OpenAI(
             base_url=provider.endpoint or None,
