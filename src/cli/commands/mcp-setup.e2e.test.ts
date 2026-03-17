@@ -393,3 +393,173 @@ describe('MCP doctor edge cases', () => {
     assert.ok(result.message.includes('invalid structure'));
   });
 });
+
+describe('MCP lifecycle — init → doctor → break → reinit → doctor', () => {
+  let testDir: string;
+
+  beforeEach(() => {
+    testDir = join(tmpdir(), `beth-mcp-lifecycle-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+    mkdirSync(testDir, { recursive: true });
+  });
+
+  afterEach(() => {
+    if (existsSync(testDir)) {
+      rmSync(testDir, { recursive: true, force: true });
+    }
+  });
+
+  it('full lifecycle: init installs both → doctor passes → remove playwright → doctor fails → --force restores → doctor passes', () => {
+    // Step 1: Fresh init — should create .vscode/mcp.json with all servers
+    runInit(testDir);
+    const mcpPath = join(testDir, '.vscode', 'mcp.json');
+    assert.ok(existsSync(mcpPath), 'init should create .vscode/mcp.json');
+
+    const initialConfig = JSON.parse(readFileSync(mcpPath, 'utf-8'));
+    assert.ok(initialConfig.servers?.playwright, 'Init should install playwright server');
+    assert.ok(initialConfig.servers?.backlog, 'Init should install backlog server');
+
+    // Step 2: Doctor should pass with both required servers present
+    const passResult = checkMcpServers(testDir);
+    assert.strictEqual(
+      passResult.status,
+      'pass',
+      `Doctor should pass after fresh init. Got: ${passResult.status} — ${passResult.message}`
+    );
+
+    // Step 3: Remove playwright — simulates user accidentally deleting a required server
+    const broken = { ...initialConfig, servers: { ...initialConfig.servers } };
+    delete broken.servers.playwright;
+    writeFileSync(mcpPath, JSON.stringify(broken, null, 2));
+
+    // Step 4: Doctor should fail with playwright missing
+    const failResult = checkMcpServers(testDir);
+    assert.strictEqual(
+      failResult.status,
+      'fail',
+      `Doctor should fail after removing playwright. Got: ${failResult.status} — ${failResult.message}`
+    );
+    assert.ok(
+      failResult.message.toLowerCase().includes('playwright'),
+      `Failure message should mention playwright. Got: ${failResult.message}`
+    );
+
+    // Step 5: Reinit with --force should restore the full template
+    runInit(testDir, ['--force']);
+
+    const restoredConfig = JSON.parse(readFileSync(mcpPath, 'utf-8'));
+    assert.ok(restoredConfig.servers?.playwright, '--force should restore playwright server');
+    assert.ok(restoredConfig.servers?.backlog, '--force should restore backlog server');
+
+    // Step 6: Doctor should pass again
+    const recoveredResult = checkMcpServers(testDir);
+    assert.strictEqual(
+      recoveredResult.status,
+      'pass',
+      `Doctor should pass after --force reinit. Got: ${recoveredResult.status} — ${recoveredResult.message}`
+    );
+  });
+
+  it('full lifecycle: init installs both → doctor passes → remove backlog → doctor fails → --force restores → doctor passes', () => {
+    // Same cycle but removing backlog instead of playwright
+    runInit(testDir);
+    const mcpPath = join(testDir, '.vscode', 'mcp.json');
+
+    const passResult = checkMcpServers(testDir);
+    assert.strictEqual(passResult.status, 'pass');
+
+    // Remove backlog server
+    const config = JSON.parse(readFileSync(mcpPath, 'utf-8'));
+    delete config.servers.backlog;
+    writeFileSync(mcpPath, JSON.stringify(config, null, 2));
+
+    const failResult = checkMcpServers(testDir);
+    assert.strictEqual(
+      failResult.status,
+      'fail',
+      `Doctor should fail after removing backlog. Got: ${failResult.status} — ${failResult.message}`
+    );
+    assert.ok(
+      failResult.message.toLowerCase().includes('backlog'),
+      `Failure message should mention backlog. Got: ${failResult.message}`
+    );
+
+    // Force restore
+    runInit(testDir, ['--force']);
+
+    const recoveredResult = checkMcpServers(testDir);
+    assert.strictEqual(
+      recoveredResult.status,
+      'pass',
+      `Doctor should pass after --force. Got: ${recoveredResult.status} — ${recoveredResult.message}`
+    );
+  });
+
+  it('full lifecycle: init installs both → remove BOTH required → doctor fails → --force restores → doctor passes', () => {
+    runInit(testDir);
+    const mcpPath = join(testDir, '.vscode', 'mcp.json');
+
+    // Verify starting state is healthy
+    assert.strictEqual(checkMcpServers(testDir).status, 'pass');
+
+    // Nuke both required servers, keep only optional ones
+    const config = JSON.parse(readFileSync(mcpPath, 'utf-8'));
+    delete config.servers.playwright;
+    delete config.servers.backlog;
+    writeFileSync(mcpPath, JSON.stringify(config, null, 2));
+
+    const failResult = checkMcpServers(testDir);
+    assert.strictEqual(failResult.status, 'fail');
+
+    // Force restore
+    runInit(testDir, ['--force']);
+
+    const restoredConfig = JSON.parse(readFileSync(mcpPath, 'utf-8'));
+    assert.ok(restoredConfig.servers?.playwright, 'playwright restored');
+    assert.ok(restoredConfig.servers?.backlog, 'backlog restored');
+    assert.strictEqual(checkMcpServers(testDir).status, 'pass', 'Doctor passes after full restore');
+  });
+
+  it('lifecycle: corrupt entire mcp.json → doctor fails → --force restores → doctor passes', () => {
+    runInit(testDir);
+    assert.strictEqual(checkMcpServers(testDir).status, 'pass');
+
+    // Corrupt the file completely
+    writeFileSync(join(testDir, '.vscode', 'mcp.json'), '<<<NOT JSON>>>');
+
+    const failResult = checkMcpServers(testDir);
+    assert.strictEqual(
+      failResult.status,
+      'fail',
+      `Doctor should fail on corrupted JSON. Got: ${failResult.status}`
+    );
+
+    // Force restore
+    runInit(testDir, ['--force']);
+
+    assert.strictEqual(
+      checkMcpServers(testDir).status,
+      'pass',
+      'Doctor should pass after --force recovers from corruption'
+    );
+  });
+
+  it('lifecycle: delete mcp.json entirely → doctor fails → init restores → doctor passes', () => {
+    runInit(testDir);
+    assert.strictEqual(checkMcpServers(testDir).status, 'pass');
+
+    // Delete the file entirely
+    rmSync(join(testDir, '.vscode', 'mcp.json'));
+
+    const failResult = checkMcpServers(testDir);
+    assert.strictEqual(failResult.status, 'fail', 'Doctor should fail when mcp.json is deleted');
+
+    // Regular init (not --force) should recreate it since the file doesn't exist
+    runInit(testDir);
+
+    assert.strictEqual(
+      checkMcpServers(testDir).status,
+      'pass',
+      'Doctor should pass after init recreates deleted mcp.json'
+    );
+  });
+});
