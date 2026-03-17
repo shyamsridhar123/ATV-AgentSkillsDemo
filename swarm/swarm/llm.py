@@ -133,7 +133,7 @@ def completions_with_failover(
                     messages=messages,
                     tools=tools if tools else None,
                     tool_choice="auto" if tools else None,
-                    max_tokens=max_tokens,
+                    max_completion_tokens=max_tokens,
                 )
             except APIStatusError as exc:
                 last_error = exc
@@ -253,14 +253,14 @@ def agent_loop(
                 messages=messages,
                 tools=tools if tools else None,
                 max_tokens=max_tokens,
-            )
+            )  # max_tokens is our param name; failover maps it
         else:
             response = client.chat.completions.create(
                 model=deployment,
                 messages=messages,
                 tools=tools if tools else None,
                 tool_choice="auto" if tools else None,
-                max_tokens=max_tokens,
+                max_completion_tokens=max_tokens,
             )
 
         # Track token usage
