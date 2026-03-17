@@ -1,10 +1,10 @@
 ---
 id: BETH-10.5
 title: 'Phase 4: Intelligence - Model routing + outcome learning + cost guardrails'
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-03-15 06:42'
-updated_date: '2026-03-15 06:45'
+updated_date: '2026-03-16 20:23'
 labels: []
 dependencies: []
 parent_task_id: BETH-10

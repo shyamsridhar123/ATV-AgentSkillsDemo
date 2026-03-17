@@ -10,6 +10,14 @@ from .git import (
     merge_worker,
     remove_worktree,
 )
+from .intelligence import (
+    BudgetExceeded,
+    CostTracker,
+    ModelSuggestion,
+    TokenCounter,
+    estimate_cost_usd,
+    suggest_model,
+)
 from .orchestrator import (
     EpicState,
     Orchestrator,
