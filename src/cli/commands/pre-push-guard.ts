@@ -7,7 +7,24 @@
  * - Bypassed with BETH_SKIP_PUSH_GUARD=1 environment variable
  */
 
-import { execFileSync } from 'child_process';
+import {
+  getCurrentBranch,
+  extractBranchName,
+  isProtectedBranch,
+  isEpicBranch,
+  isReleaseBranch,
+  isRecognizedBranch,
+} from '../lib/gitHelpers.js';
+
+// Re-export shared helpers so existing consumers don't break
+export {
+  getCurrentBranch,
+  extractBranchName,
+  isProtectedBranch,
+  isEpicBranch,
+  isReleaseBranch,
+  isRecognizedBranch,
+};
 
 const COLORS = {
   reset: '\x1b[0m',
@@ -16,15 +33,6 @@ const COLORS = {
   yellow: '\x1b[33m',
   cyan: '\x1b[36m',
 };
-
-/** Protected branch names that cannot receive direct pushes. */
-const PROTECTED_BRANCHES = ['main', 'master'];
-
-/** Epic branch naming convention: epic/<rig>-<hash> */
-const EPIC_BRANCH_PATTERN = /^epic\/[a-z]+-[a-z0-9]+$/;
-
-/** Release branches are also valid push targets. */
-const RELEASE_BRANCH_PATTERN = /^release\/v?\d+/;
 
 export interface PushRef {
   localRef: string;
@@ -58,64 +66,6 @@ export function parsePushRefs(stdin: string): PushRef[] {
         remoteSha: parts[3] || '',
       };
     });
-}
-
-/**
- * Extract branch name from a Git ref.
- * refs/heads/main → main
- * refs/heads/epic/beth-abc123 → epic/beth-abc123
- */
-export function extractBranchName(ref: string): string {
-  const prefix = 'refs/heads/';
-  if (ref.startsWith(prefix)) {
-    return ref.slice(prefix.length);
-  }
-  return ref;
-}
-
-/**
- * Check if a branch name is protected (main, master).
- */
-export function isProtectedBranch(branch: string): boolean {
-  return PROTECTED_BRANCHES.includes(branch);
-}
-
-/**
- * Check if the branch follows the epic/<id> convention.
- */
-export function isEpicBranch(branch: string): boolean {
-  return EPIC_BRANCH_PATTERN.test(branch);
-}
-
-/**
- * Check if the branch is a release branch.
- */
-export function isReleaseBranch(branch: string): boolean {
-  return RELEASE_BRANCH_PATTERN.test(branch);
-}
-
-/**
- * Check if the branch follows any recognized naming convention.
- */
-export function isRecognizedBranch(branch: string): boolean {
-  return isEpicBranch(branch) || isReleaseBranch(branch) || isProtectedBranch(branch);
-}
-
-/**
- * Get the current Git branch name.
- * Returns null if not in a git repo or in detached HEAD state.
- */
-export function getCurrentBranch(): string | null {
-  try {
-    const result = execFileSync('git', ['branch', '--show-current'], {
-      encoding: 'utf-8',
-      timeout: 5000,
-      stdio: ['pipe', 'pipe', 'pipe'],
-    }).trim();
-    return result || null;
-  } catch {
-    return null;
-  }
 }
 
 /**
