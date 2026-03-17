@@ -755,7 +755,7 @@ class Orchestrator:
 
         return summary
 
-    async def run(self, max_ticks: int = 0) -> None:
+    async def run(self, max_ticks: int = 0, drain_timeout: float = 60.0) -> None:
         """Run the orchestration loop.
 
         Parameters
@@ -763,9 +763,21 @@ class Orchestrator:
         max_ticks : int
             If > 0, stop after this many ticks (for testing).
             If 0, run forever until stopped.
+        drain_timeout : float
+            Seconds to wait for in-progress tasks after a stop signal
+            before force-quitting.
         """
         self._running = True
         tick_count = 0
+
+        # Install signal handlers for graceful shutdown
+        try:
+            loop = asyncio.get_running_loop()
+            for sig in (signal.SIGINT, signal.SIGTERM):
+                loop.add_signal_handler(sig, self._handle_signal, sig)
+        except (NotImplementedError, OSError):
+            # Windows or non-main-thread — fall back to KeyboardInterrupt
+            pass
 
         logger.info("Orchestrator starting — poll_interval=%.1fs", self.config.poll_interval_seconds)
 
@@ -784,12 +796,156 @@ class Orchestrator:
 
             await asyncio.sleep(self.config.poll_interval_seconds)
 
+        # Graceful drain: keep ticking to process completions until timeout
+        if self._draining():
+            logger.info("Draining in-progress tasks (timeout=%.0fs)...", drain_timeout)
+            drain_start = time.monotonic()
+            while time.monotonic() - drain_start < drain_timeout:
+                if not self._draining():
+                    logger.info("All in-progress tasks drained")
+                    break
+                try:
+                    self.tick()
+                except Exception:
+                    logger.exception("Error during drain tick")
+                await asyncio.sleep(self.config.poll_interval_seconds)
+            else:
+                logger.warning("Drain timeout reached — force stopping")
+
         logger.info("Orchestrator stopped after %d ticks", tick_count)
+
+    def _handle_signal(self, sig: signal.Signals) -> None:
+        """Handle SIGINT/SIGTERM for graceful shutdown."""
+        logger.info("Received %s — initiating graceful shutdown", sig.name)
+        self._running = False
+
+    def _draining(self) -> bool:
+        """Return True if any epic has tasks in RUNNING status."""
+        for epic in self.epics.values():
+            for task in epic.tasks.values():
+                if task.status == TaskStatus.RUNNING:
+                    return True
+        return False
 
     def stop(self) -> None:
         """Signal the orchestrator to stop after the current tick."""
         self._running = False
         logger.info("Orchestrator stop requested")
+
+    def status_summary(self) -> dict[str, Any]:
+        """Build a snapshot of current orchestrator state.
+
+        Used by ``swarm status`` CLI command.
+        """
+        running_workers: list[dict[str, str]] = []
+        queued_tasks: list[dict[str, str]] = []
+        recent_completions: list[dict[str, str]] = []
+
+        for epic_id, epic in self.epics.items():
+            for task in epic.tasks.values():
+                entry = {"epic": epic_id, "task": task.id, "agent": task.agent_role}
+                if task.status == TaskStatus.RUNNING:
+                    running_workers.append(entry)
+                elif task.status == TaskStatus.PENDING:
+                    queued_tasks.append(entry)
+                elif task.status == TaskStatus.MERGED:
+                    recent_completions.append(entry)
+
+        return {
+            "epics": len(self.epics),
+            "running_workers": running_workers,
+            "queued_tasks": queued_tasks,
+            "recent_completions": recent_completions[-10:],
+            "spend": {
+                "today_usd": self.cost_tracker.get_daily_cost(),
+                "limit_usd": self.config.max_daily_spend_usd,
+            },
+        }
+
+    @classmethod
+    def recover_from_board(
+        cls,
+        config: SwarmConfig,
+        board: MessageBoard,
+        repo_root: Path,
+    ) -> "Orchestrator":
+        """Reconstruct orchestrator state from the durable SQLite board.
+
+        After a crash, the board retains all posts.  We reconstruct epics
+        by scanning the ``tasks`` channel for epic submissions and the
+        ``completions`` channel for finished work.  Tasks that were RUNNING
+        at crash time are reset to PENDING for re-dispatch (their worktrees
+        are cleaned up).
+        """
+        orch = cls(config=config, board=board, repo_root=repo_root)
+
+        # 1. Find all epic submission posts
+        all_tasks_posts = board.read_all("tasks")
+        epic_posts = [p for p in all_tasks_posts if p.metadata and "epic_id" in p.metadata]
+
+        if not epic_posts:
+            logger.info("Crash recovery: no epics found on board — clean start")
+            return orch
+
+        for post in epic_posts:
+            meta = post.metadata or {}
+            epic_id = meta["epic_id"]
+            task_ids = meta.get("task_ids", [])
+
+            # Reconstruct task nodes from dispatch posts
+            task_nodes: list[TaskNode] = []
+            for tp in all_tasks_posts:
+                if tp.metadata and tp.metadata.get("epic_id") == epic_id and "task_id" in tp.metadata:
+                    node = TaskNode(
+                        id=tp.metadata["task_id"],
+                        title=tp.title or tp.metadata.get("task_id", ""),
+                        body=tp.body,
+                        agent_role=tp.metadata.get("agent_role", "developer"),
+                        dependencies=tp.metadata.get("deps", []),
+                    )
+                    task_nodes.append(node)
+
+            if not task_nodes:
+                # Epic posted but no tasks dispatched yet — create from task_ids
+                task_nodes = [TaskNode(id=tid, title=tid, body="", agent_role="developer") for tid in task_ids]
+
+            epic = EpicState(
+                epic_id=epic_id,
+                title=post.title or epic_id,
+                original_request=post.body,
+                tasks={t.id: t for t in task_nodes},
+                epic_branch=meta.get("epic_branch", "main"),
+            )
+
+            # 2. Mark completed tasks by scanning completions channel
+            completions = board.read_all("completions")
+            for comp in completions:
+                if comp.metadata and comp.metadata.get("epic_id") == epic_id:
+                    tid = comp.metadata.get("task_id")
+                    if tid and tid in epic.tasks:
+                        epic.tasks[tid].status = TaskStatus.COMPLETED
+                        epic.tasks[tid].completion_post_id = comp.id
+
+            # 3. Reset any formerly RUNNING tasks to PENDING for re-dispatch
+            # (We don't know which ones were running — any not DONE gets PENDING)
+            for task in epic.tasks.values():
+                if task.status not in (TaskStatus.COMPLETED, TaskStatus.MERGED):
+                    task.status = TaskStatus.PENDING
+
+            orch.epics[epic_id] = epic
+            logger.info(
+                "Recovered epic %s: %d tasks (%d completed)",
+                epic_id, len(epic.tasks),
+                sum(1 for t in epic.tasks.values() if t.status == TaskStatus.COMPLETED),
+            )
+
+        # 4. Clean up orphaned worktrees from the crash
+        try:
+            cleanup_all_worktrees(repo_root)
+        except Exception:
+            logger.warning("Failed to clean worktrees during recovery", exc_info=True)
+
+        return orch
 
 
 # ---------------------------------------------------------------------------

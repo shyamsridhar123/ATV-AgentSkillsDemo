@@ -14,8 +14,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from openai import AzureOpenAI, OpenAI
-from openai.types.chat import ChatCompletionMessage, ChatCompletionMessageToolCall
+from openai import APIStatusError, AzureOpenAI, OpenAI
 
 from .board import MessageBoard
 from .config import ProviderConfig, SwarmConfig
@@ -46,6 +45,73 @@ def create_client(provider: ProviderConfig) -> AzureOpenAI | OpenAI:
             base_url=provider.endpoint or None,
             api_key=provider.api_key,
         )
+
+
+# ---------------------------------------------------------------------------
+# Provider failover
+# ---------------------------------------------------------------------------
+
+_RETRIABLE_STATUS_CODES = {429, 500, 502, 503}
+
+
+def completions_with_failover(
+    *,
+    config: SwarmConfig,
+    deployment: str,
+    messages: list[dict[str, Any]],
+    tools: list[dict[str, Any]] | None = None,
+    max_tokens: int = 4096,
+    retries: int = 2,
+    backoff_base: float = 1.0,
+) -> Any:
+    """Call chat.completions.create with automatic retry + fallback provider.
+
+    On retriable errors (429, 500, 502, 503), retries up to ``retries`` times
+    with exponential backoff.  If all retries exhaust on the primary, falls
+    through to ``config.fallback_provider`` (if configured).
+
+    Workers never know which provider served the request — the failover is
+    transparent.
+
+    Returns the raw ``ChatCompletion`` response.
+    """
+    providers = [config.primary_provider]
+    if config.fallback_provider:
+        providers.append(config.fallback_provider)
+
+    last_error: Exception | None = None
+
+    for provider in providers:
+        client = create_client(provider)
+        for attempt in range(retries + 1):
+            try:
+                return client.chat.completions.create(
+                    model=deployment,
+                    messages=messages,
+                    tools=tools if tools else None,
+                    tool_choice="auto" if tools else None,
+                    max_tokens=max_tokens,
+                )
+            except APIStatusError as exc:
+                last_error = exc
+                if exc.status_code in _RETRIABLE_STATUS_CODES and attempt < retries:
+                    delay = backoff_base * (2 ** attempt)
+                    logger.warning(
+                        "LLM %d from %s (attempt %d/%d) — retrying in %.1fs",
+                        exc.status_code, provider.name, attempt + 1, retries + 1, delay,
+                    )
+                    time.sleep(delay)
+                elif exc.status_code in _RETRIABLE_STATUS_CODES:
+                    logger.warning(
+                        "LLM %d from %s — exhausted retries, trying next provider",
+                        exc.status_code, provider.name,
+                    )
+                    break  # Try next provider
+                else:
+                    raise  # Non-retriable (400, 401, 404, etc.) — bubble up
+
+    # All providers exhausted
+    raise last_error  # type: ignore[misc]
 
 
 # ---------------------------------------------------------------------------
@@ -83,15 +149,20 @@ def agent_loop(
     repo_root: Path,
     max_iterations: int = 50,
     max_tokens: int = 4096,
+    config: SwarmConfig | None = None,
 ) -> CompletionResult:
     """Run the tool-use agent loop until the model produces a final response.
 
     Implements: chat → tool_calls → execute → loop until ``finish_reason == "stop"``.
 
+    When *config* is provided, uses :func:`completions_with_failover` for
+    transparent provider failover.  Otherwise falls back to the direct
+    *client* (backward-compatible).
+
     Parameters
     ----------
     client : AzureOpenAI | OpenAI
-        The LLM client.
+        The LLM client (used when *config* is None).
     deployment : str
         Model deployment name (e.g. ``"gpt-4o"``).
     system_prompt : str
@@ -132,13 +203,22 @@ def agent_loop(
             iteration + 1, max_iterations, agent_id, deployment,
         )
 
-        response = client.chat.completions.create(
-            model=deployment,
-            messages=messages,
-            tools=tools if tools else None,
-            tool_choice="auto" if tools else None,
-            max_tokens=max_tokens,
-        )
+        if config is not None:
+            response = completions_with_failover(
+                config=config,
+                deployment=deployment,
+                messages=messages,
+                tools=tools if tools else None,
+                max_tokens=max_tokens,
+            )
+        else:
+            response = client.chat.completions.create(
+                model=deployment,
+                messages=messages,
+                tools=tools if tools else None,
+                tool_choice="auto" if tools else None,
+                max_tokens=max_tokens,
+            )
 
         # Track token usage
         if response.usage:

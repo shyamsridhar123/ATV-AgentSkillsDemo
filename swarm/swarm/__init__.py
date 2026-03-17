@@ -1,6 +1,7 @@
 """Beth Agent Swarm — persistent Python daemon for multi-agent orchestration."""
 
 from .claims import ClaimsRegistry
+from .cli import main as cli_main
 from .git import (
     MergeResult,
     WorktreeInfo,
@@ -18,6 +19,8 @@ from .intelligence import (
     estimate_cost_usd,
     suggest_model,
 )
+from .logging_config import JsonFormatter, configure_logging
+from .llm import completions_with_failover
 from .orchestrator import (
     EpicState,
     Orchestrator,
