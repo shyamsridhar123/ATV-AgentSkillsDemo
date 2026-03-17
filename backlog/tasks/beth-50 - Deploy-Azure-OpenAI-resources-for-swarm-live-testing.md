@@ -1,10 +1,10 @@
 ---
 id: BETH-50
 title: Deploy Azure OpenAI resources for swarm live testing
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-03-17 05:48'
-updated_date: '2026-03-17 05:48'
+updated_date: '2026-03-17 06:09'
 labels: []
 dependencies: []
 ---

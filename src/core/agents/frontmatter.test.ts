@@ -10,6 +10,7 @@ import assert from 'node:assert';
 import { writeFileSync, mkdirSync, rmSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { loadAgent } from './loader.js';
+import type { AgentDefinition, AgentLoadError } from './types.js';
 
 // Temp directory for test fixtures
 const TEST_DIR = join(process.cwd(), '.test-agents-frontmatter');
@@ -62,7 +63,7 @@ This is the body content.
       const result = loadAgent(filePath);
 
       assert.ok(!('error' in result), `Unexpected error: ${JSON.stringify(result)}`);
-      const { agent } = result as { agent: any };
+      const { agent } = result as { agent: AgentDefinition };
 
       assert.strictEqual(agent.id, 'complete');
       assert.strictEqual(agent.frontmatter.name, 'Test Agent');
@@ -97,7 +98,7 @@ Agent with tools.
       const result = loadAgent(filePath);
 
       assert.ok(!('error' in result));
-      const { agent } = result as { agent: any };
+      const { agent } = result as { agent: AgentDefinition };
 
       assert.deepStrictEqual(agent.frontmatter.tools, [
         'codebase',
@@ -128,7 +129,7 @@ Agent with handoffs.
       const result = loadAgent(filePath);
 
       assert.ok(!('error' in result));
-      const { agent } = result as { agent: any };
+      const { agent } = result as { agent: AgentDefinition };
 
       assert.ok(Array.isArray(agent.frontmatter.handoffs));
       assert.strictEqual(agent.frontmatter.handoffs!.length, 2);
@@ -154,7 +155,7 @@ This agent can be invoked as a subagent.
       const result = loadAgent(filePath);
 
       assert.ok(!('error' in result));
-      const { agent } = result as { agent: any };
+      const { agent } = result as { agent: AgentDefinition };
 
       assert.strictEqual(agent.frontmatter.infer, true);
     });
@@ -171,7 +172,7 @@ This agent cannot be invoked as a subagent.
       const result = loadAgent(filePath);
 
       assert.ok(!('error' in result));
-      const { agent } = result as { agent: any };
+      const { agent } = result as { agent: AgentDefinition };
 
       // infer: false is preserved in frontmatter (both true and false are set)
       assert.strictEqual(agent.frontmatter.infer, false);
@@ -191,7 +192,7 @@ This has infer as a string, not boolean.
       const result = loadAgent(filePath);
 
       assert.ok(!('error' in result));
-      const { agent } = result as { agent: any };
+      const { agent } = result as { agent: AgentDefinition };
 
       // String "true" should NOT be converted to boolean true
       assert.strictEqual(agent.frontmatter.infer, undefined);
@@ -214,13 +215,13 @@ Agent with extra fields.
       const result = loadAgent(filePath);
 
       assert.ok(!('error' in result), 'Should not error on unknown fields');
-      const { agent } = result as { agent: any };
+      const { agent } = result as { agent: AgentDefinition };
 
       assert.strictEqual(agent.frontmatter.name, 'Extended Agent');
       assert.strictEqual(agent.frontmatter.description, 'Standard description');
       // Unknown fields should not appear in frontmatter
-      assert.strictEqual((agent.frontmatter as any).customField, undefined);
-      assert.strictEqual((agent.frontmatter as any).extraData, undefined);
+      assert.ok(!('customField' in agent.frontmatter), 'customField should not be in frontmatter');
+      assert.ok(!('extraData' in agent.frontmatter), 'extraData should not be in frontmatter');
     });
 
     it('15. model field accepts any string value', () => {
@@ -235,7 +236,7 @@ Agent with custom model.
       const result = loadAgent(filePath);
 
       assert.ok(!('error' in result));
-      const { agent } = result as { agent: any };
+      const { agent } = result as { agent: AgentDefinition };
 
       assert.strictEqual(agent.frontmatter.model, 'gpt-4-turbo-preview');
     });
@@ -252,7 +253,7 @@ Agent with complex model identifier.
       const result = loadAgent(filePath);
 
       assert.ok(!('error' in result));
-      const { agent } = result as { agent: any };
+      const { agent } = result as { agent: AgentDefinition };
 
       assert.strictEqual(agent.frontmatter.model, 'anthropic/claude-3.5-sonnet@20240620');
     });
@@ -271,7 +272,7 @@ This agent is missing the required name field.
       const result = loadAgent(filePath);
 
       assert.ok('error' in result, 'Should return error for missing name');
-      const { error } = result as { error: any };
+      const { error } = result as { error: AgentLoadError };
       assert.ok(
         error.message.includes('name'),
         `Error should mention 'name', got: ${error.message}`
@@ -290,7 +291,7 @@ Name should be a string.
       const result = loadAgent(filePath);
 
       assert.ok('error' in result, 'Should return error for non-string name');
-      const { error } = result as { error: any };
+      const { error } = result as { error: AgentLoadError };
       assert.ok(
         error.message.includes('name'),
         `Error should mention 'name', got: ${error.message}`
@@ -311,7 +312,7 @@ Name should be a string.
       const result = loadAgent(filePath);
 
       assert.ok('error' in result, 'Should return error for array name');
-      const { error } = result as { error: any };
+      const { error } = result as { error: AgentLoadError };
       assert.ok(error.message.includes('name'));
     });
 
@@ -327,7 +328,7 @@ Name should be a string.
       const result = loadAgent(filePath);
 
       assert.ok('error' in result, 'Should return error for null name');
-      const { error } = result as { error: any };
+      const { error } = result as { error: AgentLoadError };
       assert.ok(error.message.includes('name'));
     });
 
@@ -343,7 +344,7 @@ Tools should be an array.
       const result = loadAgent(filePath);
 
       assert.ok('error' in result, 'Should return error for non-array tools');
-      const { error } = result as { error: any };
+      const { error } = result as { error: AgentLoadError };
       assert.ok(
         error.message.includes('tools'),
         `Error should mention 'tools', got: ${error.message}`
@@ -364,7 +365,7 @@ Tools should be an array, not an object.
       const result = loadAgent(filePath);
 
       assert.ok('error' in result, 'Should return error for object tools');
-      const { error } = result as { error: any };
+      const { error } = result as { error: AgentLoadError };
       assert.ok(error.message.includes('tools'));
     });
 
@@ -382,7 +383,7 @@ Handoff is missing label field.
       const result = loadAgent(filePath);
 
       assert.ok('error' in result, 'Should return error for missing handoff label');
-      const { error } = result as { error: any };
+      const { error } = result as { error: AgentLoadError };
       assert.ok(
         error.message.includes('Handoff') || error.message.includes('label'),
         `Error should mention handoff issue, got: ${error.message}`
@@ -403,7 +404,7 @@ Handoff is missing agent field.
       const result = loadAgent(filePath);
 
       assert.ok('error' in result, 'Should return error for missing handoff agent');
-      const { error } = result as { error: any };
+      const { error } = result as { error: AgentLoadError };
       assert.ok(
         error.message.includes('Handoff') || error.message.includes('agent'),
         `Error should mention handoff issue, got: ${error.message}`
@@ -424,7 +425,7 @@ Handoff is missing prompt field.
       const result = loadAgent(filePath);
 
       assert.ok('error' in result, 'Should return error for missing handoff prompt');
-      const { error } = result as { error: any };
+      const { error } = result as { error: AgentLoadError };
       assert.ok(
         error.message.includes('Handoff') || error.message.includes('prompt'),
         `Error should mention handoff issue, got: ${error.message}`
@@ -441,7 +442,7 @@ This file has empty frontmatter.
       const result = loadAgent(filePath);
 
       assert.ok('error' in result, 'Should return error for empty frontmatter');
-      const { error } = result as { error: any };
+      const { error } = result as { error: AgentLoadError };
       assert.ok(
         error.message.includes('name'),
         `Error should mention missing name, got: ${error.message}`
@@ -463,7 +464,7 @@ This YAML is malformed.
       const result = loadAgent(filePath);
 
       assert.ok('error' in result, 'Should return error for malformed YAML');
-      const { error } = result as { error: any };
+      const { error } = result as { error: AgentLoadError };
       assert.ok(
         error.message.includes('Failed to parse') || error.message.includes('YAML'),
         `Error should indicate parse failure, got: ${error.message}`
@@ -536,7 +537,7 @@ Handoffs should be an array.
       const result = loadAgent(filePath);
 
       assert.ok('error' in result, 'Should return error for non-array handoffs');
-      const { error } = result as { error: any };
+      const { error } = result as { error: AgentLoadError };
       assert.ok(
         error.message.includes('handoffs'),
         `Error should mention 'handoffs', got: ${error.message}`
@@ -554,7 +555,7 @@ name: Minimal Agent
       const result = loadAgent(filePath);
 
       assert.ok(!('error' in result), 'Minimal agent should be valid');
-      const { agent } = result as { agent: any };
+      const { agent } = result as { agent: AgentDefinition };
 
       assert.strictEqual(agent.frontmatter.name, 'Minimal Agent');
       assert.strictEqual(agent.frontmatter.description, undefined);
@@ -573,7 +574,7 @@ name: Empty Body Agent
       const result = loadAgent(filePath);
 
       assert.ok(!('error' in result));
-      const { agent } = result as { agent: any };
+      const { agent } = result as { agent: AgentDefinition };
       assert.strictEqual(agent.body, '');
     });
 
@@ -589,7 +590,7 @@ Agent with empty tools array.
       const result = loadAgent(filePath);
 
       assert.ok(!('error' in result));
-      const { agent } = result as { agent: any };
+      const { agent } = result as { agent: AgentDefinition };
       assert.deepStrictEqual(agent.frontmatter.tools, []);
     });
 
@@ -605,7 +606,7 @@ Agent with empty handoffs array.
       const result = loadAgent(filePath);
 
       assert.ok(!('error' in result));
-      const { agent } = result as { agent: any };
+      const { agent } = result as { agent: AgentDefinition };
       assert.deepStrictEqual(agent.frontmatter.handoffs, []);
     });
 
@@ -620,7 +621,7 @@ Agent with special characters in name.
       const result = loadAgent(filePath);
 
       assert.ok(!('error' in result));
-      const { agent } = result as { agent: any };
+      const { agent } = result as { agent: AgentDefinition };
       assert.strictEqual(agent.frontmatter.name, 'Agent: The Sequel (2.0)');
     });
 
@@ -639,7 +640,7 @@ Agent with multiline description.
       const result = loadAgent(filePath);
 
       assert.ok(!('error' in result));
-      const { agent } = result as { agent: any };
+      const { agent } = result as { agent: AgentDefinition };
       assert.ok(agent.frontmatter.description?.includes('multiline description'));
       assert.ok(agent.frontmatter.description?.includes('spans several lines'));
     });
@@ -656,7 +657,7 @@ Content with unicode: 日本語, العربية, 中文
       const result = loadAgent(filePath);
 
       assert.ok(!('error' in result));
-      const { agent } = result as { agent: any };
+      const { agent } = result as { agent: AgentDefinition };
       assert.strictEqual(agent.frontmatter.name, 'Unicode Agent 🤖');
       assert.ok(agent.body.includes('日本語'));
     });
@@ -674,7 +675,7 @@ This is inside a code fence.
       const result = loadAgent(filePath);
 
       assert.ok(!('error' in result), `Unexpected error: ${JSON.stringify(result)}`);
-      const { agent } = result as { agent: any };
+      const { agent } = result as { agent: AgentDefinition };
       assert.strictEqual(agent.frontmatter.name, 'Wrapped Agent');
       assert.ok(agent.body.includes('inside a code fence'));
     });
@@ -690,7 +691,7 @@ Body content.
       const result = loadAgent(filePath);
 
       assert.ok(!('error' in result));
-      const { agent } = result as { agent: any };
+      const { agent } = result as { agent: AgentDefinition };
       assert.strictEqual(agent.id, 'my-complex-agent');
     });
   });

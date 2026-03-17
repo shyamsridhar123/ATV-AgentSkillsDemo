@@ -17,6 +17,7 @@ import {
   DEFAULT_SKILLS_DIR,
   SKILL_FILE_NAME,
 } from './loader.js';
+import type { SkillDefinition } from './types.js';
 
 // Test against templates directory
 const TEMPLATES_SKILLS_DIR = join(process.cwd(), 'templates', '.github', 'skills');
@@ -51,7 +52,7 @@ describe('Skill Loader', () => {
       const result = loadSkill(filePath, 'prd');
 
       assert.ok(!('error' in result), `Unexpected error: ${JSON.stringify(result)}`);
-      const { skill } = result as { skill: any };
+      const { skill } = result as { skill: SkillDefinition };
 
       assert.strictEqual(skill.id, 'prd');
       assert.strictEqual(skill.frontmatter.name, 'prd');
@@ -65,7 +66,7 @@ describe('Skill Loader', () => {
       const result = loadSkill(filePath, 'prd');
 
       assert.ok(!('error' in result));
-      const { skill } = result as { skill: any };
+      const { skill } = result as { skill: SkillDefinition };
 
       assert.strictEqual(skill.sourcePath, filePath);
     });
