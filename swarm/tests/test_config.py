@@ -174,3 +174,18 @@ class TestSwarmConfigFromYaml:
         yaml_file.write_text("")
         cfg = SwarmConfig.from_yaml(yaml_file)
         assert cfg.db_path == "swarm.db"  # defaults
+
+
+class TestProviderConfigValidation:
+    def test_valid_auth_modes(self) -> None:
+        for mode in ("key", "identity"):
+            cfg = ProviderConfig.from_dict({"auth_mode": mode})
+            assert cfg.auth_mode == mode
+
+    def test_invalid_auth_mode_raises(self) -> None:
+        with pytest.raises(ValueError, match="Invalid auth_mode"):
+            ProviderConfig.from_dict({"auth_mode": "identitiy"})
+
+    def test_default_auth_mode_is_key(self) -> None:
+        cfg = ProviderConfig.from_dict({})
+        assert cfg.auth_mode == "key"
