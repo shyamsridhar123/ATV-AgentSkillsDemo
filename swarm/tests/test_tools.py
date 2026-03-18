@@ -80,6 +80,20 @@ class TestSandbox:
         resolved = _resolve_sandboxed("src/../hello.txt", work_dir)
         assert resolved == (work_dir / "hello.txt").resolve()
 
+    def test_reject_sibling_prefix_bypass(self, tmp_path):
+        """Regression: /tmp/repo vs /tmp/repo_evil must be rejected.
+
+        A naive startswith check would pass because '/tmp/repo_evil'
+        starts with '/tmp/repo'. is_relative_to() blocks this.
+        """
+        sandbox = tmp_path / "repo"
+        sandbox.mkdir()
+        evil_dir = tmp_path / "repo_evil"
+        evil_dir.mkdir()
+        (evil_dir / "secret.txt").write_text("stolen", encoding="utf-8")
+        with pytest.raises(ValueError, match="outside"):
+            _resolve_sandboxed("../repo_evil/secret.txt", sandbox)
+
 
 # ---------------------------------------------------------------------------
 # Tool: read_file (AC #3)
@@ -370,6 +384,15 @@ class TestCommandBlocklist:
     def test_default_patterns_is_nonempty(self):
         assert len(DEFAULT_BLOCKED_PATTERNS) >= 7
 
+    def test_invalid_regex_pattern_returns_error(self, work_dir):
+        """Invalid regex in custom patterns returns error, doesn't crash."""
+        result = tool_run_command(
+            "echo hello", work_dir=work_dir, blocked_patterns=["[invalid"]
+        )
+        parsed = json.loads(result)
+        assert "error" in parsed
+        assert "Invalid blocklist pattern" in parsed["error"]
+
     # -- Via execute_tool dispatcher --
 
     def test_execute_tool_blocks_dangerous_command(self, work_dir, board):
@@ -560,6 +583,21 @@ class TestLoadSkill:
             pytest.skip("Cannot create symlinks in this environment")
         # The symlink resolves to /etc/passwd, which is outside tmp_path
         result = tool_load_skill("evil_link", repo_root=tmp_path)
+        parsed = json.loads(result)
+        assert "error" in parsed
+
+    def test_reject_sibling_prefix_bypass(self, tmp_path):
+        """Regression: /tmp/repo vs /tmp/repo_evil sibling prefix bypass.
+
+        Ensures is_relative_to() catches paths that share a common prefix
+        but are not actually inside the sandbox.
+        """
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        evil = tmp_path / "repo_evil"
+        evil.mkdir()
+        (evil / "secret.md").write_text("stolen skill", encoding="utf-8")
+        result = tool_load_skill("../repo_evil/secret.md", repo_root=repo)
         parsed = json.loads(result)
         assert "error" in parsed
 

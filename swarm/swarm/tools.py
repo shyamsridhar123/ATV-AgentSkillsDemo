@@ -54,8 +54,11 @@ def _check_command_blocklist(
     """
     patterns = blocked_patterns if blocked_patterns is not None else DEFAULT_BLOCKED_PATTERNS
     for pattern in patterns:
-        if re.search(pattern, command):
-            return f"Command blocked by security policy: matches pattern '{pattern}'"
+        try:
+            if re.search(pattern, command):
+                return f"Command blocked by security policy: matches pattern '{pattern}'"
+        except re.error as e:
+            return f"Invalid blocklist pattern '{pattern}': {e}"
     return None
 
 
@@ -73,7 +76,8 @@ def _resolve_sandboxed(relative_path: str, work_dir: Path) -> Path:
     resolved = (work_dir / relative_path).resolve()
     work_resolved = work_dir.resolve()
 
-    if not str(resolved).startswith(str(work_resolved)):
+    # Use is_relative_to to avoid prefix-bypass (e.g. /tmp/repo vs /tmp/repo_evil)
+    if not resolved.is_relative_to(work_resolved):
         raise ValueError(
             f"Path '{relative_path}' resolves to '{resolved}' which is outside "
             f"the working directory '{work_resolved}'"
