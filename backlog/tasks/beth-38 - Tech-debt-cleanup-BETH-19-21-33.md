@@ -4,9 +4,10 @@ title: 'Tech debt cleanup: BETH-19, 21, 33'
 status: Done
 assignee: []
 created_date: '2026-03-16 04:59'
-updated_date: '2026-03-16 05:06'
+updated_date: '2026-03-18 17:51'
 labels: []
 dependencies: []
+priority: medium
 ---
 
 ## Description

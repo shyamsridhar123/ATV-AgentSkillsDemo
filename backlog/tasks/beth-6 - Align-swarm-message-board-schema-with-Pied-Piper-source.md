@@ -4,9 +4,10 @@ title: Align swarm message board schema with Pied Piper source
 status: Done
 assignee: []
 created_date: '2026-03-15 05:03'
-updated_date: '2026-03-15 05:06'
+updated_date: '2026-03-18 17:51'
 labels: []
 dependencies: []
+priority: medium
 ---
 
 ## Description

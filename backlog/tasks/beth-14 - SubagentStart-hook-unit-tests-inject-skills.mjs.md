@@ -4,9 +4,10 @@ title: SubagentStart hook unit tests (inject-skills.mjs)
 status: Done
 assignee: []
 created_date: '2026-03-15 07:00'
-updated_date: '2026-03-15 15:50'
+updated_date: '2026-03-18 17:51'
 labels: []
 dependencies: []
+priority: medium
 ---
 
 ## Description

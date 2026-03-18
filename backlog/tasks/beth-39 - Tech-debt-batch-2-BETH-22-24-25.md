@@ -4,9 +4,10 @@ title: 'Tech debt batch 2: BETH-22, 24, 25'
 status: Done
 assignee: []
 created_date: '2026-03-16 05:13'
-updated_date: '2026-03-16 05:18'
+updated_date: '2026-03-18 17:51'
 labels: []
 dependencies: []
+priority: medium
 ---
 
 ## Description

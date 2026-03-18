@@ -4,9 +4,10 @@ title: 'Cat 2-10: Skill routing structural tests'
 status: Done
 assignee: []
 created_date: '2026-03-15 06:59'
-updated_date: '2026-03-15 15:50'
+updated_date: '2026-03-18 17:51'
 labels: []
 dependencies: []
+priority: medium
 ---
 
 ## Description

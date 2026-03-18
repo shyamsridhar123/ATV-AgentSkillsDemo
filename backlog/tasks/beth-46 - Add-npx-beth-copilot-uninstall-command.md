@@ -4,9 +4,10 @@ title: Add npx beth-copilot uninstall command
 status: Done
 assignee: []
 created_date: '2026-03-16 15:13'
-updated_date: '2026-03-16 15:20'
+updated_date: '2026-03-18 17:51'
 labels: []
 dependencies: []
+priority: medium
 ---
 
 ## Description

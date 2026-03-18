@@ -4,9 +4,10 @@ title: Add community skills and MCP config
 status: Done
 assignee: []
 created_date: '2026-03-13 20:09'
-updated_date: '2026-03-13 20:19'
+updated_date: '2026-03-18 17:51'
 labels: []
 dependencies: []
+priority: medium
 ---
 
 ## Description

@@ -4,9 +4,10 @@ title: Improve doctor command with fix guidance and MCP help
 status: Done
 assignee: []
 created_date: '2026-03-17 16:17'
-updated_date: '2026-03-17 16:29'
+updated_date: '2026-03-18 17:51'
 labels: []
 dependencies: []
+priority: medium
 ---
 
 ## Description

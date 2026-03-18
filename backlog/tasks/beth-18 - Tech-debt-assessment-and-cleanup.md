@@ -4,9 +4,10 @@ title: Tech debt assessment and cleanup
 status: Done
 assignee: []
 created_date: '2026-03-16 02:56'
-updated_date: '2026-03-16 03:13'
+updated_date: '2026-03-18 17:51'
 labels: []
 dependencies: []
+priority: medium
 ---
 
 ## Description

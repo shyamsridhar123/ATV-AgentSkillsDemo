@@ -4,9 +4,10 @@ title: MCP lifecycle E2E tests
 status: Done
 assignee: []
 created_date: '2026-03-17 05:36'
-updated_date: '2026-03-17 05:36'
+updated_date: '2026-03-18 17:51'
 labels: []
 dependencies: []
+priority: medium
 ---
 
 ## Description
