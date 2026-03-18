@@ -1,9 +1,10 @@
 ---
 id: BETH-54.2
 title: '[HIGH] F02: Fix path traversal in swarm tool_load_skill'
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-03-18 06:09'
+updated_date: '2026-03-18 14:46'
 labels: []
 dependencies: []
 parent_task_id: BETH-54

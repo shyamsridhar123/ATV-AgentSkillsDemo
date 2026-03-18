@@ -20,11 +20,46 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import subprocess
 from pathlib import Path
 from typing import Any, Callable
 
 from .board import MessageBoard
+
+
+# ---------------------------------------------------------------------------
+# Command blocklist — defense-in-depth against prompt injection RCE
+# ---------------------------------------------------------------------------
+
+DEFAULT_BLOCKED_PATTERNS: list[str] = [
+    r"\brm\s+(-\w+\s+)*/($|\s|\*)",        # rm [-rf] / or /*
+    r"\bcurl\b.*\|\s*\b(ba)?sh\b",           # curl ... | sh/bash
+    r"\bwget\b.*\|\s*\b(ba)?sh\b",           # wget ... | sh/bash
+    r"\b(nc|ncat|netcat)\b",                  # netcat variants
+    r"\bchmod\s+777\b",                       # chmod 777
+    r"\bmkfs\b",                               # make filesystem
+    r"\bdd\s+if=",                              # dd raw disk operations
+]
+
+
+def _check_command_blocklist(
+    command: str,
+    blocked_patterns: list[str] | None = None,
+) -> str | None:
+    """Check a command against blocked patterns.
+
+    Returns an error message string if the command matches a blocked pattern,
+    or None if the command is allowed.
+    """
+    patterns = blocked_patterns if blocked_patterns is not None else DEFAULT_BLOCKED_PATTERNS
+    for pattern in patterns:
+        try:
+            if re.search(pattern, command):
+                return f"Command blocked by security policy: matches pattern '{pattern}'"
+        except re.error as e:
+            return f"Invalid blocklist pattern '{pattern}': {e}"
+    return None
 
 
 # ---------------------------------------------------------------------------
@@ -41,7 +76,8 @@ def _resolve_sandboxed(relative_path: str, work_dir: Path) -> Path:
     resolved = (work_dir / relative_path).resolve()
     work_resolved = work_dir.resolve()
 
-    if not str(resolved).startswith(str(work_resolved)):
+    # Use is_relative_to to avoid prefix-bypass (e.g. /tmp/repo vs /tmp/repo_evil)
+    if not resolved.is_relative_to(work_resolved):
         raise ValueError(
             f"Path '{relative_path}' resolves to '{resolved}' which is outside "
             f"the working directory '{work_resolved}'"
@@ -96,8 +132,21 @@ def tool_edit_file(path: str, old_string: str, new_string: str, *, work_dir: Pat
     return json.dumps({"success": True, "path": path})
 
 
-def tool_run_command(command: str, *, work_dir: Path) -> str:
-    """Execute a shell command in the working directory. Returns stdout/stderr."""
+def tool_run_command(
+    command: str,
+    *,
+    work_dir: Path,
+    blocked_patterns: list[str] | None = None,
+) -> str:
+    """Execute a shell command in the working directory. Returns stdout/stderr.
+
+    Commands are checked against a blocklist before execution.
+    Pass ``blocked_patterns`` to override the default blocklist,
+    or an empty list to disable blocking.
+    """
+    blocked_reason = _check_command_blocklist(command, blocked_patterns)
+    if blocked_reason:
+        return json.dumps({"error": blocked_reason})
     try:
         result = subprocess.run(
             command,
@@ -206,7 +255,10 @@ def tool_read_messages(channel: str, *, board: MessageBoard, reader_id: str) -> 
 
 def tool_load_skill(skill_path: str, *, repo_root: Path) -> str:
     """Load a skill file from the repo."""
-    full_path = repo_root / skill_path
+    try:
+        full_path = _resolve_sandboxed(skill_path, repo_root)
+    except ValueError as e:
+        return json.dumps({"error": str(e)})
     if not full_path.is_file():
         return json.dumps({"error": f"Skill file not found: {skill_path}"})
     try:
@@ -367,6 +419,7 @@ def execute_tool(
     board: MessageBoard,
     agent_id: str,
     repo_root: Path,
+    blocked_patterns: list[str] | None = None,
 ) -> str:
     """Execute a tool by name with JSON arguments. Returns a string result.
 
@@ -403,7 +456,11 @@ def execute_tool(
                 args["path"], args["old_string"], args["new_string"], work_dir=work_dir
             )
         elif name == "run_command":
-            return tool_run_command(args["command"], work_dir=work_dir)
+            return tool_run_command(
+                args["command"],
+                work_dir=work_dir,
+                blocked_patterns=blocked_patterns,
+            )
         elif name == "list_directory":
             return tool_list_directory(args.get("path", "."), work_dir=work_dir)
         elif name == "search_files":

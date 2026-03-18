@@ -159,6 +159,9 @@ class SwarmConfig:
     # Test command (run after merges)
     test_command: str = "npm test"
 
+    # Command blocklist (patterns that tool_run_command rejects)
+    blocked_command_patterns: list[str] | None = None
+
     # Providers
     primary_provider: ProviderConfig = field(default_factory=ProviderConfig)
     fallback_provider: ProviderConfig | None = None
@@ -178,7 +181,7 @@ class SwarmConfig:
             "db_path", "poll_interval_seconds", "heartbeat_interval_seconds",
             "heartbeat_timeout_multiplier", "max_task_tokens_in",
             "max_task_tokens_out", "max_epic_spend_usd", "max_daily_spend_usd",
-            "test_command",
+            "test_command", "blocked_command_patterns",
         }
         for key in simple_fields:
             if key in resolved:
