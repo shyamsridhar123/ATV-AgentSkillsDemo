@@ -312,6 +312,7 @@ def agent_loop(
                 board=board,
                 agent_id=agent_id,
                 repo_root=repo_root,
+                blocked_patterns=config.blocked_command_patterns if config else None,
             )
 
             messages.append({

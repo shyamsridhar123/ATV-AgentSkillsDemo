@@ -1,9 +1,10 @@
 ---
 id: BETH-54.1
 title: '[HIGH] F01: Add command blocklist to swarm tool_run_command'
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-03-18 06:09'
+updated_date: '2026-03-18 14:46'
 labels: []
 dependencies: []
 parent_task_id: BETH-54
