@@ -37,9 +37,7 @@ from swarm.worker import Task, run_worker
 # Skip condition: check if DefaultAzureCredential can obtain a token
 # ---------------------------------------------------------------------------
 
-ENDPOINT = os.environ.get(
-    "AZURE_OPENAI_ENDPOINT", "https://beth-swarm-aoai.openai.azure.com/"
-)
+ENDPOINT = os.environ.get("AZURE_OPENAI_ENDPOINT", "")
 
 
 def _live_tests_enabled() -> bool:
@@ -66,7 +64,12 @@ requires_live = pytest.mark.skipif(
     reason="Live tests disabled — set BETH_LIVE_TESTS=1 to enable",
 )
 
-pytestmark = [pytest.mark.live, requires_live]
+requires_endpoint = pytest.mark.skipif(
+    not ENDPOINT,
+    reason="AZURE_OPENAI_ENDPOINT not set — configure your own Azure OpenAI resource",
+)
+
+pytestmark = [pytest.mark.live, requires_live, requires_endpoint]
 
 
 # ---------------------------------------------------------------------------
