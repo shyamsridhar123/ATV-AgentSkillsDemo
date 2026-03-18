@@ -119,7 +119,7 @@ function checkNodeVersion(cwd: string): CheckResult {
     name: 'Node.js',
     status: 'fail',
     message: `${version} (≥${minMajor} required)`,
-    details: 'Upgrade Node.js: https://nodejs.org/',
+    fixCommand: 'Upgrade Node.js: https://nodejs.org/',
   };
 }
 
@@ -143,7 +143,7 @@ function checkCli(name: string, command: string, installHint: string): CheckResu
       name,
       status: 'fail',
       message: 'not found',
-      details: `Install: ${installHint}`,
+      fixCommand: `Install: ${installHint}`,
     };
   }
 }
@@ -353,7 +353,9 @@ export function checkMcpServers(cwd: string): CheckResult {
       name: 'MCP Servers',
       status: 'fail',
       message: '.vscode/mcp.json is not valid JSON',
-      fixCommand: 'npx beth-copilot init --force',
+      issues: ['The corrupted file will be backed up and regenerated.'],
+      fixCommand: 'npx beth-copilot doctor --fix',
+      fixable: true,
     };
   }
 
@@ -449,6 +451,7 @@ export function fixMcpServers(cwd: string): string[] {
   // Add schema if missing
   if (!config['$schema']) {
     config = { '$schema': 'https://code.visualstudio.com/docs/copilot/chat/mcp-servers', ...config };
+    actions.push('Added $schema reference to mcp.json');
   }
 
   const servers = config.servers as Record<string, unknown>;
@@ -521,7 +524,8 @@ export async function doctor(options: DoctorOptions = {}, exitOnFailure = true):
     // Fix backlog init
     const backlogActions = fixBacklogInit(cwd);
     for (const action of backlogActions) {
-      log(`  ✓ ${action}`, COLORS.green);
+      const failed = action.startsWith('Failed');
+      log(`  ${failed ? '✗' : '✓'} ${action}`, failed ? COLORS.red : COLORS.green);
     }
 
     console.log('');

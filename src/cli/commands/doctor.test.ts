@@ -551,6 +551,7 @@ describe('fixMcpServers', () => {
     const vsDir = join(testDir, '.vscode');
     mkdirSync(vsDir, { recursive: true });
     const original = {
+      '$schema': 'https://code.visualstudio.com/docs/copilot/chat/mcp-servers',
       servers: {
         playwright: { command: 'npx', args: ['@playwright/mcp@0.0.68'] },
         backlog: { command: 'backlog', args: ['mcp', 'start'] },
@@ -597,9 +598,10 @@ describe('fixMcpServers', () => {
     mkdirSync(vsDir, { recursive: true });
     writeFileSync(join(vsDir, 'mcp.json'), JSON.stringify({ servers: {} }));
 
-    fixMcpServers(testDir);
+    const actions = fixMcpServers(testDir);
     const config = JSON.parse(readFileSync(join(vsDir, 'mcp.json'), 'utf-8'));
     assert.ok(config['$schema'], 'Should add $schema');
+    assert.ok(actions.some(a => a.includes('$schema')), 'Should record $schema action');
   });
 
   it('doctor check should pass after fix', () => {
