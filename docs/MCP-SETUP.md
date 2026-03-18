@@ -261,12 +261,41 @@ Some MCPs take time to initialize. VS Code shows status in the MCP Servers outpu
 
 ---
 
-## Security Notes
+## Security Considerations
+
+### Data Exposure by Server Type
+
+| Server | Type | What It Receives | Network |
+|--------|------|-----------------|---------|
+| **backlog** | Local process | Nothing external | None |
+| **shadcn/ui** | npx (npm) | Component queries | shadcn registry |
+| **Playwright** | npx (npm) | Page URLs, JS execution | Local + target sites |
+| **Azure** | npx (npm) | Azure resource queries | Azure APIs (authenticated) |
+| **DeepWiki** | HTTP endpoint | Your repository/code queries | `mcp.deepwiki.com` (third-party) |
+| **Web Search** | npx (npm) | Search queries | Brave API (third-party) |
+
+### Third-Party HTTP Endpoints
+
+These servers send your queries to external services you don't control:
+
+- **DeepWiki** (`https://mcp.deepwiki.com/mcp`) — your repository and code queries are sent to deepwiki.com. **OPTIONAL** — remove if you don't want queries leaving your network.
+- **Brave Web Search** — search queries are sent to Brave's API.
+
+### npx-Based Servers
+
+Servers using `npx` fetch and execute code from the npm registry at runtime:
+
+- `@playwright/mcp`, `shadcn`, `@azure/mcp-server`, `@brave/brave-search-mcp-server`
+- Pin versions (e.g., `@playwright/mcp@0.0.68`) to avoid supply-chain surprises.
+- Each invocation may download the package if not cached.
+
+### General Recommendations
 
 - **Never commit API keys.** Use environment variables.
 - **Azure MCP** uses your logged-in Azure CLI credentials.
-- **Web Search** queries are sent to Brave's API.
-- **Playwright** can execute JavaScript on pages—use carefully.
+- **Playwright** can execute JavaScript on pages — use carefully.
+- **Review before enabling** — only add servers you actually need.
+- **Pin versions** for all npx-based servers to avoid unreviewed updates.
 
 ---
 

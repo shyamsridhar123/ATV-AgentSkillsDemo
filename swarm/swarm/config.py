@@ -6,6 +6,7 @@ from the environment. Provides typed access to all swarm settings.
 
 from __future__ import annotations
 
+import logging
 import os
 import re
 from dataclasses import dataclass, field
@@ -13,6 +14,16 @@ from pathlib import Path
 from typing import Any, Literal
 
 import yaml
+
+logger = logging.getLogger(__name__)
+
+# Patterns that indicate dangerous pipe-to-shell in test_command.
+# test_command runs with shell=True — this is a safety rail.
+# Catches: "| sh", "| /bin/bash", "| env sh", "| /usr/bin/env bash", etc.
+_SUSPICIOUS_TEST_CMD = re.compile(
+    r"\|\s*(?:/\S*/)?(?:env\s+)?(sh|bash|zsh|dash|ksh)\b",
+    re.IGNORECASE,
+)
 
 AuthMode = Literal["key", "identity"]
 _VALID_AUTH_MODES: set[str] = {"key", "identity"}
@@ -131,6 +142,20 @@ class ProviderConfig:
 # ---------------------------------------------------------------------------
 
 
+def _validate_test_command(cmd: str) -> None:
+    """Reject test_command values that contain pipe-to-shell patterns.
+
+    test_command runs with ``shell=True`` (needed for pipelines and builtins).
+    Raises ``ValueError`` if the command pipes into a shell interpreter
+    (sh, bash, zsh, dash, ksh) — including via absolute paths or ``env``.
+    """
+    if _SUSPICIOUS_TEST_CMD.search(cmd):
+        raise ValueError(
+            f"test_command contains a suspicious pipe-to-shell pattern: {cmd!r}. "
+            "Piping into sh/bash/zsh is not allowed for safety."
+        )
+
+
 @dataclass
 class SwarmConfig:
     """Top-level swarm configuration.
@@ -194,7 +219,9 @@ class SwarmConfig:
         if "model_routing" in resolved:
             kwargs["model_routing"] = ModelRouting.from_dict(resolved["model_routing"])
 
-        return cls(**kwargs)
+        instance = cls(**kwargs)
+        _validate_test_command(instance.test_command)
+        return instance
 
     @classmethod
     def from_yaml(cls, path: str | Path) -> SwarmConfig:

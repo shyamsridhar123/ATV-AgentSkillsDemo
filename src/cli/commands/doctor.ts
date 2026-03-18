@@ -12,7 +12,7 @@
  * Supports --fix to auto-repair common issues (MCP config, backlog init).
  */
 
-import { execSync } from 'child_process';
+import { execFileSync } from 'child_process';
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import matter from 'gray-matter';
@@ -128,7 +128,7 @@ function checkNodeVersion(cwd: string): CheckResult {
  */
 function checkCli(name: string, command: string, installHint: string): CheckResult {
   try {
-    const output = execSync(`${command} --version`, { 
+    const output = execFileSync(command, ['--version'], { 
       encoding: 'utf-8',
       stdio: ['pipe', 'pipe', 'pipe'],
     }).trim();
@@ -485,7 +485,7 @@ function fixBacklogInit(cwd: string): string[] {
   }
 
   try {
-    execSync('backlog init', {
+    execFileSync('backlog', ['init'], {
       cwd,
       encoding: 'utf-8',
       stdio: ['pipe', 'pipe', 'pipe'],

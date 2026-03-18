@@ -1,9 +1,10 @@
 ---
 id: BETH-54.5
 title: '[MED] F05: Exclude test files from npm package'
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-03-18 06:10'
+updated_date: '2026-03-18 16:57'
 labels: []
 dependencies: []
 parent_task_id: BETH-54

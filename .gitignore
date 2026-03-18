@@ -64,3 +64,10 @@ sbom.json
 # Swarm user config (users copy from swarm.yaml.example)
 swarm/swarm.yaml
 swarm/.venv/
+
+# Private keys and certificates
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks

@@ -1,9 +1,10 @@
 ---
 id: BETH-54.8
 title: '[LOW] F10: Sanitize swarm worker_id from LLM output'
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-03-18 06:11'
+updated_date: '2026-03-18 16:57'
 labels: []
 dependencies: []
 parent_task_id: BETH-54

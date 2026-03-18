@@ -1,9 +1,10 @@
 ---
 id: BETH-54.3
 title: '[MED] F03: Document shell=True in swarm merge_worker test_command'
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-03-18 06:10'
+updated_date: '2026-03-18 16:57'
 labels: []
 dependencies: []
 parent_task_id: BETH-54
