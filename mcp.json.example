@@ -1,19 +1,24 @@
 {
   "$schema": "https://code.visualstudio.com/docs/copilot/chat/mcp-servers",
+  "_security_notice": "npx-based servers fetch and execute remote code from the npm registry. HTTP-type servers send your queries to third-party endpoints. Review each server before enabling.",
   "servers": {
     "playwright": {
+      "_comment": "npx: fetches @playwright/mcp from npm and runs locally",
       "command": "npx",
       "args": ["@playwright/mcp@0.0.68"]
     },
     "backlog": {
+      "_comment": "Local process — no external network calls",
       "command": "backlog",
       "args": ["mcp", "start"]
     },
     "shadcn": {
+      "_comment": "npx: fetches shadcn from npm and runs locally, queries shadcn registry",
       "command": "npx",
       "args": ["shadcn@3.7.0", "mcp"]
     },
     "deepwiki": {
+      "_comment": "OPTIONAL third-party: sends your queries to deepwiki.com (external HTTP endpoint)",
       "type": "http",
       "url": "https://mcp.deepwiki.com/mcp"
     }

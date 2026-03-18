@@ -33,6 +33,10 @@ max_task_tokens_out: 10000
 max_epic_spend_usd: 5.0
 max_daily_spend_usd: 50.0
 
+# SECURITY NOTE: test_command runs with shell=True (required for pipelines
+# and shell builtins). The config loader rejects commands containing
+# pipe-to-shell patterns (e.g., "| sh", "| bash") as a safety measure.
+# Only use trusted, operator-controlled commands here.
 test_command: "npm test"
 
 # Primary: Azure OpenAI with managed identity (RECOMMENDED)

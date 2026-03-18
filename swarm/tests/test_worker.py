@@ -9,7 +9,7 @@ import pytest
 
 from swarm.board import MessageBoard
 from swarm.config import SwarmConfig, ProviderConfig, ModelRouting, ModelTier
-from swarm.worker import Task, _build_task_prompt, _detect_changed_files, run_worker
+from swarm.worker import Task, _build_task_prompt, _detect_changed_files, run_worker, sanitize_worker_id
 
 
 # ---------------------------------------------------------------------------
@@ -270,3 +270,37 @@ class TestRunWorker:
         messages = call_args.kwargs["messages"]
         system_msg = messages[0]["content"]
         assert "Test Skill" in system_msg
+
+
+# ---------------------------------------------------------------------------
+# sanitize_worker_id (BETH-54.8)
+# ---------------------------------------------------------------------------
+
+
+class TestSanitizeWorkerId:
+    def test_normal_id_unchanged(self) -> None:
+        assert sanitize_worker_id("developer-42") == "developer-42"
+
+    def test_underscores_kept(self) -> None:
+        assert sanitize_worker_id("dev_lead-task_1") == "dev_lead-task_1"
+
+    def test_slashes_stripped(self) -> None:
+        assert sanitize_worker_id("../../etc/passwd") == "etcpasswd"
+
+    def test_backticks_stripped(self) -> None:
+        assert sanitize_worker_id("`rm -rf /`") == "rm-rf"
+
+    def test_spaces_stripped(self) -> None:
+        assert sanitize_worker_id("dev worker 1") == "devworker1"
+
+    def test_unicode_stripped(self) -> None:
+        assert sanitize_worker_id("dev-\u00e9\u00e0\u00fc-42") == "dev-42"
+
+    def test_empty_after_sanitize_returns_default(self) -> None:
+        assert sanitize_worker_id("///...") == "worker-unknown"
+
+    def test_dots_stripped(self) -> None:
+        assert sanitize_worker_id("dev.worker.1") == "devworker1"
+
+    def test_leading_trailing_dashes_stripped(self) -> None:
+        assert sanitize_worker_id("--dev--") == "dev"

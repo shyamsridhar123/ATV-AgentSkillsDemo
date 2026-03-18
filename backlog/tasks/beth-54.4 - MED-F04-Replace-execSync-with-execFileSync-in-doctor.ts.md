@@ -1,9 +1,10 @@
 ---
 id: BETH-54.4
 title: '[MED] F04: Replace execSync with execFileSync in doctor.ts'
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-03-18 06:10'
+updated_date: '2026-03-18 16:57'
 labels: []
 dependencies: []
 parent_task_id: BETH-54

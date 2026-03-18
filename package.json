@@ -28,7 +28,12 @@
   },
   "files": [
     "bin/",
-    "dist/",
+    "dist/index.*",
+    "dist/cli/",
+    "dist/core/",
+    "dist/lib/",
+    "!dist/**/*.test.*",
+    "!dist/**/*.e2e.test.*",
     "templates/",
     "assets/",
     "sbom.json",

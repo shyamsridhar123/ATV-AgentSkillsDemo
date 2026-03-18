@@ -1,9 +1,10 @@
 ---
 id: BETH-54
 title: Security hardening — audit findings F01-F11
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-03-18 06:09'
+updated_date: '2026-03-18 16:57'
 labels: []
 dependencies: []
 priority: high

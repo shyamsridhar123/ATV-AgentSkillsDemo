@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -32,6 +33,26 @@ from .llm import CompletionResult, agent_loop, create_client
 from .skills import load_injected_skills
 
 logger = logging.getLogger(__name__)
+
+# Regex for sanitising worker_id — keep only safe chars for branch/dir names
+_SAFE_ID_RE = re.compile(r"[^a-zA-Z0-9_-]")
+
+_DEFAULT_WORKER_ID = "worker-unknown"
+
+
+def sanitize_worker_id(raw: str) -> str:
+    """Sanitize a worker_id for use in git branch names and directory paths.
+
+    Strips everything except alphanumeric, dash, and underscore.
+    Collapses consecutive dashes. Falls back to a safe default if nothing remains.
+    """
+    cleaned = _SAFE_ID_RE.sub("", raw)
+    # Collapse runs of dashes
+    cleaned = re.sub(r"-{2,}", "-", cleaned).strip("-_")
+    if not cleaned:
+        logger.warning("worker_id empty after sanitization (raw=%r), using default", raw)
+        return _DEFAULT_WORKER_ID
+    return cleaned
 
 
 # ---------------------------------------------------------------------------
@@ -295,7 +316,8 @@ def run_worker_in_worktree(
     agents_dir : Path | None
         Directory containing .agent.md files.
     """
-    worker_id = f"{task.agent_role}-{task.task_id or task.post_id}"
+    raw_id = f"{task.agent_role}-{task.task_id or task.post_id}"
+    worker_id = sanitize_worker_id(raw_id)
 
     # 1. Acquire claims if configured
     if claims is not None and claimed_paths:
