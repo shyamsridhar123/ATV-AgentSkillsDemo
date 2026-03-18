@@ -45,6 +45,7 @@ import {
   readFileSync,
   readdirSync,
   statSync,
+  symlinkSync,
 } from 'fs';
 import { join, resolve } from 'path';
 import { tmpdir } from 'os';
@@ -294,6 +295,62 @@ describe('init logic: copyDirRecursive behavior', () => {
       assert.ok(
         !existsSync(join(testDir, 'mcp.json.example')),
         'mcp.json.example should not be created with --skip-mcp'
+      );
+    });
+  });
+
+  describe('symlink detection (F08 security fix)', () => {
+    // Expected: symlink destinations are skipped with a warning, not followed
+    // Note: symlink tests are POSIX-only — Windows requires elevated privileges
+    // and directory symlinks need a 'junction' type argument.
+    const isWindows = process.platform === 'win32';
+
+    it('should skip .github directory when it is a symlink', { skip: isWindows }, () => {
+      // Create a target directory for the symlink to point to
+      const symlinkTarget = join(testDir, 'symlink-target');
+      mkdirSync(symlinkTarget, { recursive: true });
+
+      // Create .github as a symlink pointing to our target
+      symlinkSync(symlinkTarget, join(testDir, '.github'));
+
+      const result = runInit(testDir);
+      const combined = result.stdout + result.stderr;
+
+      // Init should succeed (not crash)
+      assert.strictEqual(result.code, 0, 'Init should succeed when .github is a symlink');
+
+      // Should warn about the symlink
+      assert.ok(
+        combined.includes('symlink'),
+        'Should warn about skipped symlink'
+      );
+
+      // The symlink target should NOT have agent files copied into it
+      assert.ok(
+        !existsSync(join(symlinkTarget, 'agents')),
+        'Symlink target should not receive copied files'
+      );
+    });
+
+    it('should skip file-level symlinks at destination', { skip: isWindows }, () => {
+      // First init to create the directory structure
+      runInit(testDir);
+
+      // Replace an agent file with a symlink to a temp file (not /dev/null for portability)
+      const symlinkTarget = join(testDir, 'dummy-target');
+      writeFileSync(symlinkTarget, 'dummy');
+      const bethAgent = join(testDir, '.github', 'agents', 'beth.agent.md');
+      rmSync(bethAgent);
+      symlinkSync(symlinkTarget, bethAgent);
+
+      // Re-init with --force (which would normally overwrite)
+      const result = runInit(testDir, ['--force']);
+      const combined = result.stdout + result.stderr;
+
+      assert.strictEqual(result.code, 0, 'Init should succeed when agent file is a symlink');
+      assert.ok(
+        combined.includes('symlink'),
+        'Should warn about skipped symlink file'
       );
     });
   });

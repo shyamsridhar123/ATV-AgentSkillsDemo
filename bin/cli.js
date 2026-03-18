@@ -2,7 +2,7 @@
 
 import { fileURLToPath } from 'url';
 import { basename, dirname, join, relative } from 'path';
-import { existsSync, mkdirSync, readdirSync, statSync, copyFileSync, readFileSync, writeFileSync, unlinkSync, chmodSync, rmSync } from 'fs';
+import { existsSync, mkdirSync, readdirSync, statSync, lstatSync, copyFileSync, readFileSync, writeFileSync, unlinkSync, chmodSync, rmSync } from 'fs';
 import { createRequire } from 'module';
 import { execSync, execFileSync, spawn } from 'child_process';
 
@@ -642,8 +642,12 @@ function copyDirRecursive(src, dest, options = {}) {
   const { force = false, copiedFiles = [] } = options;
   
   if (existsSync(dest)) {
-    const destStats = statSync(dest);
-    if (!destStats.isDirectory()) {
+    const destLstat = lstatSync(dest);
+    if (destLstat.isSymbolicLink()) {
+      logWarning(`Skipped symlink: ${relative(process.cwd(), dest)} (symlinks are not followed for security)`);
+      return copiedFiles;
+    }
+    if (!destLstat.isDirectory()) {
       if (force) {
         // Destination exists as a file but should be a directory - remove it
         unlinkSync(dest);
@@ -674,12 +678,19 @@ function copyDirRecursive(src, dest, options = {}) {
     if (stats.isDirectory()) {
       copyDirRecursive(srcPath, destPath, { force, copiedFiles });
     } else {
-      if (existsSync(destPath) && !force) {
-        logWarning(`Skipped (exists): ${relative(process.cwd(), destPath)}`);
-      } else {
-        copyFileSync(srcPath, destPath);
-        copiedFiles.push(relative(process.cwd(), destPath));
+      if (existsSync(destPath)) {
+        const destEntryLstat = lstatSync(destPath);
+        if (destEntryLstat.isSymbolicLink()) {
+          logWarning(`Skipped symlink: ${relative(process.cwd(), destPath)} (symlinks are not followed for security)`);
+          continue;
+        }
+        if (!force) {
+          logWarning(`Skipped (exists): ${relative(process.cwd(), destPath)}`);
+          continue;
+        }
       }
+      copyFileSync(srcPath, destPath);
+      copiedFiles.push(relative(process.cwd(), destPath));
     }
   }
   
