@@ -301,8 +301,11 @@ describe('init logic: copyDirRecursive behavior', () => {
 
   describe('symlink detection (F08 security fix)', () => {
     // Expected: symlink destinations are skipped with a warning, not followed
+    // Note: symlink tests are POSIX-only — Windows requires elevated privileges
+    // and directory symlinks need a 'junction' type argument.
+    const isWindows = process.platform === 'win32';
 
-    it('should skip .github directory when it is a symlink', () => {
+    it('should skip .github directory when it is a symlink', { skip: isWindows }, () => {
       // Create a target directory for the symlink to point to
       const symlinkTarget = join(testDir, 'symlink-target');
       mkdirSync(symlinkTarget, { recursive: true });
@@ -329,14 +332,16 @@ describe('init logic: copyDirRecursive behavior', () => {
       );
     });
 
-    it('should skip file-level symlinks at destination', () => {
+    it('should skip file-level symlinks at destination', { skip: isWindows }, () => {
       // First init to create the directory structure
       runInit(testDir);
 
-      // Replace an agent file with a symlink to /dev/null
+      // Replace an agent file with a symlink to a temp file (not /dev/null for portability)
+      const symlinkTarget = join(testDir, 'dummy-target');
+      writeFileSync(symlinkTarget, 'dummy');
       const bethAgent = join(testDir, '.github', 'agents', 'beth.agent.md');
       rmSync(bethAgent);
-      symlinkSync('/dev/null', bethAgent);
+      symlinkSync(symlinkTarget, bethAgent);
 
       // Re-init with --force (which would normally overwrite)
       const result = runInit(testDir, ['--force']);
