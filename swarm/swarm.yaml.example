@@ -1,6 +1,17 @@
 # Beth Swarm Configuration — Example
 # Copy to swarm.yaml and configure before running.
 #
+# SETUP (you need your own Azure OpenAI resource):
+#   1. Create an Azure OpenAI resource: az cognitiveservices account create ...
+#   2. Deploy a model (e.g. gpt-4o): az cognitiveservices account deployment create ...
+#   3. Assign yourself the RBAC role:
+#      az role assignment create --assignee <your-user-or-sp> \
+#        --role "Cognitive Services OpenAI User" \
+#        --scope /subscriptions/<sub>/resourceGroups/<rg>/providers/Microsoft.CognitiveServices/accounts/<resource>
+#   4. Copy this file: cp swarm.yaml.example swarm.yaml
+#   5. Replace "your-resource" with your Azure OpenAI resource name
+#   6. Update deployment names under model_routing to match your deployments
+#
 # Auth mode: "identity" (RECOMMENDED) or "key"
 #
 # identity mode (no secrets needed):
