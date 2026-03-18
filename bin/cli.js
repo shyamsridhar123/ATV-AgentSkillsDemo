@@ -582,7 +582,7 @@ function showHelp() {
 ${COLORS.bright}Commands:${COLORS.reset}
   ${COLORS.cyan}npx beth-copilot init${COLORS.reset} [options]     Initialize Beth in current directory
   ${COLORS.cyan}npx beth-copilot update${COLORS.reset} [options]   Update project files to latest templates
-  ${COLORS.cyan}npx beth-copilot doctor${COLORS.reset}             Check system health and dependencies
+  ${COLORS.cyan}npx beth-copilot doctor${COLORS.reset} [options]   Check system health and auto-fix issues
   ${COLORS.cyan}npx beth-copilot land${COLORS.reset} [options]     Automated session completion (test, commit, push)
   ${COLORS.cyan}npx beth-copilot quickstart${COLORS.reset}         Run init + doctor
   ${COLORS.cyan}npx beth-copilot pre-push-guard${COLORS.reset}     Run branch discipline checks (used by git hook)
@@ -594,6 +594,10 @@ ${COLORS.bright}Init Options:${COLORS.reset}
   --skip-backlog                      Don't create Backlog.md
   --skip-mcp                          Don't create mcp.json.example
   --verbose                           Show detailed diagnostics on errors
+
+${COLORS.bright}Doctor Options:${COLORS.reset}
+  --fix                               Auto-repair fixable issues (MCP servers, backlog init)
+  --verbose                           Show all agent/skill issues (not just first 5)
 
 ${COLORS.bright}Update Options:${COLORS.reset}
   --check-only                        Report update status without modifying files
@@ -612,6 +616,7 @@ ${COLORS.bright}Examples:${COLORS.reset}
   npx beth-copilot update             Update to latest templates
   npx beth-copilot update --check-only See what changed without modifying
   npx beth-copilot doctor             Verify installation health
+  npx beth-copilot doctor --fix       Auto-repair fixable issues
   npx beth-copilot land -m "feat: new component"  Commit and push session work
 
 ${COLORS.bright}What gets installed:${COLORS.reset}
@@ -907,7 +912,7 @@ ${COLORS.bright}Pro tip:${COLORS.reset} Start every session with ${COLORS.cyan}@
   console.log(`
 ${COLORS.bright}Commands:${COLORS.reset}
   ${COLORS.cyan}npx beth-copilot update${COLORS.reset}     Update Beth to the latest templates
-  ${COLORS.cyan}npx beth-copilot doctor${COLORS.reset}     Check system health and dependencies
+  ${COLORS.cyan}npx beth-copilot doctor${COLORS.reset}     Check system health (use --fix to auto-repair)
   ${COLORS.cyan}npx beth-copilot land${COLORS.reset}       Automated session completion (test, commit, push)
   ${COLORS.cyan}npx beth-copilot help${COLORS.reset}       Show all commands, options, and documentation
 `);
@@ -1113,7 +1118,7 @@ async function uninstall() {
 
 // Input validation constants
 const ALLOWED_COMMANDS = ['init', 'help', '--help', '-h', 'doctor', 'quickstart', 'pre-push-guard', 'update', 'land', 'uninstall'];
-const ALLOWED_FLAGS = ['--force', '--skip-backlog', '--skip-mcp', '--verbose', '--reason', '-r', '-f', '--skip-tests', '--message', '-m', '--dry-run', '--check-only'];
+const ALLOWED_FLAGS = ['--force', '--skip-backlog', '--skip-mcp', '--verbose', '--reason', '-r', '-f', '--skip-tests', '--message', '-m', '--dry-run', '--check-only', '--fix'];
 const MAX_ARG_LENGTH = 50;
 
 // Validate and sanitize input
@@ -1147,6 +1152,7 @@ const options = {
   skipBacklog: args.includes('--skip-backlog'),
   skipMcp: args.includes('--skip-mcp'),
   verbose: args.includes('--verbose'),
+  fix: args.includes('--fix'),
 };
 
 // Set global verbose flag for logDebug
