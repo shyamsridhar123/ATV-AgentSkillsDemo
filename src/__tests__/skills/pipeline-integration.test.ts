@@ -18,14 +18,26 @@
 import { describe, it, expect } from 'vitest';
 import { execFileSync } from 'node:child_process';
 import { join } from 'node:path';
+import type { InjectHookOutput, VerifyHookOutput } from '../hook-test-types';
 
 const INJECT_SCRIPT = join(process.cwd(), '.github/hooks/scripts/inject-skills.mjs');
 const VERIFY_SCRIPT = join(process.cwd(), '.github/hooks/scripts/verify-skills.mjs');
 const PROJECT_ROOT = process.cwd();
 
-/** Run a hook script with JSON input, return parsed output */
-function runScript(scriptPath: string, input: Record<string, unknown>): Record<string, unknown> {
-  const result = execFileSync('node', [scriptPath], {
+/** Run inject-skills.mjs with JSON input */
+function runInject(input: Record<string, unknown>): InjectHookOutput {
+  const result = execFileSync('node', [INJECT_SCRIPT], {
+    input: JSON.stringify(input),
+    encoding: 'utf8',
+    cwd: PROJECT_ROOT,
+    timeout: 10000,
+  });
+  return JSON.parse(result);
+}
+
+/** Run verify-skills.mjs with JSON input */
+function runVerify(input: Record<string, unknown>): VerifyHookOutput {
+  const result = execFileSync('node', [VERIFY_SCRIPT], {
     input: JSON.stringify(input),
     encoding: 'utf8',
     cwd: PROJECT_ROOT,
@@ -37,21 +49,21 @@ function runScript(scriptPath: string, input: Record<string, unknown>): Record<s
 /** Simulate the full pipeline: inject → (subagent work) → verify first stop → verify retry */
 function runPipeline(agentType: string) {
   // Step 1: SubagentStart — inject skills
-  const injectOutput = runScript(INJECT_SCRIPT, {
+  const injectOutput = runInject({
     agent_type: agentType,
     cwd: PROJECT_ROOT,
-  }) as any;
+  });
 
   // Step 2: SubagentStop (first attempt) — should block
-  const firstStop = runScript(VERIFY_SCRIPT, {
+  const firstStop = runVerify({
     agent_type: agentType,
-  }) as any;
+  });
 
   // Step 3: SubagentStop (retry with stop_hook_active) — should pass
-  const retryStop = runScript(VERIFY_SCRIPT, {
+  const retryStop = runVerify({
     agent_type: agentType,
     stop_hook_active: true,
-  }) as any;
+  });
 
   return { injectOutput, firstStop, retryStop };
 }
@@ -113,21 +125,21 @@ describe('Unknown agent types pass through cleanly', () => {
   const UNKNOWN_AGENTS = ['orchestrator', 'cto', 'intern', '', 'DEVELOPER'];
 
   it.each(UNKNOWN_AGENTS)('agent type "%s" does not crash inject', (agentType) => {
-    const output = runScript(INJECT_SCRIPT, {
+    const output = runInject({
       agent_type: agentType,
       cwd: PROJECT_ROOT,
-    }) as any;
+    });
     expect(output.continue).toBe(true);
     // Unknown agents should NOT get additionalContext
     expect(output.hookSpecificOutput).toBeUndefined();
   });
 
   it.each(UNKNOWN_AGENTS)('agent type "%s" still gets blocked by verify (first stop)', (agentType) => {
-    const output = runScript(VERIFY_SCRIPT, {
+    const output = runVerify({
       agent_type: agentType,
-    }) as any;
+    });
     // Verify blocks ALL first stops regardless of agent type
-    expect(output.hookSpecificOutput.decision).toBe('block');
+    expect(output.hookSpecificOutput!.decision).toBe('block');
   });
 });
 
@@ -135,27 +147,27 @@ describe('Unknown agent types pass through cleanly', () => {
 
 describe('Malformed input handling', () => {
   it('inject handles missing agent_type gracefully', () => {
-    const output = runScript(INJECT_SCRIPT, { cwd: PROJECT_ROOT }) as any;
+    const output = runInject({ cwd: PROJECT_ROOT });
     expect(output.continue).toBe(true);
   });
 
   it('inject handles empty object gracefully', () => {
-    const output = runScript(INJECT_SCRIPT, {}) as any;
+    const output = runInject({});
     expect(output.continue).toBe(true);
   });
 
   it('verify handles empty object gracefully (blocks on first attempt)', () => {
-    const output = runScript(VERIFY_SCRIPT, {}) as any;
-    expect(output.hookSpecificOutput.decision).toBe('block');
+    const output = runVerify({});
+    expect(output.hookSpecificOutput!.decision).toBe('block');
   });
 
   it('inject handles non-string agent_type gracefully', () => {
-    const output = runScript(INJECT_SCRIPT, { agent_type: 42 }) as any;
+    const output = runInject({ agent_type: 42 });
     expect(output.continue).toBe(true);
   });
 
   it('inject handles null agent_type gracefully', () => {
-    const output = runScript(INJECT_SCRIPT, { agent_type: null }) as any;
+    const output = runInject({ agent_type: null });
     expect(output.continue).toBe(true);
   });
 
@@ -167,7 +179,7 @@ describe('Malformed input handling', () => {
       cwd: PROJECT_ROOT,
       timeout: 10000,
     });
-    const injectOutput = JSON.parse(injectResult);
+    const injectOutput: InjectHookOutput = JSON.parse(injectResult);
     expect(injectOutput.continue).toBe(true);
 
     // verify-skills.mjs
@@ -177,7 +189,7 @@ describe('Malformed input handling', () => {
       cwd: PROJECT_ROOT,
       timeout: 10000,
     });
-    const verifyOutput = JSON.parse(verifyResult);
+    const verifyOutput: VerifyHookOutput = JSON.parse(verifyResult);
     expect(verifyOutput.continue).toBe(true);
   });
 });
@@ -186,11 +198,11 @@ describe('Malformed input handling', () => {
 
 describe('Injected skill content is real, not placeholders', () => {
   it('developer context contains actual vercel-react-best-practices content', () => {
-    const output = runScript(INJECT_SCRIPT, {
+    const output = runInject({
       agent_type: 'developer',
       cwd: PROJECT_ROOT,
-    }) as any;
-    const ctx = output.hookSpecificOutput.additionalContext;
+    });
+    const ctx = output.hookSpecificOutput!.additionalContext;
     // The inject layer loads the actual SKILL.md file content
     // Verify it contains real content, not just the path
     expect(ctx).toContain('React');
@@ -198,29 +210,29 @@ describe('Injected skill content is real, not placeholders', () => {
   });
 
   it('ux-designer context contains actual web-design-guidelines content', () => {
-    const output = runScript(INJECT_SCRIPT, {
+    const output = runInject({
       agent_type: 'ux-designer',
       cwd: PROJECT_ROOT,
-    }) as any;
-    const ctx = output.hookSpecificOutput.additionalContext;
+    });
+    const ctx = output.hookSpecificOutput!.additionalContext;
     expect(ctx.length).toBeGreaterThan(500);
   });
 
   it('tester context contains actual web-design-guidelines content', () => {
-    const output = runScript(INJECT_SCRIPT, {
+    const output = runInject({
       agent_type: 'tester',
       cwd: PROJECT_ROOT,
-    }) as any;
-    const ctx = output.hookSpecificOutput.additionalContext;
+    });
+    const ctx = output.hookSpecificOutput!.additionalContext;
     expect(ctx.length).toBeGreaterThan(500);
   });
 
   it('researcher context contains actual web-search content', () => {
-    const output = runScript(INJECT_SCRIPT, {
+    const output = runInject({
       agent_type: 'researcher',
       cwd: PROJECT_ROOT,
-    }) as any;
-    const ctx = output.hookSpecificOutput.additionalContext;
+    });
+    const ctx = output.hookSpecificOutput!.additionalContext;
     expect(ctx.length).toBeGreaterThan(200);
   });
 });
@@ -230,30 +242,30 @@ describe('Injected skill content is real, not placeholders', () => {
 describe('Cross-hook consistency', () => {
   it('verify challenge text mentions skills that inject actually loaded', () => {
     // The verify hook should challenge about skills — and inject should have provided them
-    const injectOutput = runScript(INJECT_SCRIPT, {
+    const injectOutput = runInject({
       agent_type: 'developer',
       cwd: PROJECT_ROOT,
-    }) as any;
-    const verifyOutput = runScript(VERIFY_SCRIPT, {
+    });
+    const verifyOutput = runVerify({
       agent_type: 'developer',
-    }) as any;
+    });
 
     // Inject loaded skills
-    const ctx = injectOutput.hookSpecificOutput.additionalContext;
+    const ctx = injectOutput.hookSpecificOutput!.additionalContext;
     expect(ctx).toContain('MANDATORY');
 
     // Verify challenges about those skills
-    const reason = verifyOutput.hookSpecificOutput.reason;
+    const reason = verifyOutput.hookSpecificOutput!.reason;
     expect(reason).toContain('MANDATORY skills');
   });
 
   it('all 6 agents produce different inject contexts', () => {
     const contexts = KNOWN_AGENTS.map((agent) => {
-      const output = runScript(INJECT_SCRIPT, {
+      const output = runInject({
         agent_type: agent,
         cwd: PROJECT_ROOT,
-      }) as any;
-      return output.hookSpecificOutput.additionalContext;
+      });
+      return output.hookSpecificOutput!.additionalContext;
     });
 
     // Every agent should get a unique context
@@ -264,8 +276,8 @@ describe('Cross-hook consistency', () => {
   it('verify produces identical challenge for all agent types', () => {
     // The compliance gate is agent-agnostic — same challenge for everyone
     const challenges = KNOWN_AGENTS.map((agent) => {
-      const output = runScript(VERIFY_SCRIPT, { agent_type: agent }) as any;
-      return output.hookSpecificOutput.reason;
+      const output = runVerify({ agent_type: agent });
+      return output.hookSpecificOutput!.reason;
     });
 
     const uniqueChallenges = new Set(challenges);

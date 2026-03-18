@@ -9,12 +9,13 @@
 import { describe, it, expect } from 'vitest';
 import { execFileSync } from 'node:child_process';
 import { join } from 'node:path';
+import type { InjectHookOutput } from './hook-test-types';
 
 const SCRIPT_PATH = join(process.cwd(), '.github/hooks/scripts/inject-skills.mjs');
 const PROJECT_ROOT = process.cwd();
 
 /** Helper: pipe JSON input to inject-skills.mjs and parse the JSON output */
-function runHook(input: Record<string, unknown>): Record<string, unknown> {
+function runHook(input: Record<string, unknown>): InjectHookOutput {
   const result = execFileSync('node', [SCRIPT_PATH], {
     input: JSON.stringify(input),
     encoding: 'utf8',
@@ -27,7 +28,7 @@ function runHook(input: Record<string, unknown>): Record<string, unknown> {
 /** Helper: extract additionalContext string from hook output */
 function getContext(input: Record<string, unknown>): string {
   const output = runHook(input);
-  return (output as any).hookSpecificOutput?.additionalContext ?? '';
+  return output.hookSpecificOutput?.additionalContext ?? '';
 }
 
 // ─── Core behavior ─────────────────────────────────────────────────────────
@@ -39,9 +40,9 @@ describe('inject-skills.mjs: output structure', () => {
   });
 
   it('should include hookSpecificOutput with SubagentStart event name', () => {
-    const output = runHook({ agent_type: 'developer', cwd: PROJECT_ROOT }) as any;
+    const output = runHook({ agent_type: 'developer', cwd: PROJECT_ROOT });
     expect(output.hookSpecificOutput).toBeDefined();
-    expect(output.hookSpecificOutput.hookEventName).toBe('SubagentStart');
+    expect(output.hookSpecificOutput!.hookEventName).toBe('SubagentStart');
   });
 });
 
