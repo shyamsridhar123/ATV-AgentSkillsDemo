@@ -19,7 +19,11 @@ logger = logging.getLogger(__name__)
 
 # Patterns that indicate dangerous pipe-to-shell in test_command.
 # test_command runs with shell=True — this is a safety rail.
-_SUSPICIOUS_TEST_CMD = re.compile(r"\|\s*(sh|bash|zsh|dash|ksh)\b")
+# Catches: "| sh", "| /bin/bash", "| env sh", "| /usr/bin/env bash", etc.
+_SUSPICIOUS_TEST_CMD = re.compile(
+    r"\|\s*(?:/\S*/)?(?:env\s+)?(sh|bash|zsh|dash|ksh)\b",
+    re.IGNORECASE,
+)
 
 AuthMode = Literal["key", "identity"]
 _VALID_AUTH_MODES: set[str] = {"key", "identity"}
@@ -139,10 +143,11 @@ class ProviderConfig:
 
 
 def _validate_test_command(cmd: str) -> None:
-    """Warn if test_command contains pipe-to-shell patterns.
+    """Reject test_command values that contain pipe-to-shell patterns.
 
     test_command runs with ``shell=True`` (needed for pipelines and builtins).
-    We reject commands that pipe directly into a shell interpreter.
+    Raises ``ValueError`` if the command pipes into a shell interpreter
+    (sh, bash, zsh, dash, ksh) — including via absolute paths or ``env``.
     """
     if _SUSPICIOUS_TEST_CMD.search(cmd):
         raise ValueError(
