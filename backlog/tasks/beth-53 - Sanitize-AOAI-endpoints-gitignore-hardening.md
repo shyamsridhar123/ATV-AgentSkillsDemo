@@ -1,10 +1,10 @@
 ---
 id: BETH-53
 title: Sanitize AOAI endpoints + gitignore hardening
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-03-18 05:55'
-updated_date: '2026-03-18 05:56'
+updated_date: '2026-03-18 05:59'
 labels: []
 dependencies: []
 priority: high

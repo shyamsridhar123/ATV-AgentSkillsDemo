@@ -1,9 +1,10 @@
 ---
 id: BETH-53.3
 title: Remove tracked .beads/ files from git index
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-03-18 05:55'
+updated_date: '2026-03-18 05:59'
 labels: []
 dependencies: []
 parent_task_id: BETH-53

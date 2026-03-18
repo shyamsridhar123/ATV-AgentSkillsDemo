@@ -1,9 +1,10 @@
 ---
 id: BETH-53.4
 title: Add swarm setup docs to swarm.yaml.example
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-03-18 05:56'
+updated_date: '2026-03-18 05:59'
 labels: []
 dependencies: []
 parent_task_id: BETH-53
