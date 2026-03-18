@@ -1,9 +1,10 @@
 ---
 id: BETH-54.7
 title: '[LOW] F08: Add symlink detection to init copyDirRecursive'
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-03-18 06:11'
+updated_date: '2026-03-18 18:19'
 labels: []
 dependencies: []
 parent_task_id: BETH-54
