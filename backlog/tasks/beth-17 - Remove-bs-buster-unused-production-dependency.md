@@ -4,9 +4,10 @@ title: Remove bs-buster unused production dependency
 status: Done
 assignee: []
 created_date: '2026-03-16 02:51'
-updated_date: '2026-03-16 02:53'
+updated_date: '2026-03-18 17:51'
 labels: []
 dependencies: []
+priority: medium
 ---
 
 ## Description

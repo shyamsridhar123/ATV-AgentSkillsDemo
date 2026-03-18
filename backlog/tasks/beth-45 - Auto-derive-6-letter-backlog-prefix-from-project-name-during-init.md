@@ -4,9 +4,10 @@ title: Auto-derive 6-letter backlog prefix from project name during init
 status: Done
 assignee: []
 created_date: '2026-03-16 15:12'
-updated_date: '2026-03-16 15:16'
+updated_date: '2026-03-18 17:51'
 labels: []
 dependencies: []
+priority: medium
 ---
 
 ## Description

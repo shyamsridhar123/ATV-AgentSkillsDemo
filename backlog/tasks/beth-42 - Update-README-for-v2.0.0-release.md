@@ -4,9 +4,10 @@ title: Update README for v2.0.0 release
 status: Done
 assignee: []
 created_date: '2026-03-16 14:17'
-updated_date: '2026-03-16 14:29'
+updated_date: '2026-03-18 17:51'
 labels: []
 dependencies: []
+priority: medium
 ---
 
 ## Description

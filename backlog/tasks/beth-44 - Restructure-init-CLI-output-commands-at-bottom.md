@@ -4,9 +4,10 @@ title: Restructure init CLI output - commands at bottom
 status: Done
 assignee: []
 created_date: '2026-03-16 14:58'
-updated_date: '2026-03-16 15:03'
+updated_date: '2026-03-18 17:51'
 labels: []
 dependencies: []
+priority: medium
 ---
 
 ## Description

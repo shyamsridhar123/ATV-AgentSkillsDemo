@@ -4,9 +4,10 @@ title: SubagentStop compliance gate tests (verify-skills.mjs)
 status: Done
 assignee: []
 created_date: '2026-03-15 07:00'
-updated_date: '2026-03-15 15:42'
+updated_date: '2026-03-18 17:51'
 labels: []
 dependencies: []
+priority: medium
 ---
 
 ## Description

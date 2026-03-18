@@ -4,9 +4,10 @@ title: Update swarm architecture with ruflo insights and implementation roadmap
 status: Done
 assignee: []
 created_date: '2026-03-13 22:00'
-updated_date: '2026-03-13 22:08'
+updated_date: '2026-03-18 17:51'
 labels: []
 dependencies: []
+priority: medium
 ---
 
 ## Description

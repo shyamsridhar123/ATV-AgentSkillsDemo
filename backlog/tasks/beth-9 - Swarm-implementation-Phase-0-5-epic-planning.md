@@ -4,9 +4,10 @@ title: Swarm implementation - Phase 0-5 epic planning
 status: Done
 assignee: []
 created_date: '2026-03-15 06:41'
-updated_date: '2026-03-15 06:46'
+updated_date: '2026-03-18 17:51'
 labels: []
 dependencies: []
+priority: medium
 ---
 
 ## Description

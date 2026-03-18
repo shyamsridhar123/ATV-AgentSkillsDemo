@@ -4,9 +4,10 @@ title: 'MCP setup integration tests — merge, force, doctor pipeline'
 status: Done
 assignee: []
 created_date: '2026-03-16 16:34'
-updated_date: '2026-03-16 16:39'
+updated_date: '2026-03-18 17:51'
 labels: []
 dependencies: []
+priority: medium
 ---
 
 ## Description

@@ -4,9 +4,10 @@ title: E2E skill routing tests from test plan
 status: Done
 assignee: []
 created_date: '2026-03-15 06:31'
-updated_date: '2026-03-15 15:42'
+updated_date: '2026-03-18 17:51'
 labels: []
 dependencies: []
+priority: medium
 ---
 
 ## Description
