@@ -18,6 +18,7 @@ import { describe, it, expect } from 'vitest';
 import { join } from 'node:path';
 import { readdirSync, existsSync, readFileSync, statSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
+import type { InjectHookOutput } from '../hook-test-types.js';
 
 const PROJECT_ROOT = process.cwd();
 const SKILLS_DIR = join(PROJECT_ROOT, '.github/skills');
@@ -40,7 +41,7 @@ function getAllAgentFiles(): string[] {
 }
 
 /** Run inject-skills.mjs for an agent type and return the raw output */
-function runInjectHook(agentType: string): Record<string, unknown> {
+function runInjectHook(agentType: string): InjectHookOutput {
   const result = execFileSync('node', [INJECT_SCRIPT], {
     input: JSON.stringify({ agent_type: agentType, cwd: PROJECT_ROOT }),
     encoding: 'utf8',
@@ -196,9 +197,9 @@ describe('Skill Inventory: All on-disk skills accounted for', () => {
 describe('inject-skills.mjs: Source-of-truth validation', () => {
   it('covers all 6 known agent types', () => {
     for (const agent of HOOKED_AGENTS) {
-      const output = runInjectHook(agent) as any;
+      const output = runInjectHook(agent);
       expect(output.hookSpecificOutput).toBeDefined();
-      expect(output.hookSpecificOutput.additionalContext).toBeTruthy();
+      expect(output.hookSpecificOutput!.additionalContext).toBeTruthy();
     }
   });
 

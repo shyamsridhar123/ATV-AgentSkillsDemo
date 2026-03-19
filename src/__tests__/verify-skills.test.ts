@@ -9,11 +9,12 @@
 import { describe, it, expect } from 'vitest';
 import { execFileSync } from 'node:child_process';
 import { join } from 'node:path';
+import type { VerifyHookOutput } from './hook-test-types.js';
 
 const SCRIPT_PATH = join(process.cwd(), '.github/hooks/scripts/verify-skills.mjs');
 
 /** Helper: pipe JSON input to verify-skills.mjs and parse JSON output */
-function runHook(input: Record<string, unknown>): Record<string, unknown> {
+function runHook(input: Record<string, unknown>): VerifyHookOutput {
   const result = execFileSync('node', [SCRIPT_PATH], {
     input: JSON.stringify(input),
     encoding: 'utf8',
@@ -26,21 +27,21 @@ function runHook(input: Record<string, unknown>): Record<string, unknown> {
 
 describe('verify-skills.mjs: first stop attempt (challenge)', () => {
   it('should block the first stop and request compliance verification', () => {
-    const output = runHook({}) as any;
+    const output = runHook({});
     expect(output.hookSpecificOutput).toBeDefined();
-    expect(output.hookSpecificOutput.decision).toBe('block');
-    expect(output.hookSpecificOutput.hookEventName).toBe('Stop');
+    expect(output.hookSpecificOutput!.decision).toBe('block');
+    expect(output.hookSpecificOutput!.hookEventName).toBe('Stop');
   });
 
   it('should include a reason mentioning MANDATORY skills', () => {
-    const output = runHook({}) as any;
-    expect(output.hookSpecificOutput.reason).toContain('MANDATORY');
+    const output = runHook({});
+    expect(output.hookSpecificOutput!.reason).toContain('MANDATORY');
   });
 
   it('should include a reason mentioning task tracking', () => {
-    const output = runHook({}) as any;
-    expect(output.hookSpecificOutput.reason).toContain('backlog task edit');
-    expect(output.hookSpecificOutput.reason).toContain('task status');
+    const output = runHook({});
+    expect(output.hookSpecificOutput!.reason).toContain('backlog task edit');
+    expect(output.hookSpecificOutput!.reason).toContain('task status');
   });
 
   it('should NOT set continue: true on first attempt', () => {
@@ -85,7 +86,7 @@ describe('verify-skills.mjs: edge cases', () => {
   });
 
   it('should treat stop_hook_active=false as first attempt (block)', () => {
-    const output = runHook({ stop_hook_active: false }) as any;
+    const output = runHook({ stop_hook_active: false });
     expect(output.hookSpecificOutput?.decision).toBe('block');
   });
 });
