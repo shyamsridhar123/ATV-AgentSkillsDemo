@@ -9,23 +9,20 @@ Auth: Uses DefaultAzureCredential (managed identity / az login). No API keys.
 Usage:
     # Ensure you're logged in and have Cognitive Services OpenAI User role
     az login
-    python -m tests.smoke_live
+    export BETH_LIVE_TESTS=1
+    # If cross-tenant: export AZURE_TENANT_ID=<tenant-id>
+    pytest tests/smoke_live.py -m live -v -s
 
-Or with pytest (marked as 'live' — skipped by default):
-    pytest tests/smoke_live.py -m live -v
+Config is loaded from swarm.yaml (not env vars).
 """
 
 from __future__ import annotations
 
 import os
-import sys
 import tempfile
 from pathlib import Path
 
 import pytest
-
-# Add swarm package to path
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from swarm.board import MessageBoard
 from swarm.config import SwarmConfig
@@ -34,18 +31,14 @@ from swarm.worker import Task, run_worker
 
 
 # ---------------------------------------------------------------------------
-# Skip condition: check if DefaultAzureCredential can obtain a token
+# Config path + skip conditions
 # ---------------------------------------------------------------------------
 
-ENDPOINT = os.environ.get("AZURE_OPENAI_ENDPOINT", "")
+SWARM_YAML = Path(__file__).resolve().parents[1] / "swarm.yaml"
 
 
 def _live_tests_enabled() -> bool:
-    """Check if live tests are explicitly enabled via env var."""
     return os.environ.get("BETH_LIVE_TESTS", "").strip().lower() in ("1", "true", "yes")
-
-
-def _can_get_azure_token() -> bool:
     """Check if DefaultAzureCredential can obtain a token.
 
     Only called when BETH_LIVE_TESTS=1 — never at import time.
@@ -64,12 +57,12 @@ requires_live = pytest.mark.skipif(
     reason="Live tests disabled — set BETH_LIVE_TESTS=1 to enable",
 )
 
-requires_endpoint = pytest.mark.skipif(
-    not ENDPOINT,
-    reason="AZURE_OPENAI_ENDPOINT not set — configure your own Azure OpenAI resource",
+requires_config = pytest.mark.skipif(
+    not SWARM_YAML.exists(),
+    reason="swarm.yaml not found — copy swarm.yaml.example and configure",
 )
 
-pytestmark = [pytest.mark.live, requires_live, requires_endpoint]
+pytestmark = [pytest.mark.live, requires_live, requires_config]
 
 
 # ---------------------------------------------------------------------------
@@ -79,17 +72,7 @@ pytestmark = [pytest.mark.live, requires_live, requires_endpoint]
 
 @pytest.fixture
 def config():
-    return SwarmConfig.from_dict({
-        "primary_provider": {
-            "name": "azure",
-            "endpoint": ENDPOINT,
-            "auth_mode": "identity",
-            "api_version": "2024-12-01-preview",
-        },
-        "model_routing": {
-            "standard": {"deployment": "gpt-4o-mini"},
-        },
-    })
+    return SwarmConfig.from_yaml(SWARM_YAML)
 
 
 @pytest.fixture
@@ -116,9 +99,10 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 class TestLiveEndpoint:
     def test_simple_completion(self, config):
         """Can we get a basic completion from the deployed model?"""
+        deployment = config.model_routing.standard.deployment
         client = create_client(config.primary_provider)
         response = client.chat.completions.create(
-            model="gpt-4o-mini",
+            model=deployment,
             messages=[
                 {"role": "system", "content": "You are a helpful assistant."},
                 {"role": "user", "content": "Say 'hello world' and nothing else."},
@@ -140,11 +124,12 @@ class TestLiveEndpoint:
 class TestLiveAgentLoop:
     def test_agent_creates_file(self, config, board, work_dir):
         """The LLM decides to write a file via tool call, then stops."""
+        deployment = config.model_routing.standard.deployment
         client = create_client(config.primary_provider)
 
         result = agent_loop(
             client=client,
-            deployment="gpt-4o-mini",
+            deployment=deployment,
             system_prompt=(
                 "You are a developer agent. You have tools: write_file, read_file, "
                 "list_directory, etc. When asked to create a file, use the write_file "
@@ -160,7 +145,7 @@ class TestLiveAgentLoop:
         )
 
         assert isinstance(result, CompletionResult)
-        assert result.model_used == "gpt-4o-mini"
+        assert result.model_used == deployment
         assert result.total_tokens_in > 0
         assert result.total_tokens_out > 0
 

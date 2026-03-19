@@ -11,6 +11,7 @@ Tests the complete flow:
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -326,3 +327,63 @@ class TestFullPipeline:
         # Phase 5: Estimate matches tracked cost
         expected = estimate_cost_usd("gpt-4o-mini", 800, 300)
         assert abs(cost - expected) < 0.0001
+
+
+# ===========================================================================
+# Live Azure: real LLM call → outcome recording → cost tracking
+# ===========================================================================
+
+SWARM_YAML = Path(__file__).resolve().parents[1] / "swarm.yaml"
+REPO_ROOT = Path(__file__).resolve().parents[2]
+
+_live_enabled = os.environ.get("BETH_LIVE_TESTS", "").strip().lower() in ("1", "true", "yes")
+
+requires_live = pytest.mark.skipif(not _live_enabled, reason="Set BETH_LIVE_TESTS=1")
+requires_config = pytest.mark.skipif(not SWARM_YAML.exists(), reason="swarm.yaml not found")
+
+
+@pytest.mark.live
+@requires_live
+@requires_config
+class TestLiveCostTracking:
+    """Real LLM call with outcome recording and cost tracking."""
+
+    def test_real_worker_records_outcome_and_cost(self, live_config, live_board, tmp_path):
+        """Worker hits real Azure, outcome is recorded, cost is tracked."""
+        from swarm.llm import CompletionResult
+        from swarm.worker import Task, run_worker
+
+        task = Task(
+            post_id=1,
+            title="Write a one-liner",
+            body="Create a file called output.txt containing 'cost tracking works'",
+            agent_role="developer",
+            epic_id="cost-test",
+            task_id="COST-1",
+        )
+
+        result = run_worker(
+            task=task,
+            config=live_config,
+            board=live_board,
+            work_dir=tmp_path,
+            repo_root=REPO_ROOT,
+        )
+
+        assert isinstance(result, CompletionResult)
+        assert result.total_tokens_in > 0
+        assert result.total_tokens_out > 0
+
+        # Outcome should be recorded on the board
+        outcomes = live_board.query_outcomes(agent_role="developer", limit=10)
+        assert len(outcomes) >= 1
+        latest = outcomes[-1]
+        assert latest.success is True
+        assert latest.tokens_in > 0
+        assert latest.tokens_out > 0
+
+        # Cost estimate should be non-zero
+        cost = estimate_cost_usd(
+            latest.model_used, latest.tokens_in, latest.tokens_out
+        )
+        assert cost > 0

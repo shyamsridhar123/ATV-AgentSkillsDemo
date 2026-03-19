@@ -8,9 +8,11 @@ This test simulates the complete Phase 1 flow:
   5. The completion has all required metadata
 
 This covers all 8 acceptance criteria in a single end-to-end flow.
+Also includes live Azure E2E tests (gated by BETH_LIVE_TESTS=1).
 """
 
 import json
+import os
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
@@ -20,6 +22,7 @@ import pytest
 from swarm.agents import load_agent, parse_agent_file
 from swarm.board import MessageBoard
 from swarm.config import ModelRouting, ModelTier, ProviderConfig, SwarmConfig
+from swarm.llm import CompletionResult
 from swarm.skills import get_auto_inject_skills, load_injected_skills
 from swarm.tools import TOOL_DEFINITIONS
 from swarm.worker import Task, run_worker
@@ -256,3 +259,95 @@ class TestPhase1Integration:
                     f"Agent {name} has wrong name: {agent.name}"
                 )
                 assert len(agent.body) > 50, f"Agent {name} has suspiciously short body"
+
+
+# ---------------------------------------------------------------------------
+# Live Azure E2E — real LLM creates files and posts completions
+# ---------------------------------------------------------------------------
+
+SWARM_YAML = Path(__file__).resolve().parents[1] / "swarm.yaml"
+
+_live_enabled = os.environ.get("BETH_LIVE_TESTS", "").strip().lower() in ("1", "true", "yes")
+
+requires_live = pytest.mark.skipif(not _live_enabled, reason="Set BETH_LIVE_TESTS=1")
+requires_config = pytest.mark.skipif(not SWARM_YAML.exists(), reason="swarm.yaml not found")
+
+
+@pytest.mark.live
+@requires_live
+@requires_config
+class TestPhase1LiveAzure:
+    """Full Phase 1 E2E with a REAL Azure OpenAI model — no mocks."""
+
+    def test_worker_creates_file_via_real_llm(self, live_config, live_board, tmp_path):
+        """Real LLM receives a task, uses tools to write a file, posts completion."""
+        task = Task(
+            post_id=1,
+            title="Create a config file",
+            body=(
+                "Create a file called config.json with this content: "
+                '{"name": "beth-live-test", "version": "1.0.0"}'
+            ),
+            agent_role="developer",
+            epic_id="beth-live",
+            task_id="LIVE-1",
+        )
+
+        result = run_worker(
+            task=task,
+            config=live_config,
+            board=live_board,
+            work_dir=tmp_path,
+            repo_root=REPO_ROOT,
+        )
+
+        assert isinstance(result, CompletionResult)
+        assert result.total_tokens_in > 0
+        assert result.total_tokens_out > 0
+        assert result.tool_calls_made >= 1
+
+        # Worker should have created the file
+        config_file = tmp_path / "config.json"
+        assert config_file.exists(), "Worker did not create config.json"
+        content = config_file.read_text()
+        assert "beth-live-test" in content
+
+        # Worker should have posted completion to board
+        completions = live_board.read_all("completions")
+        assert len(completions) >= 1
+
+        # Outcome should be recorded
+        outcomes = live_board.query_outcomes(agent_role="developer", limit=10)
+        assert len(outcomes) >= 1
+        assert outcomes[0].success is True
+
+    def test_worker_handles_multi_step_task(self, live_config, live_board, tmp_path):
+        """Real LLM handles a task requiring multiple tool calls."""
+        task = Task(
+            post_id=2,
+            title="Create and verify files",
+            body=(
+                "Create two files:\n"
+                "1. hello.txt containing 'Hello World'\n"
+                "2. goodbye.txt containing 'Goodbye World'\n"
+                "Then list the directory to verify both files exist."
+            ),
+            agent_role="developer",
+            epic_id="beth-live",
+            task_id="LIVE-2",
+        )
+
+        result = run_worker(
+            task=task,
+            config=live_config,
+            board=live_board,
+            work_dir=tmp_path,
+            repo_root=REPO_ROOT,
+        )
+
+        assert isinstance(result, CompletionResult)
+        assert result.tool_calls_made >= 2  # At least 2 write_file calls
+
+        # Both files should exist
+        assert (tmp_path / "hello.txt").exists()
+        assert (tmp_path / "goodbye.txt").exists()
