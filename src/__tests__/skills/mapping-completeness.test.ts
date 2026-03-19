@@ -18,7 +18,7 @@ import { describe, it, expect } from 'vitest';
 import { join } from 'node:path';
 import { readdirSync, existsSync, readFileSync, statSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
-import type { InjectHookOutput } from '../hook-test-types';
+import type { InjectHookOutput } from '../hook-test-types.js';
 
 const PROJECT_ROOT = process.cwd();
 const SKILLS_DIR = join(PROJECT_ROOT, '.github/skills');

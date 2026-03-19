@@ -12,7 +12,7 @@ import { describe, it, expect } from 'vitest';
 import { execFileSync } from 'node:child_process';
 import { join } from 'node:path';
 import { existsSync } from 'node:fs';
-import type { InjectHookOutput } from '../hook-test-types';
+import type { InjectHookOutput } from '../hook-test-types.js';
 
 const SCRIPT_PATH = join(process.cwd(), '.github/hooks/scripts/inject-skills.mjs');
 const PROJECT_ROOT = process.cwd();

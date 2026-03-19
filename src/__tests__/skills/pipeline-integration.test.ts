@@ -18,7 +18,7 @@
 import { describe, it, expect } from 'vitest';
 import { execFileSync } from 'node:child_process';
 import { join } from 'node:path';
-import type { InjectHookOutput, VerifyHookOutput } from '../hook-test-types';
+import type { InjectHookOutput, VerifyHookOutput } from '../hook-test-types.js';
 
 const INJECT_SCRIPT = join(process.cwd(), '.github/hooks/scripts/inject-skills.mjs');
 const VERIFY_SCRIPT = join(process.cwd(), '.github/hooks/scripts/verify-skills.mjs');
@@ -89,14 +89,14 @@ describe('Full Pipeline: inject → verify round-trip', () => {
       // Inject should produce context with skills
       expect(injectOutput.continue).toBe(true);
       expect(injectOutput.hookSpecificOutput).toBeDefined();
-      expect(injectOutput.hookSpecificOutput.additionalContext).toBeTruthy();
-      expect(injectOutput.hookSpecificOutput.additionalContext).toContain('SKILL ENFORCEMENT');
+      expect(injectOutput.hookSpecificOutput!.additionalContext).toBeTruthy();
+      expect(injectOutput.hookSpecificOutput!.additionalContext).toContain('SKILL ENFORCEMENT');
 
       // First stop should block
       expect(firstStop.hookSpecificOutput).toBeDefined();
-      expect(firstStop.hookSpecificOutput.decision).toBe('block');
-      expect(firstStop.hookSpecificOutput.reason).toContain('Skills compliance');
-      expect(firstStop.hookSpecificOutput.reason).toContain('Task tracking');
+      expect(firstStop.hookSpecificOutput!.decision).toBe('block');
+      expect(firstStop.hookSpecificOutput!.reason).toContain('Skills compliance');
+      expect(firstStop.hookSpecificOutput!.reason).toContain('Task tracking');
 
       // Retry should pass through
       expect(retryStop.continue).toBe(true);
@@ -104,13 +104,13 @@ describe('Full Pipeline: inject → verify round-trip', () => {
 
     it('inject context references the correct agent type', () => {
       const { injectOutput } = runPipeline(agentType);
-      const ctx = injectOutput.hookSpecificOutput.additionalContext;
+      const ctx = injectOutput.hookSpecificOutput!.additionalContext;
       expect(ctx).toContain(`You are \`${agentType}\``);
     });
 
     it('verify challenge mentions both skill compliance and task tracking', () => {
       const { firstStop } = runPipeline(agentType);
-      const reason = firstStop.hookSpecificOutput.reason;
+      const reason = firstStop.hookSpecificOutput!.reason;
       // Must challenge on BOTH dimensions — this is the whole point of the unified hook
       expect(reason).toContain('Skills compliance');
       expect(reason).toContain('Task tracking');

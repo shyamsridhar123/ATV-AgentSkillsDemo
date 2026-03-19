@@ -1,10 +1,10 @@
 ---
 id: BETH-51
 title: 'Tech debt: extract shared git utils + fix test any types'
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-03-17 13:53'
-updated_date: '2026-03-18 19:28'
+updated_date: '2026-03-18 19:34'
 labels: []
 dependencies: []
 priority: medium
