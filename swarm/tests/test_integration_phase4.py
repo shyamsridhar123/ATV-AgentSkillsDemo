@@ -342,6 +342,7 @@ requires_live = pytest.mark.skipif(not _live_enabled, reason="Set BETH_LIVE_TEST
 requires_config = pytest.mark.skipif(not SWARM_YAML.exists(), reason="swarm.yaml not found")
 
 
+@pytest.mark.live
 @requires_live
 @requires_config
 class TestLiveCostTracking:

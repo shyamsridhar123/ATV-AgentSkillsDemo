@@ -11,7 +11,7 @@ import pytest
 
 from swarm.board import MessageBoard
 from swarm.llm import CompletionResult, _message_to_dict, agent_loop, create_client
-from swarm.config import ProviderConfig, SwarmConfig
+from swarm.config import ProviderConfig
 
 
 # ---------------------------------------------------------------------------
@@ -362,6 +362,7 @@ requires_live = pytest.mark.skipif(not _live_enabled, reason="Set BETH_LIVE_TEST
 requires_config = pytest.mark.skipif(not SWARM_YAML.exists(), reason="swarm.yaml not found")
 
 
+@pytest.mark.live
 @requires_live
 @requires_config
 class TestLiveCreateClient:
@@ -380,6 +381,7 @@ class TestLiveCreateClient:
         assert response.usage.prompt_tokens > 0
 
 
+@pytest.mark.live
 @requires_live
 @requires_config
 class TestLiveAgentLoopE2E:

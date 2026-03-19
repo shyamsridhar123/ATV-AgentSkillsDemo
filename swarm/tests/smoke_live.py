@@ -19,14 +19,10 @@ Config is loaded from swarm.yaml (not env vars).
 from __future__ import annotations
 
 import os
-import sys
 import tempfile
 from pathlib import Path
 
 import pytest
-
-# Add swarm package to path
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from swarm.board import MessageBoard
 from swarm.config import SwarmConfig

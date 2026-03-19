@@ -59,13 +59,23 @@ requires_config = pytest.mark.skipif(
 
 @pytest.fixture
 def live_config() -> SwarmConfig:
-    """Load real SwarmConfig from swarm.yaml for live tests."""
+    """Load real SwarmConfig from swarm.yaml for live tests.
+
+    Skips gracefully if live tests aren't enabled or config is missing,
+    so accidental fixture use fails as a clean skip rather than an error.
+    """
+    if not _live_tests_enabled():
+        pytest.skip("Live tests disabled — set BETH_LIVE_TESTS=1")
+    if not SWARM_YAML.exists():
+        pytest.skip("swarm.yaml not found — copy swarm.yaml.example and configure")
     return SwarmConfig.from_yaml(SWARM_YAML)
 
 
 @pytest.fixture
 def live_board():
     """In-memory board for live tests (no persistence needed)."""
+    if not _live_tests_enabled():
+        pytest.skip("Live tests disabled — set BETH_LIVE_TESTS=1")
     b = MessageBoard(":memory:")
     yield b
     b.close()

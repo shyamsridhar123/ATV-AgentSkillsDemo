@@ -22,7 +22,7 @@ import pytest
 from swarm.agents import load_agent, parse_agent_file
 from swarm.board import MessageBoard
 from swarm.config import ModelRouting, ModelTier, ProviderConfig, SwarmConfig
-from swarm.llm import CompletionResult, create_client
+from swarm.llm import CompletionResult
 from swarm.skills import get_auto_inject_skills, load_injected_skills
 from swarm.tools import TOOL_DEFINITIONS
 from swarm.worker import Task, run_worker
@@ -273,6 +273,7 @@ requires_live = pytest.mark.skipif(not _live_enabled, reason="Set BETH_LIVE_TEST
 requires_config = pytest.mark.skipif(not SWARM_YAML.exists(), reason="swarm.yaml not found")
 
 
+@pytest.mark.live
 @requires_live
 @requires_config
 class TestPhase1LiveAzure:
