@@ -1,6 +1,7 @@
 """Tests for llm.py — Azure OpenAI client with tool-use loop."""
 
 import json
+import os
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
@@ -10,7 +11,7 @@ import pytest
 
 from swarm.board import MessageBoard
 from swarm.llm import CompletionResult, _message_to_dict, agent_loop, create_client
-from swarm.config import ProviderConfig
+from swarm.config import ProviderConfig, SwarmConfig
 
 
 # ---------------------------------------------------------------------------
@@ -347,3 +348,89 @@ class TestMessageToDict:
         assert d["role"] == "assistant"
         assert len(d["tool_calls"]) == 1
         assert d["tool_calls"][0]["function"]["name"] == "read_file"
+
+
+# ---------------------------------------------------------------------------
+# Live Azure OpenAI tests — require BETH_LIVE_TESTS=1 + swarm.yaml
+# ---------------------------------------------------------------------------
+
+SWARM_YAML = Path(__file__).resolve().parents[1] / "swarm.yaml"
+
+_live_enabled = os.environ.get("BETH_LIVE_TESTS", "").strip().lower() in ("1", "true", "yes")
+
+requires_live = pytest.mark.skipif(not _live_enabled, reason="Set BETH_LIVE_TESTS=1")
+requires_config = pytest.mark.skipif(not SWARM_YAML.exists(), reason="swarm.yaml not found")
+
+
+@requires_live
+@requires_config
+class TestLiveCreateClient:
+    """Verify create_client produces a working Azure OpenAI client."""
+
+    def test_identity_client_returns_completion(self, live_config):
+        """DefaultAzureCredential client can hit the real endpoint."""
+        client = create_client(live_config.primary_provider)
+        deployment = live_config.model_routing.standard.deployment
+        response = client.chat.completions.create(
+            model=deployment,
+            messages=[{"role": "user", "content": "Reply with the word 'pong'"}],
+            max_tokens=10,
+        )
+        assert response.choices[0].message.content is not None
+        assert response.usage.prompt_tokens > 0
+
+
+@requires_live
+@requires_config
+class TestLiveAgentLoopE2E:
+    """End-to-end agent_loop against real Azure OpenAI with tool use."""
+
+    def test_write_and_read_file(self, live_config, live_board, tmp_path):
+        """Real LLM writes a file via tools, then reads it back."""
+        client = create_client(live_config.primary_provider)
+        deployment = live_config.model_routing.standard.deployment
+
+        result = agent_loop(
+            client=client,
+            deployment=deployment,
+            system_prompt=(
+                "You are a developer agent. Write the requested file using the "
+                "write_file tool, then read it back with read_file to verify."
+            ),
+            user_message="Create test.txt containing 'live test' then read it back.",
+            work_dir=tmp_path,
+            board=live_board,
+            agent_id="developer",
+            repo_root=tmp_path,
+            config=live_config,
+            max_iterations=10,
+        )
+
+        assert isinstance(result, CompletionResult)
+        assert result.total_tokens_in > 0
+        assert result.total_tokens_out > 0
+        assert result.tool_calls_made >= 1
+        assert (tmp_path / "test.txt").exists()
+        assert "live test" in (tmp_path / "test.txt").read_text().lower()
+
+    def test_failover_config_path(self, live_config, live_board, tmp_path):
+        """agent_loop with config= param uses completions_with_failover."""
+        client = create_client(live_config.primary_provider)
+        deployment = live_config.model_routing.standard.deployment
+
+        result = agent_loop(
+            client=client,
+            deployment=deployment,
+            system_prompt="You are a helpful assistant.",
+            user_message="Say 'acknowledged' and nothing else.",
+            work_dir=tmp_path,
+            board=live_board,
+            agent_id="developer",
+            repo_root=tmp_path,
+            config=live_config,
+            max_iterations=3,
+        )
+
+        assert isinstance(result, CompletionResult)
+        assert result.content is not None
+        assert len(result.content) > 0

@@ -12,6 +12,11 @@
 #   5. Replace "your-resource" with your Azure OpenAI resource name
 #   6. Update deployment names under model_routing to match your deployments
 #
+# Cross-tenant auth:
+#   If your CLI user's home tenant differs from the resource's tenant,
+#   set AZURE_TENANT_ID to the resource's tenant ID:
+#     export AZURE_TENANT_ID=<your-resource-tenant-id>
+#
 # Auth mode: "identity" (RECOMMENDED) or "key"
 #
 # identity mode (no secrets needed):
@@ -59,14 +64,14 @@ primary_provider:
 #   name: openai
 #   api_key: ${OPENAI_API_KEY}
 
-# 3-tier model routing
+# 3-tier model routing (update deployment names to match your AOAI deployments)
 model_routing:
   complex:
-    deployment: gpt-5.4
+    deployment: gpt-4o
     max_tokens: 16384
   standard:
-    deployment: gpt-5.2
+    deployment: gpt-4o-mini
     max_tokens: 8192
   simple:
-    deployment: gpt-5-mini
+    deployment: gpt-4o-mini
     max_tokens: 4096
