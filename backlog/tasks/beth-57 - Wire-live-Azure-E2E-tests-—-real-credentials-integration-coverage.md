@@ -1,10 +1,10 @@
 ---
 id: BETH-57
 title: Wire live Azure E2E tests — real credentials + integration coverage
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-03-19 15:09'
-updated_date: '2026-03-19 15:09'
+updated_date: '2026-03-19 15:51'
 labels: []
 dependencies: []
 ---
