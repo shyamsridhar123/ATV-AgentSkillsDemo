@@ -22,7 +22,7 @@ from .models import BacklogTask
 
 logger = logging.getLogger(__name__)
 
-# Cache of last-seen task content for change detection
+# Cache of last-seen task status (by file path) for change detection
 _task_cache: dict[str, str] = {}
 
 

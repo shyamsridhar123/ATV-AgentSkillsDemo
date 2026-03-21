@@ -14,10 +14,10 @@ class Settings(BaseSettings):
     ado_area_path: str = Field(default="", description="ADO area path")
     ado_iteration_path: str = Field(default="", description="ADO iteration path")
 
-    # Azure OpenAI
-    azure_openai_endpoint: str = Field(..., description="Azure OpenAI endpoint URL")
+    # Azure OpenAI (optional -- when omitted, offline formatter is used)
+    azure_openai_endpoint: str = Field(default="", description="Azure OpenAI endpoint URL")
     azure_openai_deployment: str = Field(default="gpt-4o", description="Deployment name")
-    azure_openai_api_key: str = Field(..., description="Azure OpenAI API key")
+    azure_openai_api_key: str = Field(default="", description="Azure OpenAI API key")
     azure_openai_api_version: str = Field(default="2024-10-21", description="API version")
 
     # GitHub

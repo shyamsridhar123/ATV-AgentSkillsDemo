@@ -92,6 +92,9 @@ def format_story(task: BacklogTask, settings: Settings) -> ADOUserStory:
     Returns:
         Formatted ADOUserStory ready for creation in Azure DevOps
     """
+    if not settings.azure_openai_endpoint or not settings.azure_openai_api_key:
+        raise ValueError("Azure OpenAI not configured — use offline formatter")
+
     client = AzureOpenAI(
         azure_endpoint=settings.azure_openai_endpoint,
         api_key=settings.azure_openai_api_key,

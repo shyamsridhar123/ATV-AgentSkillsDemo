@@ -164,7 +164,11 @@ async def github_webhook(request: Request):
             raise HTTPException(status_code=401, detail="Invalid signature")
 
     event_type = request.headers.get("X-GitHub-Event", "")
-    payload = json.loads(body)
+    try:
+        payload = json.loads(body)
+    except json.JSONDecodeError as exc:
+        logging.warning("Invalid JSON payload on GitHub webhook: %s", exc)
+        raise HTTPException(status_code=400, detail="Invalid JSON payload")
 
     if event_type == "pull_request":
         return await _handle_pr_event(payload)
@@ -289,28 +293,40 @@ def _verify_signature(body: bytes, signature: str, secret: str) -> bool:
     return hmac.compare_digest(f"sha256={expected}", signature)
 
 
+def _canonicalize_task_id(task_id: str) -> str:
+    """Normalize a task ID to canonical uppercase form (e.g., BETH-42)."""
+    import re
+    match = re.match(r"([a-zA-Z]+)-(\d+(?:\.\d+)?)", task_id)
+    if match:
+        return f"{match.group(1).upper()}-{match.group(2)}"
+    return task_id.upper()
+
+
 def _extract_task_id(branch: str, pr_body: str, pr_title: str) -> str | None:
     """Try to extract a BacklogMD task ID from PR metadata.
 
     Beth's branch naming convention typically includes the task ID.
     Examples: beth-42-implement-auth, BETH-42/implement-auth, task-42
+
+    Returns a canonicalized ID (e.g., BETH-42) for consistent lookups.
     """
     import re
 
-    # Try branch name first
     patterns = [
-        r"(?:beth|BETH|task)-(\d+(?:\.\d+)?)",  # beth-42, BETH-42, task-42
-        r"(?:BACK|back)-(\d+(?:\.\d+)?)",        # BACK-42
+        r"(beth|BETH|task)-(\d+(?:\.\d+)?)",  # beth-42, BETH-42, task-42
+        r"(BACK|back)-(\d+(?:\.\d+)?)",        # BACK-42
     ]
 
     for pattern in patterns:
         for source in [branch, pr_title, pr_body]:
             match = re.search(pattern, source)
             if match:
-                # Reconstruct with prefix
-                task_num = match.group(1)
-                prefix = _settings.backlog_task_prefix if _settings else "BETH"
-                return f"{prefix}-{task_num}"
+                task_num = match.group(2)
+                configured_prefix = (
+                    _settings.backlog_task_prefix if _settings else None
+                )
+                effective_prefix = configured_prefix or match.group(1) or "BETH"
+                return f"{effective_prefix.upper()}-{task_num}"
 
     return None
 

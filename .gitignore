@@ -80,4 +80,4 @@ ado-sync/.venv/
 ado-sync/.pytest_cache/
 ado-sync/__pycache__/
 ado-sync/**/__pycache__/
-ado-sync/.env
+ado-sync/.env\nado-sync/.ado-sync-mappings.json

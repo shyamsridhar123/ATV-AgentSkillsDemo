@@ -213,10 +213,12 @@ def _find_task_file(tasks_dir: Path, task_id: str) -> Path | None:
 
     task_num = num_match.group(1)
 
-    # Search for matching files — handle both beth-{num} and task-{num} prefixes
+    # Build an anchored regex to avoid partial matches (e.g., "beth-1" vs "beth-10")
+    pattern = re.compile(rf"^(beth|task)-{re.escape(task_num)}(\D|$)")
+
     for md_file in tasks_dir.glob("*.md"):
         name_lower = md_file.name.lower()
-        if f"beth-{task_num}" in name_lower or f"task-{task_num}" in name_lower:
+        if pattern.match(name_lower):
             return md_file
 
     return None

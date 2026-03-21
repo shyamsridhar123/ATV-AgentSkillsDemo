@@ -8,9 +8,14 @@ API Reference:
 """
 
 import base64
+import json as _json
 import logging
+import re
+from html import escape as html_escape
+from pathlib import Path
 from typing import Optional
 from datetime import datetime
+from urllib.parse import urlparse
 
 import httpx
 
@@ -19,9 +24,39 @@ from .models import ADOUserStory, ADOWorkItemResult, StoryTaskMapping
 
 logger = logging.getLogger(__name__)
 
-# In-memory mapping of task IDs to ADO work items
-# In production, you'd want to persist this (SQLite, Redis, etc.)
+# Persistent mapping of task IDs to ADO work items (JSON file)
+_MAPPING_FILE = Path(__file__).parent.parent / ".ado-sync-mappings.json"
 _task_story_map: dict[str, StoryTaskMapping] = {}
+
+
+def _canonicalize_task_id(task_id: str) -> str:
+    """Normalize a task ID to canonical uppercase form (e.g., BETH-42)."""
+    match = re.match(r"([a-zA-Z]+)-(\d+(?:\.\d+)?)", task_id)
+    if match:
+        return f"{match.group(1).upper()}-{match.group(2)}"
+    return task_id.upper()
+
+
+def _load_mappings() -> None:
+    """Load persisted task-story mappings from disk."""
+    global _task_story_map
+    if _MAPPING_FILE.exists():
+        try:
+            data = _json.loads(_MAPPING_FILE.read_text())
+            for key, val in data.items():
+                _task_story_map[key] = StoryTaskMapping(**val)
+            logger.info(f"Loaded {len(_task_story_map)} task-story mappings from {_MAPPING_FILE}")
+        except Exception as e:
+            logger.warning(f"Failed to load mappings from {_MAPPING_FILE}: {e}")
+
+
+def _save_mappings() -> None:
+    """Persist task-story mappings to disk."""
+    try:
+        data = {k: v.model_dump(mode="json") for k, v in _task_story_map.items()}
+        _MAPPING_FILE.write_text(_json.dumps(data, indent=2, default=str))
+    except Exception as e:
+        logger.warning(f"Failed to save mappings to {_MAPPING_FILE}: {e}")
 
 
 class ADOClient:
@@ -35,6 +70,9 @@ class ADOClient:
         # PAT auth: base64 encode ":{pat}"
         pat_bytes = f":{settings.ado_pat}".encode("ascii")
         self.auth_header = f"Basic {base64.b64encode(pat_bytes).decode('ascii')}"
+
+        # Load persisted mappings on init
+        _load_mappings()
 
         self.client = httpx.AsyncClient(
             headers={
@@ -53,8 +91,11 @@ class ADOClient:
         Returns:
             ADOWorkItemResult with the created work item details
         """
+        # Canonicalize task ID for consistent lookups
+        canonical_id = _canonicalize_task_id(story.backlog_task_id)
+
         # Check if we already have a story for this task
-        existing = _task_story_map.get(story.backlog_task_id)
+        existing = _task_story_map.get(canonical_id)
         if existing:
             logger.info(
                 f"Story already exists for {story.backlog_task_id}: "
@@ -141,12 +182,13 @@ class ADOClient:
             backlog_task_id=story.backlog_task_id,
         )
 
-        # Store mapping
-        _task_story_map[story.backlog_task_id] = StoryTaskMapping(
-            task_id=story.backlog_task_id,
+        # Store mapping (with canonical ID)
+        _task_story_map[canonical_id] = StoryTaskMapping(
+            task_id=canonical_id,
             work_item_id=result.work_item_id,
             work_item_url=result.url,
         )
+        _save_mappings()
 
         logger.info(
             f"Created ADO User Story #{result.work_item_id}: {result.title} "
@@ -200,9 +242,16 @@ class ADOClient:
 
         history_html = "<p><strong>Work completed and PR opened.</strong></p>"
         if pr_url:
-            history_html += f'<p>PR: <a href="{pr_url}">{pr_url}</a></p>'
+            # Validate URL scheme and HTML-escape to prevent injection
+            parsed = urlparse(pr_url)
+            if parsed.scheme not in ("https", "http"):
+                logger.warning(f"Suspicious PR URL scheme: {parsed.scheme}")
+            safe_url = html_escape(pr_url)
+            history_html += f'<p>PR: <a href="{safe_url}">{safe_url}</a></p>'
         if commit_messages:
-            commits_html = "<br/>".join(f"- {msg}" for msg in commit_messages[:10])
+            commits_html = "<br/>".join(
+                f"- {html_escape(msg)}" for msg in commit_messages[:10]
+            )
             history_html += f"<p>Commits:<br/>{commits_html}</p>"
 
         operations = [
@@ -228,7 +277,7 @@ class ADOClient:
 
         data = response.json()
 
-        # Update mapping
+        # Update mapping and persist
         task_id = ""
         for tid, mapping in _task_story_map.items():
             if mapping.work_item_id == work_item_id:
@@ -236,6 +285,7 @@ class ADOClient:
                 mapping.updated_at = datetime.utcnow()
                 task_id = tid
                 break
+        _save_mappings()
 
         logger.info(f"Resolved ADO Story #{work_item_id} with PR: {pr_url}")
 
@@ -275,8 +325,11 @@ class ADOClient:
         logger.info(f"Linked {link_type} to ADO #{work_item_id}: {github_url}")
 
     def get_mapping(self, task_id: str) -> Optional[StoryTaskMapping]:
-        """Get the ADO work item mapping for a BacklogMD task."""
-        return _task_story_map.get(task_id)
+        """Get the ADO work item mapping for a BacklogMD task.
+
+        Performs case-insensitive lookup via canonical ID normalization.
+        """
+        return _task_story_map.get(_canonicalize_task_id(task_id))
 
     def get_all_mappings(self) -> list[StoryTaskMapping]:
         """Get all task-to-story mappings."""
