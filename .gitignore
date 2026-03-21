@@ -71,3 +71,13 @@ swarm/.venv/
 *.p12
 *.pfx
 *.jks
+
+# Windows NTFS alternate data stream artifacts
+*:Zone.Identifier
+
+# ADO Sync Python artifacts
+ado-sync/.venv/
+ado-sync/.pytest_cache/
+ado-sync/__pycache__/
+ado-sync/**/__pycache__/
+ado-sync/.env
