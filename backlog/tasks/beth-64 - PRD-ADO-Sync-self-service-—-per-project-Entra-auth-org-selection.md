@@ -1,10 +1,10 @@
 ---
 id: BETH-64
 title: 'PRD: ADO Sync self-service — per-project Entra auth + org selection'
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-03-22 16:24'
-updated_date: '2026-03-22 16:34'
+updated_date: '2026-03-22 16:44'
 labels: []
 dependencies: []
 ---
