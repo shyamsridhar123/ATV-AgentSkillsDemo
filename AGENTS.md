@@ -68,6 +68,15 @@ grep -r "import.*ComponentName" src/
 ```
 If the tracker says "done" but the code disagrees, re-apply the fix.
 
+### 5. Verify node path in hook configs
+Node is installed via nvm, which doesn't add `node` to `PATH` in non-interactive shells. Copilot hooks run via `/bin/sh`, so they need the absolute path.
+```bash
+# Check that the node path in hook configs matches the active node version
+which node                                          # e.g. /home/sschofield/.nvm/versions/node/v24.14.0/bin/node
+grep "node" .github/hooks/skill-enforcement.json    # Should show the same absolute path
+```
+If the paths don't match (e.g. after `nvm install`), update `.github/hooks/skill-enforcement.json` with the correct absolute path. Without this, SubagentStart/SubagentStop hooks fail silently with `node: not found`.
+
 ### The principle: Trust the code, not the tracker
 
 > **War story (March 7, 2026):** A formatter reverted `app/workspace/agents/page.tsx` back to importing the old `WorkspaceAgents` component. The tracker said "routing wired up" but the code was back to the old state. Caught and fixed — but only because we checked.

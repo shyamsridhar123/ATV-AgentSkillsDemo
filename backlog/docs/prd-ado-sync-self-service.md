@@ -150,7 +150,7 @@ Enterprise teams are the primary beth-copilot growth vector, and enterprise team
 **So that** Beth can call ADO Sync tools directly without manual config editing.
 
 **Acceptance Criteria:**
-- [ ] After successful ADO Sync setup, the MCP entry for `ado-sync` is added to `.vscode/mcp.json` (or `copilot-mcp-config.json`)
+- [ ] After successful ADO Sync setup, the MCP entry for `ado-sync` is added to `.vscode/mcp.json`
 - [ ] The MCP entry uses the correct Python path and working directory for this project
 - [ ] If the MCP config file doesn't exist, it is created with the `ado-sync` entry plus existing required servers
 - [ ] If the MCP config already has an `ado-sync` entry, it is updated (not duplicated)
@@ -209,8 +209,8 @@ Config schema:
 
 - This file contains NO secrets (no tokens, no PATs, no API keys).
 - Tokens are stored separately via OS keychain or credential helper (see FR-6).
-- `.beth/` MUST be added to `.gitignore` during setup.
-- The config file IS safe to commit (org/project names are not secrets) — but `.beth/` is gitignored by default to avoid any future accidental secret leakage if the format evolves.
+- `.beth/` MUST be added to `.gitignore` during setup, so `ado-sync.json` is **local-only by default** and not committed.
+- The config file would be safe to commit (org/project names are not secrets), but we intentionally keep `.beth/` gitignored by default to avoid any future accidental secret leakage if the format evolves. Teams that explicitly want to version this config must opt in by adjusting their `.gitignore` or relocating the non-secret config outside `.beth/`.
 
 **FR-6:** Credentials (Entra tokens, PATs) are stored using the OS keychain via `keytar` (Node.js) or the system credential manager.
 
@@ -251,14 +251,16 @@ Display as interactive list with project name and description.
 
 ### MCP Server Configuration
 
-**FR-12:** After setup, add `ado-sync` server entry to the project's MCP config (`.vscode/mcp.json` or `.github/copilot-mcp-config.json`, whichever exists). Format:
+**FR-12:** After setup, add `ado-sync` server entry to the project's `.vscode/mcp.json`. Format:
 ```json
 {
-  "ado-sync": {
-    "_comment": "Local process — syncs BacklogMD tasks to Azure DevOps",
-    "command": "python3",
-    "args": ["-m", "app.mcp_server"],
-    "cwd": "<absolute-path-to-ado-sync>"
+  "servers": {
+    "ado-sync": {
+      "_comment": "Local process — syncs BacklogMD tasks to Azure DevOps",
+      "command": "python3",
+      "args": ["-m", "app.mcp_server"],
+      "cwd": "<absolute-path-to-ado-sync>"
+    }
   }
 }
 ```
@@ -269,7 +271,7 @@ Display as interactive list with project name and description.
 
 **FR-14:** `ado-sync start` spawns the Python process as a detached background process. PID is written to `.beth/ado-sync.pid`. The process inherits credentials from the keychain (or env vars), not from `.env`.
 
-**FR-15:** `ado-sync stop` reads the PID file and sends `SIGTERM`. Cleans up the PID file. If the process is already dead, cleans up the stale PID file.
+**FR-15:** `ado-sync stop` reads the PID file and attempts a **graceful, cross-platform termination** of the recorded process: on POSIX systems it SHOULD send `SIGTERM` (and MAY follow with a hard kill if the process does not exit within a timeout), while on Windows it MUST use an equivalent OS-native mechanism (e.g., `taskkill /PID <pid> /T` or the default `child_process.kill()` semantics). In all cases, it MUST clean up the PID file; if the process is already dead or the PID is stale, it still cleans up the PID file without error.
 
 **FR-16:** `ado-sync status` reports:
 - Running / Stopped (checks PID file and validates process is alive)
@@ -280,10 +282,13 @@ Display as interactive list with project name and description.
 
 ### Python Runtime Discovery
 
-**FR-17:** The CLI must locate a working Python 3.10+ runtime. Discovery order:
-1. `.beth/ado-sync/.venv/bin/python` (project-local venv, created during setup)
-2. `python3` on PATH
-3. `python` on PATH (validate version ≥ 3.10)
+**FR-17:** The CLI must locate a working Python 3.10+ runtime on all supported platforms. Discovery order:
+1. Project-local virtual environment (created during setup):
+   - POSIX: `.beth/ado-sync/.venv/bin/python`
+   - Windows: `.beth/ado-sync/.venv/Scripts/python.exe`
+2. `python3` on PATH (validate version ≥ 3.10)
+3. Windows `py` launcher (`py -3`) if available (validate version ≥ 3.10)
+4. `python` on PATH (validate version ≥ 3.10)
 
 If no Python is found, display a clear error: "Python 3.10+ is required for ADO Sync. Install from https://python.org or your system package manager."
 
