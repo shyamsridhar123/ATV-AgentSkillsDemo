@@ -23,6 +23,8 @@ backlog search "query" --plain         # Fuzzy search across tasks
 
 **CRITICAL:** Always use `--plain` flag on commands that support it (`task list`, `task create`, `task edit`, `search`) — without it, these commands open a TUI that agents cannot interact with. Commands like `board` and `overview` are already plain-text.
 
+**NEVER DELETE BACKLOG FILES.** Not tasks, not archive, not config. Completed tasks move to `backlog/archive/tasks/` via `backlog task archive BETH-X`. If a merge conflict touches `backlog/`, keep BOTH sides. PR #65 wiped 64 task files during a merge — full forensic recovery required. Check `/memories/backlog-md-cli.md` (Copilot persistent memory) for the full CLI reference and incident details.
+
 ## Quick Setup
 
 ```bash
@@ -82,6 +84,14 @@ If the paths don't match (e.g. after `nvm install`), update `.github/hooks/skill
 > **War story (March 7, 2026):** A formatter reverted `app/workspace/agents/page.tsx` back to importing the old `WorkspaceAgents` component. The tracker said "routing wired up" but the code was back to the old state. Caught and fixed — but only because we checked.
 
 This can happen to ANY file touched by agents. The most vulnerable are files touched by formatters on save. When in doubt, check the code.
+
+### 6. Check memory files for accumulated rules
+The paths below are **Copilot persistent memory files** (accessed via the `memory` tool, not the repo filesystem). Review them at session start — they document mistakes that MUST NOT be repeated:
+- `/memories/git-workflow-rules.md` — **NEVER commit directly to `main`.** Always branch first. (Incident: March 16, 2026 — 63 tests pushed straight to main.)
+- `/memories/github-mcp-limitations.md` — GitHub MCP PR creation ALWAYS fails (403 EMU restriction). Use `gh` CLI instead. Two `gh auth` accounts exist — switch to `stephschofield` before pushing. NEVER touch `shyamsridhar123/ATV-AgentSkillsDemo` — it's not ours.
+- `/memories/workflow-epic-reports.md` — Every completed epic requires a completion report (What We Tried, Learned, Completed, What Needs to Change, Recommendations).
+- `/memories/workflow-session-startup.md` — Extended session startup checks including backlog file protection and E2E test pre-cleanup rules.
+- `/memories/repo/git-workflow.md` — All PRs target `stephschofield/beth`. Confirm with `git remote -v`.
 
 ## Workflow
 
@@ -151,4 +161,8 @@ This can happen to ANY file touched by agents. The most vulnerable are files tou
 - NEVER say "ready to push when you are" - YOU must push
 - If push fails, resolve and retry until it succeeds
 - The PR is how humans review your work. No PR = no review = no trust.
+- **NEVER commit directly to `main`** — always use a feature/epic branch. Details in Copilot memory: `/memories/git-workflow-rules.md`.
+- **Use `gh` CLI for PRs**, NOT GitHub MCP (403 EMU restriction). Check `gh auth status` — must be `stephschofield`, not `sschofield_microsoft`. Details in Copilot memory: `/memories/github-mcp-limitations.md`.
+- **All PRs target `stephschofield/beth`** — never push to external repos. Details in Copilot memory: `/memories/repo/git-workflow.md`.
+- **Epic completion requires a report** — share What We Tried/Learned/Completed/What Needs to Change with the user. Details in Copilot memory: `/memories/workflow-epic-reports.md`.
 
