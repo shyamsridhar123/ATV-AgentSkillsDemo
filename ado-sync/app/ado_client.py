@@ -70,15 +70,19 @@ class ADOClient:
         self.base_url = f"https://dev.azure.com/{settings.ado_organization}/{settings.ado_project}"
         self.api_version = "7.1"
         self._credential = None
+        self._static_auth: str | None = None
 
-        # Determine auth mode: Entra (preferred) or PAT (fallback)
+        # Prepare PAT auth if available (used as primary or fallback)
+        if settings.ado_pat:
+            pat_bytes = f":{settings.ado_pat}".encode("ascii")
+            self._static_auth = f"Basic {base64.b64encode(pat_bytes).decode('ascii')}"
+
+        # Determine primary auth mode: Entra (preferred) or PAT
         if settings.ado_tenant_id:
             self._auth_mode = "entra"
             self._init_entra_auth(settings.ado_tenant_id)
-        elif settings.ado_pat:
+        elif self._static_auth:
             self._auth_mode = "pat"
-            pat_bytes = f":{settings.ado_pat}".encode("ascii")
-            self._static_auth = f"Basic {base64.b64encode(pat_bytes).decode('ascii')}"
         else:
             raise ValueError(
                 "Either ADO_TENANT_ID (for Entra auth) or ADO_PAT must be set."
@@ -95,39 +99,47 @@ class ADOClient:
         )
 
     def _init_entra_auth(self, tenant_id: str) -> None:
-        """Initialize Entra ID credential scoped to the ADO tenant."""
+        """Initialize Entra ID credential that allows acquiring tokens for the ADO tenant."""
         try:
-            from azure.identity import DefaultAzureCredential
+            from azure.identity.aio import DefaultAzureCredential
             self._credential = DefaultAzureCredential(
                 additionally_allowed_tenants=[tenant_id],
                 exclude_managed_identity_credential=False,
             )
-            logger.info(f"Entra auth configured for tenant {tenant_id}")
+            logger.info(f"Entra auth configured (additionally allowed tenant: {tenant_id})")
         except ImportError:
             raise ImportError(
                 "azure-identity is required for Entra auth. "
                 "Install with: pip install azure-identity"
             )
 
-    def _get_auth_header(self) -> str:
+    async def _get_auth_header(self) -> str:
         """Get the current Authorization header value.
 
-        For Entra: fetches a fresh bearer token scoped to the ADO tenant
-        (cached internally by azure-identity).
-        For PAT: returns the static Basic header.
+        For Entra: acquires a bearer token for the ADO tenant (async, non-blocking).
+        Falls back to PAT if Entra token acquisition fails and PAT is configured.
+        For PAT-only: returns the static Basic header.
         """
         if self._auth_mode == "entra":
-            token = self._credential.get_token(
-                f"{_ADO_RESOURCE_ID}/.default",
-                tenant_id=self.settings.ado_tenant_id,
-            )
-            return f"Bearer {token.token}"
+            try:
+                token = await self._credential.get_token(
+                    f"{_ADO_RESOURCE_ID}/.default",
+                    tenant_id=self.settings.ado_tenant_id,
+                )
+                return f"Bearer {token.token}"
+            except Exception as exc:
+                if self._static_auth:
+                    logger.warning(
+                        f"Entra token acquisition failed ({exc}), falling back to PAT"
+                    )
+                    return self._static_auth
+                raise
         return self._static_auth
 
     async def _request(self, method: str, url: str, **kwargs) -> httpx.Response:
         """Make an authenticated request, refreshing the auth header each time."""
         headers = kwargs.pop("headers", {})
-        headers["Authorization"] = self._get_auth_header()
+        headers["Authorization"] = await self._get_auth_header()
         response = await self.client.request(method, url, headers=headers, **kwargs)
         response.raise_for_status()
         return response
@@ -382,5 +394,7 @@ class ADOClient:
         return list(_task_story_map.values())
 
     async def close(self):
-        """Close the HTTP client."""
+        """Close the HTTP client and credential."""
         await self.client.aclose()
+        if self._credential is not None:
+            await self._credential.close()
