@@ -81,3 +81,5 @@ ado-sync/.pytest_cache/
 ado-sync/__pycache__/
 ado-sync/**/__pycache__/
 ado-sync/.env\nado-sync/.ado-sync-mappings.json
+ado-sync/ado-sync.service
+ado-sync/.ado-sync-mappings.json

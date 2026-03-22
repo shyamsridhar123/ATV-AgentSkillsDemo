@@ -12,5 +12,5 @@ dependencies: []
 ## Description
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
-Session epic: Deploy ado-sync as running service with Azure OpenAI configured for Beth ADO (org: sschofield, project: Beth). Wire up watcher. Test end-to-end. Phase 1 of making this available to all beth-copilot users.
+Session epic: Deploy ado-sync as running service with Azure OpenAI and Entra ID auth. Wire up backlog watcher for auto-creation of ADO stories. Test end-to-end. Phase 1 of making this available to all beth-copilot users.
 <!-- SECTION:DESCRIPTION:END -->
