@@ -116,7 +116,7 @@ async def _prime_cache(tasks_path: Path):
                 logger.debug(f"Cached: {task.task_id} = {task.status}")
         except Exception as e:
             errors += 1
-            logger.warning(f"Failed to parse {md_file.name}: {e}")
+            logger.warning(f"Failed to parse {md_file.name}: {e}", exc_info=True)
 
     logger.info(f"Primed cache with {len(_task_cache)} existing tasks ({errors} parse errors)")
 

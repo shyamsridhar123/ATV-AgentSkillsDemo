@@ -14,8 +14,8 @@ from .models import BacklogTask, ADOUserStory, FibonacciEffort
 
 logger = logging.getLogger(__name__)
 
-# Cached token provider (created once, reused across calls)
-_token_provider = None
+# Cached token providers keyed by tenant ID (or "default" for same-tenant)
+_token_providers: dict[str, callable] = {}
 
 SYSTEM_PROMPT = """You are an expert agile project manager who creates Azure DevOps user stories from developer task descriptions.
 
@@ -100,8 +100,6 @@ def format_story(task: BacklogTask, settings: Settings) -> ADOUserStory:
     if not settings.azure_openai_endpoint:
         raise ValueError("Azure OpenAI not configured — use offline formatter")
 
-    global _token_provider
-
     if settings.azure_openai_api_key:
         # API key auth
         client = AzureOpenAI(
@@ -110,8 +108,9 @@ def format_story(task: BacklogTask, settings: Settings) -> ADOUserStory:
             api_version=settings.azure_openai_api_version,
         )
     else:
-        # Entra ID auth (DefaultAzureCredential)
-        if _token_provider is None:
+        # Entra ID auth (DefaultAzureCredential), cached per tenant
+        cache_key = settings.azure_openai_tenant_id or "_default"
+        if cache_key not in _token_providers:
             from azure.identity import DefaultAzureCredential
             cred_kwargs = {}
             if settings.azure_openai_tenant_id:
@@ -120,16 +119,17 @@ def format_story(task: BacklogTask, settings: Settings) -> ADOUserStory:
             aoai_scope = "https://cognitiveservices.azure.com/.default"
             aoai_tenant = settings.azure_openai_tenant_id or None
 
-            def _provider():
-                """Acquire a bearer token for the AOAI resource, targeting the correct tenant."""
-                token = credential.get_token(aoai_scope, tenant_id=aoai_tenant)
-                return token.token
+            def _make_provider(_cred=credential, _scope=aoai_scope, _tenant=aoai_tenant):
+                def _provider():
+                    token = _cred.get_token(_scope, tenant_id=_tenant)
+                    return token.token
+                return _provider
 
-            _token_provider = _provider
-            logger.info("AOAI: Using Entra ID (DefaultAzureCredential) auth")
+            _token_providers[cache_key] = _make_provider()
+            logger.info(f"AOAI: Created Entra ID token provider for tenant '{cache_key}'")
         client = AzureOpenAI(
             azure_endpoint=settings.azure_openai_endpoint,
-            azure_ad_token_provider=_token_provider,
+            azure_ad_token_provider=_token_providers[cache_key],
             api_version=settings.azure_openai_api_version,
         )
 

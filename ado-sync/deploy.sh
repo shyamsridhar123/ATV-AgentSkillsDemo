@@ -13,7 +13,6 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 SERVICE_NAME="ado-sync"
-UNIT_FILE="${SCRIPT_DIR}/ado-sync.service"
 USER_UNIT_DIR="${HOME}/.config/systemd/user"
 
 ensure_venv() {
@@ -30,7 +29,10 @@ install_service() {
 
     mkdir -p "${USER_UNIT_DIR}"
 
-    # Generate a user-mode unit (no root required)
+    # Generate a user-mode unit (no root required).
+    # EnvironmentFile points to the repo .env — this is intentional for
+    # local/dev deployments in the user's clone. Production deployments
+    # should override with: systemctl --user edit ado-sync
     cat > "${USER_UNIT_DIR}/${SERVICE_NAME}.service" <<EOF
 [Unit]
 Description=ADO Sync — BacklogMD to Azure DevOps user story bridge
