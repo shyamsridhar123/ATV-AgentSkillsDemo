@@ -1,9 +1,10 @@
 ---
 id: BETH-64.1
 title: 'Resolve OQ-1: Credential storage — keytar vs native CLI helpers'
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-03-22 16:34'
+updated_date: '2026-03-22 23:48'
 labels: []
 dependencies: []
 parent_task_id: BETH-64
@@ -23,3 +24,9 @@ BLOCKING DECISION for Phase 2a. Evaluate keytar (Node native module, needs node-
 - [ ] #3 Fallback strategy defined for headless environments without keychain
 - [ ] #4 npm dependency impact assessed (bundle size, native compilation requirements)
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+ADR-001 written in backlog/decisions/ADR-001-credential-storage.md. Decision: cross-keychain with env var override layer. keytar rejected (dead). Follows gh/docker pattern.
+<!-- SECTION:NOTES:END -->
