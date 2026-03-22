@@ -1,7 +1,7 @@
 """Azure DevOps REST API client.
 
 Creates and updates work items (User Stories) via the ADO REST API v7.1.
-Uses PAT authentication and JSON Patch operations.
+Supports Entra ID (bearer token) auth with PAT fallback.
 
 API Reference:
   POST https://dev.azure.com/{org}/{project}/_apis/wit/workitems/$User%20Story?api-version=7.1
@@ -21,6 +21,9 @@ import httpx
 
 from .config import Settings
 from .models import ADOUserStory, ADOWorkItemResult, StoryTaskMapping
+
+# ADO resource ID used when requesting Entra tokens
+_ADO_RESOURCE_ID = "499b84ac-1321-427f-aa17-267ca6975798"
 
 logger = logging.getLogger(__name__)
 
@@ -66,21 +69,68 @@ class ADOClient:
         self.settings = settings
         self.base_url = f"https://dev.azure.com/{settings.ado_organization}/{settings.ado_project}"
         self.api_version = "7.1"
+        self._credential = None
 
-        # PAT auth: base64 encode ":{pat}"
-        pat_bytes = f":{settings.ado_pat}".encode("ascii")
-        self.auth_header = f"Basic {base64.b64encode(pat_bytes).decode('ascii')}"
+        # Determine auth mode: Entra (preferred) or PAT (fallback)
+        if settings.ado_tenant_id:
+            self._auth_mode = "entra"
+            self._init_entra_auth(settings.ado_tenant_id)
+        elif settings.ado_pat:
+            self._auth_mode = "pat"
+            pat_bytes = f":{settings.ado_pat}".encode("ascii")
+            self._static_auth = f"Basic {base64.b64encode(pat_bytes).decode('ascii')}"
+        else:
+            raise ValueError(
+                "Either ADO_TENANT_ID (for Entra auth) or ADO_PAT must be set."
+            )
+
+        logger.info(f"ADO client initialized ({self._auth_mode} auth) → {self.base_url}")
 
         # Load persisted mappings on init
         _load_mappings()
 
         self.client = httpx.AsyncClient(
-            headers={
-                "Authorization": self.auth_header,
-                "Content-Type": "application/json-patch+json",
-            },
+            headers={"Content-Type": "application/json-patch+json"},
             timeout=30.0,
         )
+
+    def _init_entra_auth(self, tenant_id: str) -> None:
+        """Initialize Entra ID credential scoped to the ADO tenant."""
+        try:
+            from azure.identity import DefaultAzureCredential
+            self._credential = DefaultAzureCredential(
+                additionally_allowed_tenants=[tenant_id],
+                exclude_managed_identity_credential=False,
+            )
+            logger.info(f"Entra auth configured for tenant {tenant_id}")
+        except ImportError:
+            raise ImportError(
+                "azure-identity is required for Entra auth. "
+                "Install with: pip install azure-identity"
+            )
+
+    def _get_auth_header(self) -> str:
+        """Get the current Authorization header value.
+
+        For Entra: fetches a fresh bearer token scoped to the ADO tenant
+        (cached internally by azure-identity).
+        For PAT: returns the static Basic header.
+        """
+        if self._auth_mode == "entra":
+            token = self._credential.get_token(
+                f"{_ADO_RESOURCE_ID}/.default",
+                tenant_id=self.settings.ado_tenant_id,
+            )
+            return f"Bearer {token.token}"
+        return self._static_auth
+
+    async def _request(self, method: str, url: str, **kwargs) -> httpx.Response:
+        """Make an authenticated request, refreshing the auth header each time."""
+        headers = kwargs.pop("headers", {})
+        headers["Authorization"] = self._get_auth_header()
+        response = await self.client.request(method, url, headers=headers, **kwargs)
+        response.raise_for_status()
+        return response
 
     async def create_user_story(self, story: ADOUserStory) -> ADOWorkItemResult:
         """Create a new User Story work item in Azure DevOps.
@@ -128,7 +178,7 @@ class ADOClient:
             {
                 "op": "add",
                 "path": "/fields/System.State",
-                "value": "Active",
+                "value": "New",
             },
         ]
 
@@ -170,8 +220,7 @@ class ADOClient:
         )
 
         logger.info(f"Creating ADO User Story: {story.title}")
-        response = await self.client.post(url, json=operations)
-        response.raise_for_status()
+        response = await self._request("POST", url, json=operations)
 
         data = response.json()
         result = ADOWorkItemResult(
@@ -219,8 +268,7 @@ class ADOClient:
             f"?api-version={self.api_version}"
         )
 
-        response = await self.client.patch(url, json=operations)
-        response.raise_for_status()
+        response = await self._request("PATCH", url, json=operations)
 
         data = response.json()
         return ADOWorkItemResult(
@@ -272,8 +320,7 @@ class ADOClient:
             f"?api-version={self.api_version}"
         )
 
-        response = await self.client.patch(url, json=operations)
-        response.raise_for_status()
+        response = await self._request("PATCH", url, json=operations)
 
         data = response.json()
 
@@ -320,8 +367,7 @@ class ADOClient:
             f"?api-version={self.api_version}"
         )
 
-        response = await self.client.patch(url, json=operations)
-        response.raise_for_status()
+        response = await self._request("PATCH", url, json=operations)
         logger.info(f"Linked {link_type} to ADO #{work_item_id}: {github_url}")
 
     def get_mapping(self, task_id: str) -> Optional[StoryTaskMapping]:

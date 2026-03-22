@@ -10,7 +10,8 @@ class Settings(BaseSettings):
     # Azure DevOps
     ado_organization: str = Field(..., description="ADO organization name")
     ado_project: str = Field(..., description="ADO project name")
-    ado_pat: str = Field(..., description="ADO Personal Access Token")
+    ado_pat: str = Field(default="", description="ADO Personal Access Token (fallback if Entra auth unavailable)")
+    ado_tenant_id: str = Field(default="", description="Entra tenant ID for ADO org (enables bearer token auth)")
     ado_area_path: str = Field(default="", description="ADO area path")
     ado_iteration_path: str = Field(default="", description="ADO iteration path")
 
