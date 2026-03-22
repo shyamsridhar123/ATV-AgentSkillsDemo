@@ -18,8 +18,9 @@ class Settings(BaseSettings):
     # Azure OpenAI (optional -- when omitted, offline formatter is used)
     azure_openai_endpoint: str = Field(default="", description="Azure OpenAI endpoint URL")
     azure_openai_deployment: str = Field(default="gpt-4o", description="Deployment name")
-    azure_openai_api_key: str = Field(default="", description="Azure OpenAI API key")
+    azure_openai_api_key: str = Field(default="", description="Azure OpenAI API key (leave empty for Entra auth)")
     azure_openai_api_version: str = Field(default="2024-10-21", description="API version")
+    azure_openai_tenant_id: str = Field(default="", description="Entra tenant ID for AOAI resource (if different from default)")
 
     # GitHub
     github_webhook_secret: str = Field(default="", description="GitHub webhook secret")
