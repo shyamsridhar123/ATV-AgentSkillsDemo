@@ -14,6 +14,9 @@ from .models import BacklogTask, ADOUserStory, FibonacciEffort
 
 logger = logging.getLogger(__name__)
 
+# Cached token providers keyed by tenant ID (or "default" for same-tenant)
+_token_providers: dict[str, callable] = {}
+
 SYSTEM_PROMPT = """You are an expert agile project manager who creates Azure DevOps user stories from developer task descriptions.
 
 You will receive a BacklogMD task with a title, description, acceptance criteria, and other metadata. Your job is to transform this into a properly formatted ADO user story.
@@ -85,6 +88,8 @@ def build_user_prompt(task: BacklogTask) -> str:
 def format_story(task: BacklogTask, settings: Settings) -> ADOUserStory:
     """Use Azure OpenAI to transform a BacklogMD task into an ADO user story.
 
+    Supports Entra ID auth (preferred) and API key auth (fallback).
+
     Args:
         task: Parsed BacklogMD task
         settings: Application settings with Azure OpenAI config
@@ -92,14 +97,41 @@ def format_story(task: BacklogTask, settings: Settings) -> ADOUserStory:
     Returns:
         Formatted ADOUserStory ready for creation in Azure DevOps
     """
-    if not settings.azure_openai_endpoint or not settings.azure_openai_api_key:
+    if not settings.azure_openai_endpoint:
         raise ValueError("Azure OpenAI not configured — use offline formatter")
 
-    client = AzureOpenAI(
-        azure_endpoint=settings.azure_openai_endpoint,
-        api_key=settings.azure_openai_api_key,
-        api_version=settings.azure_openai_api_version,
-    )
+    if settings.azure_openai_api_key:
+        # API key auth
+        client = AzureOpenAI(
+            azure_endpoint=settings.azure_openai_endpoint,
+            api_key=settings.azure_openai_api_key,
+            api_version=settings.azure_openai_api_version,
+        )
+    else:
+        # Entra ID auth (DefaultAzureCredential), cached per tenant
+        cache_key = settings.azure_openai_tenant_id or "_default"
+        if cache_key not in _token_providers:
+            from azure.identity import DefaultAzureCredential
+            cred_kwargs = {}
+            if settings.azure_openai_tenant_id:
+                cred_kwargs["additionally_allowed_tenants"] = [settings.azure_openai_tenant_id]
+            credential = DefaultAzureCredential(**cred_kwargs)
+            aoai_scope = "https://cognitiveservices.azure.com/.default"
+            aoai_tenant = settings.azure_openai_tenant_id or None
+
+            def _make_provider(_cred=credential, _scope=aoai_scope, _tenant=aoai_tenant):
+                def _provider():
+                    token = _cred.get_token(_scope, tenant_id=_tenant)
+                    return token.token
+                return _provider
+
+            _token_providers[cache_key] = _make_provider()
+            logger.info(f"AOAI: Created Entra ID token provider for tenant '{cache_key}'")
+        client = AzureOpenAI(
+            azure_endpoint=settings.azure_openai_endpoint,
+            azure_ad_token_provider=_token_providers[cache_key],
+            api_version=settings.azure_openai_api_version,
+        )
 
     user_prompt = build_user_prompt(task)
     logger.info(f"Formatting story for task {task.task_id}: {task.title}")
@@ -111,7 +143,7 @@ def format_story(task: BacklogTask, settings: Settings) -> ADOUserStory:
             {"role": "user", "content": user_prompt},
         ],
         temperature=0.3,
-        max_tokens=1000,
+        max_completion_tokens=1000,
         response_format={"type": "json_object"},
     )
 

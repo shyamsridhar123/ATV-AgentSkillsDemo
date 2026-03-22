@@ -1,10 +1,10 @@
 ---
 id: BETH-59
 title: Deploy ADO Sync + Entra auth for ADO organizations
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-03-21 19:18'
-updated_date: '2026-03-21 19:18'
+updated_date: '2026-03-22 15:34'
 labels: []
 dependencies: []
 priority: high

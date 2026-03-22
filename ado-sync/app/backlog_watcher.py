@@ -107,13 +107,18 @@ async def watch_backlog_tasks(
 
 async def _prime_cache(tasks_path: Path):
     """Load current task states into cache on startup."""
+    errors = 0
     for md_file in tasks_path.glob("*.md"):
-        task = parse_task_file(md_file)
-        if task:
-            _task_cache[str(md_file)] = task.status
-            logger.debug(f"Cached: {task.task_id} = {task.status}")
+        try:
+            task = parse_task_file(md_file)
+            if task:
+                _task_cache[str(md_file)] = task.status
+                logger.debug(f"Cached: {task.task_id} = {task.status}")
+        except Exception as e:
+            errors += 1
+            logger.warning(f"Failed to parse {md_file.name}: {e}", exc_info=True)
 
-    logger.info(f"Primed cache with {len(_task_cache)} existing tasks")
+    logger.info(f"Primed cache with {len(_task_cache)} existing tasks ({errors} parse errors)")
 
 
 def _get_cached_status(path_key: str) -> Optional[str]:

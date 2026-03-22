@@ -1,6 +1,6 @@
 """Domain models for ADO Sync."""
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from typing import Optional
 from datetime import datetime
 from enum import Enum
@@ -27,6 +27,13 @@ class BacklogTask(BaseModel):
     labels: list[str] = Field(default_factory=list, description="Task labels")
     assignee: Optional[str] = Field(default=None, description="Assigned agent/person")
     priority: Optional[str] = Field(default=None, description="Task priority")
+
+    @field_validator("assignee", mode="before")
+    @classmethod
+    def _coerce_assignee(cls, v):
+        if isinstance(v, list):
+            return v[0] if v else None
+        return v or None
     notes: str = Field(default="", description="Implementation notes")
     plan: str = Field(default="", description="Implementation plan")
     raw_content: str = Field(default="", description="Full raw markdown content")
