@@ -3,14 +3,14 @@
     "SubagentStart": [
       {
         "type": "command",
-        "command": "node .github/hooks/scripts/inject-skills.mjs",
+        "command": "/home/sschofield/.nvm/versions/node/v24.14.0/bin/node .github/hooks/scripts/inject-skills.mjs",
         "timeout": 15
       }
     ],
     "SubagentStop": [
       {
         "type": "command",
-        "command": "node .github/hooks/scripts/verify-skills.mjs",
+        "command": "/home/sschofield/.nvm/versions/node/v24.14.0/bin/node .github/hooks/scripts/verify-skills.mjs",
         "timeout": 10
       }
     ]
