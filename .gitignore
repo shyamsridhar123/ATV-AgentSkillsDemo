@@ -58,6 +58,9 @@ sbom.json
 # Beads (removed — legacy tracking system)
 .beads/
 
+# Beth local runtime state (MSAL tokens, config, PID files)
+.beth/
+
 # bs-buster (removed — legacy dependency)
 .bs-buster/
 
