@@ -14,7 +14,7 @@
 
 ADR-003's shared MSAL token cache (`msal-node-extensions` / `msal-extensions`) already provides:
 - **Token storage**: MSAL Unified Cache at `.beth/msal_token_cache.json`
-- **Cache encryption**: DPAPI (Windows), Keychain Services (macOS), libsecret (Linux) — via `msal-extensions` built-in
+- **Cache encryption**: DPAPI (Windows), Keychain Services (macOS), libsecret (Linux) — via `msal-extensions` built-in. Note: Linux requires a running secret service (libsecret/gnome-keyring); in minimal containers/CI without one, use `BETH_PAT` env var instead. See ADR-003 Edge Cases.
 - **Cross-language interop**: Node.js and Python share the same cache natively
 
 The `cross-keychain` dependency proposed here is **not needed**. MSAL handles Entra token persistence and encryption. PAT fallback (US-008) is covered by the `BETH_PAT` environment variable — no keychain required.

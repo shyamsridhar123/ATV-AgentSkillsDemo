@@ -57,7 +57,7 @@ A user who runs `ado-sync start` at least once every 90 days never needs to re-a
 ```
 INITIAL AUTH (one-time):
   npx beth-copilot set-ado-org
-    → MSAL.js device code flow (scope: 499b84ac.../. default)
+    → MSAL.js device code flow (scope: 499b84ac.../.default)
     → User opens browser, enters code
     → Tokens stored in .beth/msal_token_cache.json
     → Config written to .beth/ado-sync.json (no secrets)
@@ -91,6 +91,7 @@ RE-AUTH (rare — refresh token expired/revoked):
 | Network down during refresh | MSAL retry. Access token works until it expires. | Next refresh attempt may succeed |
 | CLI and Python refresh simultaneously | File lock serializes. First writer wins. Second reader sees fresh tokens. | Automatic |
 | **Different client_ids** | **Tokens partitioned — invisible to each other** | **MUST use same client_id** |
+| No keyring service (Linux containers/CI) | `msal-extensions` libsecret persistence fails | Falls back to plaintext cache. Use `BETH_PAT` env var in keyring-less environments (CI, minimal containers). |
 
 ## Interface Contract: CLI ↔ Python
 
@@ -130,3 +131,4 @@ The existing `azure-identity` dependency in the Python service can remain as a f
 - New Node.js deps: `@azure/msal-node`, `@azure/msal-node-extensions`
 - New Python deps: `msal`, `msal-extensions` (added to `requirements.txt`)
 - Users re-authenticate only when refresh token expires (90d inactive) or is revoked
+- Linux requires a running secret service (libsecret/gnome-keyring) for encrypted cache persistence. In minimal containers or CI without a keyring daemon, `msal-extensions` falls back to plaintext storage — use `BETH_PAT` env var instead in those environments.
