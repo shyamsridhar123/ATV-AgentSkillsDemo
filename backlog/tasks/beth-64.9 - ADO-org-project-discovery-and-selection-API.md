@@ -1,9 +1,10 @@
 ---
 id: BETH-64.9
 title: ADO org/project discovery and selection API
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-03-22 16:36'
+updated_date: '2026-03-24 00:01'
 labels: []
 dependencies: []
 parent_task_id: BETH-64

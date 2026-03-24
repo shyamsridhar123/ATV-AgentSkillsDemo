@@ -1,9 +1,10 @@
 ---
 id: BETH-64.10
 title: 'CLI command: npx beth-copilot set-ado-org'
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-03-22 16:36'
+updated_date: '2026-03-24 03:18'
 labels: []
 dependencies: []
 parent_task_id: BETH-64

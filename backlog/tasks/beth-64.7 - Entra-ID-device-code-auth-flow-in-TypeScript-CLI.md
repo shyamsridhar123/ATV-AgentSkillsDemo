@@ -1,9 +1,10 @@
 ---
 id: BETH-64.7
 title: Entra ID device code auth flow in TypeScript CLI
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-03-22 16:35'
+updated_date: '2026-03-23 23:57'
 labels: []
 dependencies: []
 parent_task_id: BETH-64
