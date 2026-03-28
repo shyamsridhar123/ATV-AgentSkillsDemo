@@ -1128,7 +1128,7 @@ async function uninstall() {
 }
 
 // Input validation constants
-const ALLOWED_COMMANDS = ['init', 'help', '--help', '-h', 'doctor', 'quickstart', 'pre-push-guard', 'update', 'land', 'uninstall'];
+const ALLOWED_COMMANDS = ['init', 'help', '--help', '-h', 'doctor', 'quickstart', 'pre-push-guard', 'update', 'land', 'uninstall', 'set-ado-org'];
 const ALLOWED_FLAGS = ['--force', '--skip-backlog', '--skip-mcp', '--verbose', '--reason', '-r', '-f', '--skip-tests', '--message', '-m', '--dry-run', '--check-only', '--fix'];
 const MAX_ARG_LENGTH = 50;
 
@@ -1234,6 +1234,12 @@ switch (command) {
         process.exit(1);
       }
       throw error;
+    }
+    break;
+  case 'set-ado-org':
+    {
+      const { setAdoOrg } = await loadTsCommand('set-ado-org');
+      await setAdoOrg();
     }
     break;
   case 'help':

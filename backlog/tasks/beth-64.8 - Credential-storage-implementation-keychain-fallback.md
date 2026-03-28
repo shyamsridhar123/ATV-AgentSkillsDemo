@@ -1,9 +1,10 @@
 ---
 id: BETH-64.8
 title: Credential storage implementation (keychain + fallback)
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-03-22 16:36'
+updated_date: '2026-03-23 23:59'
 labels: []
 dependencies: []
 parent_task_id: BETH-64

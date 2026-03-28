@@ -1,9 +1,10 @@
 ---
 id: BETH-64.6
 title: 'Per-project config: .beth/ado-sync.json schema and storage'
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-03-22 16:35'
+updated_date: '2026-03-23 23:53'
 labels: []
 dependencies: []
 parent_task_id: BETH-64
