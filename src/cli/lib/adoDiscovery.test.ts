@@ -17,25 +17,13 @@ import {
 
 const MOCK_TOKEN = 'mock-access-token';
 
-function jsonResponse(body: unknown, status = 200): Response {
+function jsonResponse(body: unknown, status = 200) {
   return {
     ok: status >= 200 && status < 300,
     status,
     statusText: status === 200 ? 'OK' : 'Error',
     json: () => Promise.resolve(body),
-    headers: new Headers(),
-    redirected: false,
-    type: 'basic' as ResponseType,
-    url: '',
-    clone: () => jsonResponse(body, status) as Response,
-    body: null,
-    bodyUsed: false,
-    arrayBuffer: () => Promise.resolve(new ArrayBuffer(0)),
-    blob: () => Promise.resolve(new Blob()),
-    formData: () => Promise.resolve(new FormData()),
-    text: () => Promise.resolve(JSON.stringify(body)),
-    bytes: () => Promise.resolve(new Uint8Array()),
-  } as Response;
+  } as unknown as Response;
 }
 
 describe('adoDiscovery', () => {
