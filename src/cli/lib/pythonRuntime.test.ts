@@ -11,15 +11,17 @@ import { join } from 'path';
 import { tmpdir } from 'os';
 
 // Mock child_process at module level (ESM-compatible)
-const mockExecSync = vi.fn();
+const mockExecFileSync = vi.fn();
 vi.mock('child_process', () => ({
-  execSync: (...args: unknown[]) => mockExecSync(...args),
+  execFileSync: (...args: unknown[]) => mockExecFileSync(...args),
 }));
 
 // Import after mock declaration (vitest hoists vi.mock)
 import {
   discoverPython,
   createVenv,
+  pythonExeName,
+  pipExeName,
 } from './pythonRuntime.js';
 
 /** Create a temporary project directory for each test */
@@ -35,9 +37,13 @@ function makeTmpDir(): string {
 describe('pythonRuntime', () => {
   let projectRoot: string;
 
+  const PYTHON_EXE = pythonExeName();
+  const PIP_EXE = pipExeName();
+  const BIN_DIR = process.platform === 'win32' ? 'Scripts' : 'bin';
+
   beforeEach(() => {
     projectRoot = makeTmpDir();
-    mockExecSync.mockReset();
+    mockExecFileSync.mockReset();
   });
 
   afterEach(() => {
@@ -51,37 +57,36 @@ describe('pythonRuntime', () => {
     describe('venv Python (BETH-64.11.1)', () => {
       it('returns venv python path when venv exists', async () => {
         // Arrange: create a fake venv with a python binary
-        const venvBin = join(projectRoot, '.beth', 'ado-sync', '.venv', 'bin');
+        const venvBin = join(projectRoot, '.beth', 'ado-sync', '.venv', BIN_DIR);
         mkdirSync(venvBin, { recursive: true });
-        writeFileSync(join(venvBin, 'python'), '#!/bin/sh\necho "Python 3.12.0"', { mode: 0o755 });
+        writeFileSync(join(venvBin, PYTHON_EXE), '#!/bin/sh\necho "Python 3.12.0"', { mode: 0o755 });
 
         // Mock version check for the venv python
-        mockExecSync.mockReturnValue(Buffer.from('Python 3.12.0\n'));
+        mockExecFileSync.mockReturnValue(Buffer.from('Python 3.12.0\n'));
 
         // Act
         const result = await discoverPython(projectRoot);
 
         // Assert
-        expect(result.pythonPath).toBe(join(venvBin, 'python'));
+        expect(result.pythonPath).toBe(join(venvBin, PYTHON_EXE));
         expect(result.source).toBe('venv');
       });
 
       it('does NOT search PATH when venv python found', async () => {
         // Arrange: venv exists
-        const venvBin = join(projectRoot, '.beth', 'ado-sync', '.venv', 'bin');
+        const venvBin = join(projectRoot, '.beth', 'ado-sync', '.venv', BIN_DIR);
         mkdirSync(venvBin, { recursive: true });
-        writeFileSync(join(venvBin, 'python'), '#!/bin/sh\necho "Python 3.12.0"', { mode: 0o755 });
+        writeFileSync(join(venvBin, PYTHON_EXE), '#!/bin/sh\necho "Python 3.12.0"', { mode: 0o755 });
 
-        mockExecSync.mockReturnValue(Buffer.from('Python 3.12.0\n'));
+        mockExecFileSync.mockReturnValue(Buffer.from('Python 3.12.0\n'));
 
         // Act
         await discoverPython(projectRoot);
 
-        // Assert — execSync should only be called for version check, not for which/where
-        const whichCalls = mockExecSync.mock.calls.filter(
-          (call: unknown[]) => String(call[0]).includes('which') || String(call[0]).includes('where')
-        );
-        expect(whichCalls).toHaveLength(0);
+        // Assert — should only be called once (version check for venv python)
+        expect(mockExecFileSync).toHaveBeenCalledTimes(1);
+        // The single call should be for the venv python, not python3/python on PATH
+        expect(String(mockExecFileSync.mock.calls[0][0])).toContain('.venv');
       });
     });
 
@@ -89,9 +94,9 @@ describe('pythonRuntime', () => {
     describe('python3 fallback (BETH-64.11.2)', () => {
       it('returns python3 when venv missing but python3 is on PATH', async () => {
         // Arrange: no venv, python3 available
-        mockExecSync.mockImplementation((cmd: string) => {
+        mockExecFileSync.mockImplementation((cmd: string) => {
           const cmdStr = String(cmd);
-          if (cmdStr.includes('python3') && cmdStr.includes('--version')) {
+          if (cmdStr.includes('python3')) {
             return Buffer.from('Python 3.11.5\n');
           }
           throw new Error('not found');
@@ -108,12 +113,12 @@ describe('pythonRuntime', () => {
 
       it('prefers python3 over python', async () => {
         // Both python3 and python exist — python3 should win
-        mockExecSync.mockImplementation((cmd: string) => {
+        mockExecFileSync.mockImplementation((cmd: string) => {
           const cmdStr = String(cmd);
-          if (cmdStr.includes('python3') && cmdStr.includes('--version')) {
+          if (cmdStr.includes('python3')) {
             return Buffer.from('Python 3.11.5\n');
           }
-          if (cmdStr.includes('python') && !cmdStr.includes('python3') && cmdStr.includes('--version')) {
+          if (cmdStr === 'python') {
             return Buffer.from('Python 3.10.0\n');
           }
           throw new Error('not found');
@@ -128,14 +133,14 @@ describe('pythonRuntime', () => {
     // BETH-64.11.3: falls back to python on PATH
     describe('python fallback (BETH-64.11.3)', () => {
       it('returns python when venv and python3 are both missing', async () => {
-        mockExecSync.mockImplementation((cmd: string) => {
+        mockExecFileSync.mockImplementation((cmd: string) => {
           const cmdStr = String(cmd);
           // python3 not found
           if (cmdStr.includes('python3')) {
             throw new Error('not found');
           }
           // python found with valid version
-          if (cmdStr.includes('python') && cmdStr.includes('--version')) {
+          if (cmdStr === 'python') {
             return Buffer.from('Python 3.10.4\n');
           }
           throw new Error('not found');
@@ -149,10 +154,10 @@ describe('pythonRuntime', () => {
 
       it('python is the last resort before failure', async () => {
         const triedCommands: string[] = [];
-        mockExecSync.mockImplementation((cmd: string) => {
+        mockExecFileSync.mockImplementation((cmd: string) => {
           const cmdStr = String(cmd);
           triedCommands.push(cmdStr);
-          if (cmdStr.includes('python') && !cmdStr.includes('python3') && cmdStr.includes('--version')) {
+          if (cmdStr === 'python') {
             return Buffer.from('Python 3.10.0\n');
           }
           throw new Error('not found');
@@ -163,7 +168,7 @@ describe('pythonRuntime', () => {
         // Should have tried python3 before python
         const python3Idx = triedCommands.findIndex((c) => c.includes('python3'));
         const pythonIdx = triedCommands.findIndex(
-          (c) => c.includes('python') && !c.includes('python3')
+          (c) => c === 'python'
         );
         expect(python3Idx).toBeLessThan(pythonIdx);
       });
@@ -172,12 +177,12 @@ describe('pythonRuntime', () => {
     // BETH-64.11.4: rejects Python < 3.10
     describe('version validation (BETH-64.11.4)', () => {
       it('rejects Python 3.9.x with clear error', async () => {
-        mockExecSync.mockImplementation((cmd: string) => {
+        mockExecFileSync.mockImplementation((cmd: string) => {
           const cmdStr = String(cmd);
-          if (cmdStr.includes('python3') && cmdStr.includes('--version')) {
+          if (cmdStr.includes('python3')) {
             return Buffer.from('Python 3.9.7\n');
           }
-          if (cmdStr.includes('python') && !cmdStr.includes('python3') && cmdStr.includes('--version')) {
+          if (cmdStr === 'python') {
             return Buffer.from('Python 3.9.7\n');
           }
           throw new Error('not found');
@@ -187,9 +192,9 @@ describe('pythonRuntime', () => {
       });
 
       it('accepts Python 3.10.0 (boundary)', async () => {
-        mockExecSync.mockImplementation((cmd: string) => {
+        mockExecFileSync.mockImplementation((cmd: string) => {
           const cmdStr = String(cmd);
-          if (cmdStr.includes('python3') && cmdStr.includes('--version')) {
+          if (cmdStr.includes('python3')) {
             return Buffer.from('Python 3.10.0\n');
           }
           throw new Error('not found');
@@ -200,9 +205,9 @@ describe('pythonRuntime', () => {
       });
 
       it('accepts Python 3.12.x and higher', async () => {
-        mockExecSync.mockImplementation((cmd: string) => {
+        mockExecFileSync.mockImplementation((cmd: string) => {
           const cmdStr = String(cmd);
-          if (cmdStr.includes('python3') && cmdStr.includes('--version')) {
+          if (cmdStr.includes('python3')) {
             return Buffer.from('Python 3.12.2\n');
           }
           throw new Error('not found');
@@ -213,9 +218,9 @@ describe('pythonRuntime', () => {
       });
 
       it('handles version strings with rc/beta suffixes', async () => {
-        mockExecSync.mockImplementation((cmd: string) => {
+        mockExecFileSync.mockImplementation((cmd: string) => {
           const cmdStr = String(cmd);
-          if (cmdStr.includes('python3') && cmdStr.includes('--version')) {
+          if (cmdStr.includes('python3')) {
             return Buffer.from('Python 3.12.0rc1\n');
           }
           throw new Error('not found');
@@ -229,7 +234,7 @@ describe('pythonRuntime', () => {
     // BETH-64.11.5: error when no Python found
     describe('no Python found (BETH-64.11.5)', () => {
       it('throws when no venv, no python3, no python on PATH', async () => {
-        mockExecSync.mockImplementation(() => {
+        mockExecFileSync.mockImplementation(() => {
           throw new Error('not found');
         });
 
@@ -237,7 +242,7 @@ describe('pythonRuntime', () => {
       });
 
       it('error message contains install URL', async () => {
-        mockExecSync.mockImplementation(() => {
+        mockExecFileSync.mockImplementation(() => {
           throw new Error('not found');
         });
 
@@ -247,7 +252,7 @@ describe('pythonRuntime', () => {
       });
 
       it('error is a proper Error object (not a stack trace dump)', async () => {
-        mockExecSync.mockImplementation(() => {
+        mockExecFileSync.mockImplementation(() => {
           throw new Error('not found');
         });
 
@@ -268,7 +273,7 @@ describe('pythonRuntime', () => {
     // BETH-64.11.6: creates new venv and installs deps
     describe('new venv creation (BETH-64.11.6)', () => {
       it('calls python -m venv with correct target path', async () => {
-        mockExecSync.mockReturnValue(Buffer.from(''));
+        mockExecFileSync.mockReturnValue(Buffer.from(''));
 
         const adoSyncSourceDir = join(projectRoot, 'ado-sync-src');
         mkdirSync(adoSyncSourceDir, { recursive: true });
@@ -276,18 +281,20 @@ describe('pythonRuntime', () => {
 
         const result = await createVenv(projectRoot, '/usr/bin/python3', adoSyncSourceDir);
 
-        const venvCmd = mockExecSync.mock.calls.find(
-          (call: unknown[]) => String(call[0]).includes('-m venv')
+        // execFileSync called with [pythonPath, ['-m', 'venv', venvPath]]
+        const venvCmd = mockExecFileSync.mock.calls.find(
+          (call: unknown[]) => Array.isArray(call[1]) && (call[1] as string[]).includes('venv')
         );
         expect(venvCmd).toBeDefined();
-        expect(String(venvCmd![0])).toContain(join('.beth', 'ado-sync', '.venv'));
+        expect(String(venvCmd![0])).toBe('/usr/bin/python3');
+        expect((venvCmd![1] as string[]).join(' ')).toContain('-m venv');
         expect(result.created).toBe(true);
       });
 
       it('calls pip install -r requirements.txt after venv creation', async () => {
         const callOrder: string[] = [];
-        mockExecSync.mockImplementation((cmd: string) => {
-          callOrder.push(String(cmd));
+        mockExecFileSync.mockImplementation((cmd: string, args: string[]) => {
+          callOrder.push(`${cmd} ${(args || []).join(' ')}`);
           return Buffer.from('');
         });
 
@@ -299,13 +306,13 @@ describe('pythonRuntime', () => {
 
         // pip install should come after venv creation
         const venvIdx = callOrder.findIndex((c) => c.includes('-m venv'));
-        const pipIdx = callOrder.findIndex((c) => c.includes('pip install'));
+        const pipIdx = callOrder.findIndex((c) => c.includes('install'));
         expect(venvIdx).toBeGreaterThanOrEqual(0);
         expect(pipIdx).toBeGreaterThan(venvIdx);
       });
 
       it('uses the venv pip, not system pip', async () => {
-        mockExecSync.mockReturnValue(Buffer.from(''));
+        mockExecFileSync.mockReturnValue(Buffer.from(''));
 
         const adoSyncSourceDir = join(projectRoot, 'ado-sync-src');
         mkdirSync(adoSyncSourceDir, { recursive: true });
@@ -313,16 +320,16 @@ describe('pythonRuntime', () => {
 
         await createVenv(projectRoot, '/usr/bin/python3', adoSyncSourceDir);
 
-        const pipCmd = mockExecSync.mock.calls.find(
-          (call: unknown[]) => String(call[0]).includes('pip install')
+        const pipCmd = mockExecFileSync.mock.calls.find(
+          (call: unknown[]) => Array.isArray(call[1]) && (call[1] as string[]).includes('install')
         );
         expect(pipCmd).toBeDefined();
-        // Should use the venv's pip (path includes .venv)
+        // First arg (the executable) should be the venv's pip
         expect(String(pipCmd![0])).toMatch(/\.venv.*pip/);
       });
 
       it('returns success on clean creation + install', async () => {
-        mockExecSync.mockReturnValue(Buffer.from(''));
+        mockExecFileSync.mockReturnValue(Buffer.from(''));
 
         const adoSyncSourceDir = join(projectRoot, 'ado-sync-src');
         mkdirSync(adoSyncSourceDir, { recursive: true });
@@ -337,14 +344,14 @@ describe('pythonRuntime', () => {
 
     // BETH-64.11.7: skips when venv already exists
     describe('existing venv (BETH-64.11.7)', () => {
-      it('skips venv creation when .venv/bin/python already exists', async () => {
+      it('skips venv creation when .venv python already exists', async () => {
         // Arrange: create fake existing venv
-        const venvBin = join(projectRoot, '.beth', 'ado-sync', '.venv', 'bin');
+        const venvBin = join(projectRoot, '.beth', 'ado-sync', '.venv', BIN_DIR);
         mkdirSync(venvBin, { recursive: true });
-        writeFileSync(join(venvBin, 'python'), '#!/bin/sh\necho "Python 3.12.0"', { mode: 0o755 });
-        writeFileSync(join(venvBin, 'pip'), '#!/bin/sh\necho "pip"', { mode: 0o755 });
+        writeFileSync(join(venvBin, PYTHON_EXE), '#!/bin/sh\necho "Python 3.12.0"', { mode: 0o755 });
+        writeFileSync(join(venvBin, PIP_EXE), '#!/bin/sh\necho "pip"', { mode: 0o755 });
 
-        mockExecSync.mockReturnValue(Buffer.from(''));
+        mockExecFileSync.mockReturnValue(Buffer.from(''));
 
         const adoSyncSourceDir = join(projectRoot, 'ado-sync-src');
         mkdirSync(adoSyncSourceDir, { recursive: true });
@@ -353,8 +360,8 @@ describe('pythonRuntime', () => {
         const result = await createVenv(projectRoot, '/usr/bin/python3', adoSyncSourceDir);
 
         // Assert — should NOT have called python -m venv
-        const venvCmds = mockExecSync.mock.calls.filter(
-          (call: unknown[]) => String(call[0]).includes('-m venv')
+        const venvCmds = mockExecFileSync.mock.calls.filter(
+          (call: unknown[]) => Array.isArray(call[1]) && (call[1] as string[]).includes('venv')
         );
         expect(venvCmds).toHaveLength(0);
         expect(result.created).toBe(false);
@@ -362,12 +369,12 @@ describe('pythonRuntime', () => {
 
       it('still installs/updates deps via pip even when venv exists', async () => {
         // Arrange: existing venv
-        const venvBin = join(projectRoot, '.beth', 'ado-sync', '.venv', 'bin');
+        const venvBin = join(projectRoot, '.beth', 'ado-sync', '.venv', BIN_DIR);
         mkdirSync(venvBin, { recursive: true });
-        writeFileSync(join(venvBin, 'python'), '#!/bin/sh', { mode: 0o755 });
-        writeFileSync(join(venvBin, 'pip'), '#!/bin/sh', { mode: 0o755 });
+        writeFileSync(join(venvBin, PYTHON_EXE), '#!/bin/sh', { mode: 0o755 });
+        writeFileSync(join(venvBin, PIP_EXE), '#!/bin/sh', { mode: 0o755 });
 
-        mockExecSync.mockReturnValue(Buffer.from(''));
+        mockExecFileSync.mockReturnValue(Buffer.from(''));
 
         const adoSyncSourceDir = join(projectRoot, 'ado-sync-src');
         mkdirSync(adoSyncSourceDir, { recursive: true });
@@ -376,8 +383,8 @@ describe('pythonRuntime', () => {
         const result = await createVenv(projectRoot, '/usr/bin/python3', adoSyncSourceDir);
 
         // Assert — pip install SHOULD still happen
-        const pipCmds = mockExecSync.mock.calls.filter(
-          (call: unknown[]) => String(call[0]).includes('pip install')
+        const pipCmds = mockExecFileSync.mock.calls.filter(
+          (call: unknown[]) => Array.isArray(call[1]) && (call[1] as string[]).includes('install')
         );
         expect(pipCmds.length).toBeGreaterThan(0);
         expect(result.depsInstalled).toBe(true);
@@ -387,9 +394,8 @@ describe('pythonRuntime', () => {
     // BETH-64.11.8: handles failures gracefully
     describe('error handling (BETH-64.11.8)', () => {
       it('throws meaningful error when venv creation fails', async () => {
-        mockExecSync.mockImplementation((cmd: string) => {
-          const cmdStr = String(cmd);
-          if (cmdStr.includes('-m venv')) {
+        mockExecFileSync.mockImplementation((cmd: string, args: string[]) => {
+          if (Array.isArray(args) && args.includes('venv')) {
             throw new Error('Error: Command returned non-zero exit status 1');
           }
           return Buffer.from('');
@@ -405,9 +411,8 @@ describe('pythonRuntime', () => {
       });
 
       it('throws meaningful error when pip install fails', async () => {
-        mockExecSync.mockImplementation((cmd: string) => {
-          const cmdStr = String(cmd);
-          if (cmdStr.includes('pip install')) {
+        mockExecFileSync.mockImplementation((cmd: string, args: string[]) => {
+          if (Array.isArray(args) && args.includes('install')) {
             throw new Error('ERROR: Could not install packages');
           }
           return Buffer.from('');
@@ -423,9 +428,8 @@ describe('pythonRuntime', () => {
       });
 
       it('error messages are user-friendly (not raw stack traces)', async () => {
-        mockExecSync.mockImplementation((cmd: string) => {
-          const cmdStr = String(cmd);
-          if (cmdStr.includes('-m venv')) {
+        mockExecFileSync.mockImplementation((cmd: string, args: string[]) => {
+          if (Array.isArray(args) && args.includes('venv')) {
             throw new Error('ENOSPC: no space left on device');
           }
           return Buffer.from('');

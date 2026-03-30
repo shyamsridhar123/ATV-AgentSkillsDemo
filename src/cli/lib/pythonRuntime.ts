@@ -10,7 +10,7 @@
  *   3. python on PATH
  */
 
-import { execSync } from 'child_process';
+import { execFileSync } from 'child_process';
 import { existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
 
@@ -58,7 +58,7 @@ function parseVersion(output: string): { major: number; minor: number; patch: nu
  */
 function checkPythonVersion(pythonCmd: string): string | null {
   try {
-    const output = execSync(`${pythonCmd} --version`, {
+    const output = execFileSync(pythonCmd, ['--version'], {
       encoding: 'utf-8',
       stdio: ['pipe', 'pipe', 'pipe'],
       timeout: 10000,
@@ -73,9 +73,21 @@ function checkPythonVersion(pythonCmd: string): string | null {
   }
 }
 
+const IS_WIN = process.platform === 'win32';
+
 /** Get the platform-appropriate venv bin directory name */
 function venvBinDir(): string {
-  return process.platform === 'win32' ? 'Scripts' : 'bin';
+  return IS_WIN ? 'Scripts' : 'bin';
+}
+
+/** Get the platform-appropriate executable name (appends .exe on Windows) */
+export function pythonExeName(): string {
+  return IS_WIN ? 'python.exe' : 'python';
+}
+
+/** Get the platform-appropriate pip name (appends .exe on Windows) */
+export function pipExeName(): string {
+  return IS_WIN ? 'pip.exe' : 'pip';
 }
 
 /**
@@ -87,7 +99,7 @@ export async function discoverPython(
   projectRoot: string
 ): Promise<PythonDiscoveryResult> {
   // 1. Check existing venv
-  const venvPython = join(projectRoot, VENV_DIR, venvBinDir(), 'python');
+  const venvPython = join(projectRoot, VENV_DIR, venvBinDir(), pythonExeName());
   if (existsSync(venvPython)) {
     const version = checkPythonVersion(venvPython);
     if (version) {
@@ -122,8 +134,8 @@ export async function createVenv(
   adoSyncSourceDir: string
 ): Promise<VenvResult> {
   const venvPath = join(projectRoot, VENV_DIR);
-  const venvPython = join(venvPath, venvBinDir(), 'python');
-  const venvPip = join(venvPath, venvBinDir(), 'pip');
+  const venvPython = join(venvPath, venvBinDir(), pythonExeName());
+  const venvPip = join(venvPath, venvBinDir(), pipExeName());
   const requirementsPath = join(adoSyncSourceDir, 'requirements.txt');
   let created = false;
 
@@ -131,7 +143,7 @@ export async function createVenv(
   if (!existsSync(venvPython)) {
     try {
       mkdirSync(join(projectRoot, '.beth', 'ado-sync'), { recursive: true });
-      execSync(`${pythonPath} -m venv ${venvPath}`, {
+      execFileSync(pythonPath, ['-m', 'venv', venvPath], {
         stdio: ['pipe', 'pipe', 'pipe'],
         timeout: 120000,
       });
@@ -144,7 +156,7 @@ export async function createVenv(
 
   // Install/update dependencies
   try {
-    execSync(`${venvPip} install -r ${requirementsPath}`, {
+    execFileSync(venvPip, ['install', '-r', requirementsPath], {
       stdio: ['pipe', 'pipe', 'pipe'],
       timeout: 300000,
     });
