@@ -1,9 +1,10 @@
 ---
 id: BETH-64.12.5
 title: 'Test: Watcher entrypoint — graceful SIGTERM shutdown'
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-03-30 17:08'
+updated_date: '2026-03-30 21:13'
 labels: []
 dependencies: []
 parent_task_id: BETH-64.12
