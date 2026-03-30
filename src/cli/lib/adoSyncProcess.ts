@@ -11,15 +11,29 @@
 import { spawn } from 'child_process';
 import { existsSync, mkdirSync, readFileSync, writeFileSync, unlinkSync } from 'fs';
 import { join, dirname } from 'path';
-import { loadConfig, getBethDir } from './adoSyncConfig.js';
-import { discoverPython } from './pythonRuntime.js';
+import { fileURLToPath } from 'url';
+import { loadConfig, getBethDir, getConfigPath } from './adoSyncConfig.js';
+import { discoverPython, createVenv } from './pythonRuntime.js';
 
 export const PID_FILENAME = 'ado-sync.pid';
 
 const IS_WIN = process.platform === 'win32';
 
+/** Derive package root from import.meta.url (ESM-safe, no __dirname) */
+const __thisDir = dirname(fileURLToPath(import.meta.url));
+
 /** Where the ado-sync Python package lives, relative to the beth package root */
-const ADO_SYNC_PKG_DIR = join(dirname(dirname(dirname(__dirname))), 'ado-sync');
+function getAdoSyncPkgDir(): string {
+  // From dist/cli/lib/ → ../../.. → repo root → ado-sync/
+  const candidate = join(__thisDir, '..', '..', '..', 'ado-sync');
+  if (!existsSync(candidate)) {
+    throw new Error(
+      `ado-sync Python package not found at ${candidate}. ` +
+      'Ensure the package is installed correctly.'
+    );
+  }
+  return candidate;
+}
 
 // ─── Types ────────────────────────────────────────────────────────────
 
@@ -120,18 +134,28 @@ export async function startWatcher(projectRoot: string): Promise<StartResult> {
     removePidFile(projectRoot);
   }
 
-  // Discover Python
+  // Discover Python and ensure venv + deps are ready
   const python = await discoverPython(projectRoot);
+  const adoSyncDir = getAdoSyncPkgDir();
+  const venv = await createVenv(projectRoot, python.pythonPath, adoSyncDir);
 
-  // Build the config path
-  const configPath = join(projectRoot, '.beth', 'ado-sync.json');
+  // Use venv python for the watcher (deps are installed there)
+  const venvPython = join(
+    venv.venvPath,
+    IS_WIN ? 'Scripts' : 'bin',
+    IS_WIN ? 'python.exe' : 'python'
+  );
+  const pythonCmd = existsSync(venvPython) ? venvPython : python.pythonPath;
+
+  // Use centralized config path
+  const configPath = getConfigPath(projectRoot);
 
   // Spawn the watcher as a detached background process
   const child = spawn(
-    python.pythonPath,
+    pythonCmd,
     ['-m', 'app.watcher_main', '--config', configPath],
     {
-      cwd: ADO_SYNC_PKG_DIR,
+      cwd: adoSyncDir,
       detached: true,
       stdio: 'ignore',
       env: {
@@ -142,9 +166,22 @@ export async function startWatcher(projectRoot: string): Promise<StartResult> {
   );
 
   const pid = child.pid ?? null;
-  if (pid) {
-    writePid(projectRoot, pid);
+  if (!pid) {
+    throw new Error(
+      'Failed to start ADO Sync watcher: spawn returned no PID. ' +
+      'Check that Python is installed and the ado-sync package exists.'
+    );
   }
+
+  // Listen for early spawn errors (e.g. ENOENT, bad cwd)
+  child.on('error', (err: Error) => {
+    removePidFile(projectRoot);
+    // Error is async — by the time it fires we've already returned.
+    // PID cleanup is the best we can do for a detached child.
+    console.error(`ADO Sync watcher spawn error: ${err.message}`);
+  });
+
+  writePid(projectRoot, pid);
 
   // Detach — parent should not wait for this child
   child.unref();
@@ -175,17 +212,23 @@ export async function stopWatcher(projectRoot: string): Promise<StopResult> {
   }
 
   // Send SIGTERM (or taskkill on Windows)
-  if (IS_WIN) {
-    const { execFileSync } = await import('child_process');
-    try {
+  try {
+    if (IS_WIN) {
+      const { execFileSync } = await import('child_process');
       execFileSync('taskkill', ['/PID', String(pid), '/T', '/F'], {
         stdio: 'ignore',
       });
-    } catch {
-      // taskkill may fail if process already exited — that's OK
+    } else {
+      process.kill(pid, 'SIGTERM');
     }
-  } else {
-    process.kill(pid, 'SIGTERM');
+  } catch (error: unknown) {
+    const code = (error as NodeJS.ErrnoException).code;
+    if (code !== 'ESRCH') {
+      // ESRCH = already exited (race condition) — treat as success.
+      // Anything else is unexpected — still clean up PID but re-throw.
+      removePidFile(projectRoot);
+      throw error;
+    }
   }
 
   // Remove PID file

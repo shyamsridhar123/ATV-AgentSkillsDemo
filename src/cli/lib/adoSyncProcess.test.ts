@@ -28,11 +28,14 @@ const mockLoadConfig = vi.fn();
 vi.mock('./adoSyncConfig.js', () => ({
   loadConfig: (...args: unknown[]) => mockLoadConfig(...args),
   getBethDir: (root: string) => `${root}/.beth`,
+  getConfigPath: (root: string) => `${root}/.beth/ado-sync.json`,
 }));
 
 const mockDiscoverPython = vi.fn();
+const mockCreateVenv = vi.fn();
 vi.mock('./pythonRuntime.js', () => ({
   discoverPython: (...args: unknown[]) => mockDiscoverPython(...args),
+  createVenv: (...args: unknown[]) => mockCreateVenv(...args),
 }));
 
 import {
@@ -101,6 +104,13 @@ describe('adoSyncProcess', () => {
       pythonPath: '/usr/bin/python3',
       source: 'path',
       version: '3.12.0',
+    });
+
+    // Default: venv creation succeeds
+    mockCreateVenv.mockResolvedValue({
+      created: true,
+      depsInstalled: true,
+      venvPath: join(projectRoot, '.beth', 'ado-sync', '.venv'),
     });
 
     // Default: config exists
@@ -569,7 +579,7 @@ describe('adoSyncProcess', () => {
       }
     });
 
-    it('throws on EPERM (process exists but no permission)', () => {
+    it('returns true on EPERM (process exists but no permission)', () => {
       const originalKill = process.kill;
       process.kill = vi.fn((() => {
         throw Object.assign(new Error('EPERM'), { code: 'EPERM' });
