@@ -6,14 +6,10 @@ Covers BETH-64.12.1 through BETH-64.12.6.
 
 import asyncio
 import json
-import os
 import signal
 import sys
-import tempfile
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
-
-import pytest
 
 
 # ---------------------------------------------------------------------------
@@ -21,7 +17,7 @@ import pytest
 # ---------------------------------------------------------------------------
 
 def _make_config(tmp_path: Path, **overrides) -> Path:
-    """Create a .beth/ado-sync.json config file and return its path."""
+    """Create a .beth/ado-sync.json config file matching the CLI schema."""
     beth_dir = tmp_path / ".beth"
     beth_dir.mkdir(exist_ok=True)
     config_path = beth_dir / "ado-sync.json"
@@ -29,9 +25,12 @@ def _make_config(tmp_path: Path, **overrides) -> Path:
         "organization": "test-org",
         "project": "test-project",
         "authMethod": "pat",
-        "pat": "test-pat-token",
         "tenantId": "",
-        "backlogTasksDir": str(tmp_path / "backlog" / "tasks"),
+        "areaPath": "",
+        "iterationPath": "",
+        "taskPrefix": "BETH",
+        "tasksDir": str(tmp_path / "backlog" / "tasks"),
+        "aiFormatting": {"enabled": True, "endpoint": "", "deployment": "gpt-4o"},
         **overrides,
     }
     config_path.write_text(json.dumps(config))
@@ -92,12 +91,49 @@ class TestConfigFromFlag:
             tmp_path,
             organization="client-org",
             project="client-proj",
+            areaPath="MyArea",
+            iterationPath="Sprint 1",
         )
         config = load_config(config_path=str(config_path))
         settings = build_settings(config)
 
         assert settings.ado_organization == "client-org"
         assert settings.ado_project == "client-proj"
+        assert settings.ado_area_path == "MyArea"
+        assert settings.ado_iteration_path == "Sprint 1"
+
+    def test_fail_fast_on_missing_config_file(self, tmp_path):
+        """--config with a missing file raises FileNotFoundError, not silent fallback."""
+        from app.watcher_main import load_config
+        import pytest
+
+        missing = str(tmp_path / ".beth" / "nonexistent.json")
+        with pytest.raises(FileNotFoundError, match="Config file not found"):
+            load_config(config_path=missing)
+
+    def test_tasks_dir_cli_schema(self, tmp_path):
+        """CLI schema key 'tasksDir' is mapped to Settings.backlog_tasks_dir."""
+        from app.watcher_main import load_config, build_settings
+
+        config_path = _make_config(tmp_path, tasksDir="/custom/tasks")
+        config = load_config(config_path=str(config_path))
+        settings = build_settings(config)
+
+        assert settings.backlog_tasks_dir == "/custom/tasks"
+
+    def test_ai_formatting_mapped_to_settings(self, tmp_path):
+        """CLI schema aiFormatting block is mapped to Settings AOAI fields."""
+        from app.watcher_main import load_config, build_settings
+
+        config_path = _make_config(
+            tmp_path,
+            aiFormatting={"enabled": True, "endpoint": "https://my-aoai.openai.azure.com/", "deployment": "gpt-4o-mini"},
+        )
+        config = load_config(config_path=str(config_path))
+        settings = build_settings(config)
+
+        assert settings.azure_openai_endpoint == "https://my-aoai.openai.azure.com/"
+        assert settings.azure_openai_deployment == "gpt-4o-mini"
 
 
 # ---------------------------------------------------------------------------
@@ -138,6 +174,17 @@ class TestConfigFromProjectRoot:
         assert config["project"] == "root-project"
         assert config["authMethod"] == "pat"
 
+    def test_project_root_fail_fast_when_missing(self, tmp_path, monkeypatch):
+        """PROJECT_ROOT is authoritative — missing config raises FileNotFoundError."""
+        from app.watcher_main import load_config
+        import pytest
+
+        monkeypatch.setenv("PROJECT_ROOT", str(tmp_path))
+        # Don't create the config file
+
+        with pytest.raises(FileNotFoundError, match="Config file not found"):
+            load_config()
+
 
 # ---------------------------------------------------------------------------
 # BETH-64.12.3: Falls back to .env file
@@ -156,6 +203,17 @@ class TestDotenvFallback:
 
         config = load_config()
         assert config["organization"] == "dotenv-org"
+
+    def test_supports_ado_organization_env_key(self, tmp_path, monkeypatch):
+        """Prefers ADO_ORGANIZATION over legacy ADO_ORG."""
+        from app.watcher_main import load_config
+
+        monkeypatch.delenv("PROJECT_ROOT", raising=False)
+        _make_dotenv(tmp_path, ADO_ORGANIZATION="new-org", ADO_ORG="old-org", ADO_PROJECT="proj")
+        monkeypatch.chdir(tmp_path)
+
+        config = load_config()
+        assert config["organization"] == "new-org"
 
     def test_reads_env_vars_from_dotenv(self, tmp_path, monkeypatch):
         """Reads ADO_ORG, ADO_PROJECT, ADO_PAT from .env file."""
@@ -180,14 +238,10 @@ class TestDotenvFallback:
         from app.watcher_main import load_config, build_settings
 
         monkeypatch.delenv("PROJECT_ROOT", raising=False)
-        # Use ADO_ORGANIZATION (matching Settings field) and also test
-        # that ADO_ORG from .env doesn't leak into pydantic-settings
         _make_dotenv(tmp_path, ADO_ORG="env-org", ADO_PROJECT="env-proj", ADO_PAT="env-pat")
         monkeypatch.chdir(tmp_path)
 
         config = load_config()
-        # Remove ADO_ORG from env if it leaked from dotenv_values side-effects
-        monkeypatch.delenv("ADO_ORG", raising=False)
         settings = build_settings(config)
 
         assert settings.ado_organization == "env-org"
@@ -204,13 +258,15 @@ class TestNoHttpServer:
 
     def test_uvicorn_never_called(self, tmp_path):
         """uvicorn.run (or equivalent) is never called."""
-        from app.watcher_main import load_config, run_watcher
+        from app.watcher_main import run_watcher
 
         config_path = _make_config(tmp_path)
 
-        with patch("app.watcher_main.watch_backlog_tasks", new_callable=AsyncMock) as mock_watch:
+        with patch("app.watcher_main.watch_backlog_tasks", new_callable=AsyncMock) as mock_watch, \
+             patch("app.watcher_main.ADOClient") as mock_ado:
             # Make the watcher return immediately instead of looping forever
             mock_watch.return_value = None
+            mock_ado.return_value = MagicMock(close=AsyncMock())
 
             with patch.dict("sys.modules", {"uvicorn": MagicMock()}) as mocked:
                 uvicorn_mock = sys.modules["uvicorn"]
