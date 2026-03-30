@@ -1,9 +1,10 @@
 ---
 id: BETH-64.13.7
 title: 'Test: ado-sync lifecycle — full start/status/stop cycle'
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-03-30 17:09'
+updated_date: '2026-03-30 21:51'
 labels: []
 dependencies: []
 parent_task_id: BETH-64.13
