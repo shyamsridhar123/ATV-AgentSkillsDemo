@@ -1,9 +1,10 @@
 ---
 id: BETH-64.11.2
 title: 'Test: Python discovery — falls back to python3 on PATH'
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-03-30 17:05'
+updated_date: '2026-03-30 20:35'
 labels: []
 dependencies: []
 parent_task_id: BETH-64.11
