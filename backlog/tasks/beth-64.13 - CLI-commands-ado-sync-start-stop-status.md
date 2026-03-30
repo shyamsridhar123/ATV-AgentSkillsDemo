@@ -1,9 +1,10 @@
 ---
 id: BETH-64.13
 title: 'CLI commands: ado-sync start/stop/status'
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-03-22 16:37'
+updated_date: '2026-03-30 21:51'
 labels: []
 dependencies: []
 parent_task_id: BETH-64

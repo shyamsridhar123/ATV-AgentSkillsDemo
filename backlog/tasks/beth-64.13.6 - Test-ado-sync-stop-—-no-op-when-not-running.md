@@ -1,9 +1,10 @@
 ---
 id: BETH-64.13.6
 title: 'Test: ado-sync stop — no-op when not running'
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-03-30 17:09'
+updated_date: '2026-03-30 21:51'
 labels: []
 dependencies: []
 parent_task_id: BETH-64.13
