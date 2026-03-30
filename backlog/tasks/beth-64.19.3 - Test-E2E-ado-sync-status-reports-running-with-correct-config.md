@@ -13,7 +13,7 @@ priority: medium
 ## Description
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
-E2E integration test: After ado-sync start, verify status command reports running state with correct org/project from .beth/ado-sync.json. Verify output is both human-readable and parseable.
+E2E integration test: After ado-sync start, verify status command reports running state with correct org/project from .beth/ado-sync.json. Output uses key: value format (one per line) that is both human-readable and grep-parseable.
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria
@@ -22,4 +22,5 @@ E2E integration test: After ado-sync start, verify status command reports runnin
 - [ ] #2 Output includes org and project names from config
 - [ ] #3 Output includes auth method
 - [ ] #4 Command exits 0
+- [ ] #5 Output uses consistent 'Key: Value' line format (grep-parseable, e.g., 'Status: running', 'Organization: myorg')
 <!-- AC:END -->

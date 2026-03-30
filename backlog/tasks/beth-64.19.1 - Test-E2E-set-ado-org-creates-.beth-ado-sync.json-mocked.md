@@ -13,7 +13,7 @@ priority: medium
 ## Description
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
-E2E integration test: Run set-ado-org with mocked Entra auth and ADO API responses. Verify .beth/ado-sync.json created with correct organization, project, and authMethod fields. Verify file permissions are user-only.
+E2E integration test: Run set-ado-org with mocked Entra auth and ADO API responses. Verify .beth/ado-sync.json created with correct organization, project, and authMethod fields.
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria

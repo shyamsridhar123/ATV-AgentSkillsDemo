@@ -22,4 +22,5 @@ E2E integration test: After config exists, run ado-sync start. Verify process sp
 - [ ] #2 .beth/ado-sync.pid file created
 - [ ] #3 PID in file corresponds to a running process
 - [ ] #4 Spawned process is the Python watcher (not a shell wrapper)
+- [ ] #5 Watcher process survives after CLI parent process exits (detached)
 <!-- AC:END -->
