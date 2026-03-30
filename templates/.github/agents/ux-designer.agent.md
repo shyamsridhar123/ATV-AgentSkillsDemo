@@ -10,6 +10,7 @@ tools:
   - fileSearch
   - textSearch
   - runSubagent
+  - backlog/*
 handoffs:
   - label: Escalate to Beth
     agent: Beth

@@ -394,7 +394,7 @@ describe('pythonRuntime', () => {
     // BETH-64.11.8: handles failures gracefully
     describe('error handling (BETH-64.11.8)', () => {
       it('throws meaningful error when venv creation fails', async () => {
-        mockExecFileSync.mockImplementation((cmd: string, args: string[]) => {
+        mockExecFileSync.mockImplementation((_cmd: string, args: string[]) => {
           if (Array.isArray(args) && args.includes('venv')) {
             throw new Error('Error: Command returned non-zero exit status 1');
           }
@@ -411,7 +411,7 @@ describe('pythonRuntime', () => {
       });
 
       it('throws meaningful error when pip install fails', async () => {
-        mockExecFileSync.mockImplementation((cmd: string, args: string[]) => {
+        mockExecFileSync.mockImplementation((_cmd: string, args: string[]) => {
           if (Array.isArray(args) && args.includes('install')) {
             throw new Error('ERROR: Could not install packages');
           }
@@ -428,7 +428,7 @@ describe('pythonRuntime', () => {
       });
 
       it('error messages are user-friendly (not raw stack traces)', async () => {
-        mockExecFileSync.mockImplementation((cmd: string, args: string[]) => {
+        mockExecFileSync.mockImplementation((_cmd: string, args: string[]) => {
           if (Array.isArray(args) && args.includes('venv')) {
             throw new Error('ENOSPC: no space left on device');
           }

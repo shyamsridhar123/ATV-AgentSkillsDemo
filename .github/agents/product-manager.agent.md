@@ -11,6 +11,7 @@ tools:
   - textSearch
   - fetch
   - runSubagent
+  - backlog/*
 handoffs:
   - label: Escalate to Beth
     agent: Beth

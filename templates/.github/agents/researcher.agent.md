@@ -10,6 +10,7 @@ tools:
   - fetch
   - githubRepo
   - runSubagent
+  - backlog/*
 handoffs:
   - label: Escalate to Beth
     agent: Beth

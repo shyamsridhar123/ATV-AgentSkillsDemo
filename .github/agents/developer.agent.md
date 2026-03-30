@@ -15,6 +15,7 @@ tools:
   - problems
   - usages
   - runSubagent
+  - backlog/*
 handoffs:
   - label: Escalate to Beth
     agent: Beth
