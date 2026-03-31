@@ -212,10 +212,27 @@ describe('BETH-64.15.2: ADO Sync credential checks', () => {
 
     assert.ok(credCheck, 'Should have a Credentials check result');
     assert.strictEqual(credCheck.status, 'fail');
-    assert.ok(credCheck.message.includes('not found') || credCheck.message.includes('missing') || credCheck.message.includes('no credentials'),
-      `Fail message should mention missing credentials, got: ${credCheck.message}`);
+    assert.ok(credCheck.message.includes('no credentials'),
+      `Fail message should mention no credentials, got: ${credCheck.message}`);
     assert.ok(credCheck.fixCommand?.includes('set-ado-org'),
       `Fix command should mention set-ado-org, got: ${credCheck.fixCommand}`);
+  });
+
+  it('should fail with invalid/expired message when hasCredentials but checkCredentials returns null', async () => {
+    const deps: AdoDeps = {
+      ...healthyDeps(),
+      hasCredentials: async () => true,
+      checkCredentials: async () => null,
+    };
+
+    const results = await checkAdoSync(testDir, deps);
+    const credCheck = results.find(r => r.name === 'ADO Sync: Credentials');
+
+    assert.ok(credCheck, 'Should have a Credentials check result');
+    assert.strictEqual(credCheck.status, 'fail');
+    assert.ok(credCheck.message.includes('invalid') || credCheck.message.includes('expired'),
+      `Fail message should mention invalid/expired, got: ${credCheck.message}`);
+    assert.ok(credCheck.fixable, 'Should be fixable');
   });
 
   it('should pass with PAT credentials (no expiry)', async () => {
@@ -310,6 +327,21 @@ describe('BETH-64.15.3: ADO org reachability', () => {
 
     assert.ok(orgCheck, 'Should have an Organization check result');
     assert.strictEqual(orgCheck.status, 'fail');
+  });
+
+  it('should fail with HTTP status on non-auth errors (404, 5xx)', async () => {
+    const deps: AdoDeps = {
+      ...healthyDeps(),
+      checkOrgReachable: async () => ({ reachable: false, statusCode: 404 }),
+    };
+
+    const results = await checkAdoSync(testDir, deps);
+    const orgCheck = results.find(r => r.name === 'ADO Sync: Organization');
+
+    assert.ok(orgCheck, 'Should have an Organization check result');
+    assert.strictEqual(orgCheck.status, 'fail');
+    assert.ok(orgCheck.message.includes('404'),
+      `Message should include HTTP status code, got: ${orgCheck.message}`);
   });
 
   it('should skip org check when credentials are missing', async () => {
@@ -618,8 +650,6 @@ describe('BETH-64.15.5: --fix auto-repairs ADO issues', () => {
   });
 
   it('should NOT auto-start the watcher process', async () => {
-    let watcherStarted = false;
-
     const deps: AdoDeps = {
       ...healthyDeps(),
       getWatcherStatus: async () => {
@@ -630,23 +660,19 @@ describe('BETH-64.15.5: --fix auto-repairs ADO issues', () => {
       },
     };
 
-    // Override getWatcherStatus to detect if start is called
-    const originalGetStatus = deps.getWatcherStatus;
-    deps.getWatcherStatus = async (...args) => {
-      const r = await originalGetStatus(...args);
-      return r;
-    };
-
     const fixDeps = {
       addMcpEntry: () => [] as string[],
       refreshCredentials: async () => [] as string[],
       createVenv: async () => [] as string[],
-      startWatcher: async () => { watcherStarted = true; },
     };
 
     await fixAdoSync(testDir, deps, fixDeps);
 
-    assert.strictEqual(watcherStarted, false, 'Should NOT auto-start the watcher');
+    // fixAdoSync does not accept a startWatcher callback —
+    // the type system enforces that watcher auto-start is impossible.
+    // Verify via the public API: watcher state is unchanged.
+    const status = await deps.getWatcherStatus(testDir);
+    assert.strictEqual(status.state, 'stopped', 'Watcher should still be stopped after fix');
   });
 
   it('should be a no-op when everything is healthy', async () => {

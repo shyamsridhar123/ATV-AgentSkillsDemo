@@ -519,7 +519,7 @@ export interface AdoDeps {
   loadConfig: (cwd: string) => AdoSyncConfig | null;
   hasCredentials: (cwd: string) => Promise<boolean>;
   checkCredentials: (cwd: string) => Promise<AuthResult | null>;
-  checkOrgReachable: (org: string, token: string) => Promise<OrgReachableResult>;
+  checkOrgReachable: (org: string, token: string, credentialType: 'entra' | 'pat') => Promise<OrgReachableResult>;
   discoverPython: (cwd: string) => Promise<PythonDiscoveryResult>;
   hasMcpEntry: (cwd: string) => boolean;
   getWatcherStatus: (cwd: string) => Promise<WatcherStatus>;
@@ -551,12 +551,16 @@ function checkAdoMcpEntry(cwd: string): boolean {
 /**
  * Lightweight ADO org reachability check.
  * Hits the project API to verify org/project access.
+ * Uses Bearer auth for Entra tokens and Basic auth for PATs.
  */
-async function defaultCheckOrgReachable(org: string, token: string): Promise<OrgReachableResult> {
+async function defaultCheckOrgReachable(org: string, token: string, credentialType: 'entra' | 'pat'): Promise<OrgReachableResult> {
   const url = `https://dev.azure.com/${encodeURIComponent(org)}/_apis/projects?api-version=7.0&$top=1`;
+  const authHeader = credentialType === 'pat'
+    ? `Basic ${Buffer.from(`:${token}`).toString('base64')}`
+    : `Bearer ${token}`;
   try {
     const response = await fetch(url, {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: { Authorization: authHeader },
       signal: AbortSignal.timeout(10_000),
     });
     return { reachable: response.ok, statusCode: response.status };
@@ -602,6 +606,7 @@ export async function checkAdoSync(cwd: string, deps: AdoDeps = defaultAdoDeps()
   // ── Credentials ──
   let hasValidToken = false;
   let tokenValue: string | null = null;
+  let credentialType: 'entra' | 'pat' = 'entra';
   try {
     const hasCreds = await deps.hasCredentials(cwd);
     if (!hasCreds) {
@@ -617,8 +622,9 @@ export async function checkAdoSync(cwd: string, deps: AdoDeps = defaultAdoDeps()
         results.push({
           name: 'ADO Sync: Credentials',
           status: 'fail',
-          message: 'no credentials found',
+          message: 'credentials invalid or expired — run set-ado-org to re-authenticate',
           fixCommand: 'npx beth-copilot set-ado-org',
+          fixable: true,
         });
       } else if (cred.expiresOn && cred.expiresOn.getTime() < Date.now()) {
         results.push({
@@ -632,6 +638,8 @@ export async function checkAdoSync(cwd: string, deps: AdoDeps = defaultAdoDeps()
       } else {
         hasValidToken = true;
         tokenValue = cred.accessToken;
+        // Detect credential type: PAT env vars use synthetic accounts
+        credentialType = (cred.account.homeAccountId === 'env-var') ? 'pat' : 'entra';
         results.push({
           name: 'ADO Sync: Credentials',
           status: 'pass',
@@ -651,7 +659,7 @@ export async function checkAdoSync(cwd: string, deps: AdoDeps = defaultAdoDeps()
   // ── Org Reachability (only if we have a token) ──
   if (config && tokenValue && hasValidToken) {
     try {
-      const orgResult = await deps.checkOrgReachable(config.organization, tokenValue);
+      const orgResult = await deps.checkOrgReachable(config.organization, tokenValue, credentialType);
       if (orgResult.reachable) {
         results.push({
           name: 'ADO Sync: Organization',
@@ -665,12 +673,21 @@ export async function checkAdoSync(cwd: string, deps: AdoDeps = defaultAdoDeps()
           message: `${config.organization} returned ${orgResult.statusCode} — re-authenticate`,
           fixCommand: 'npx beth-copilot set-ado-org',
         });
-      } else {
+      } else if (orgResult.statusCode === 0) {
+        // Actual network error (timeout, DNS, connection refused)
         results.push({
           name: 'ADO Sync: Organization',
           status: 'warn',
           message: `${config.organization} unreachable (network error)`,
           details: orgResult.error,
+        });
+      } else {
+        // HTTP error (404, 429, 5xx, etc.)
+        results.push({
+          name: 'ADO Sync: Organization',
+          status: 'fail',
+          message: `${config.organization} returned HTTP ${orgResult.statusCode}`,
+          fixCommand: 'Verify organization name and try again',
         });
       }
     } catch {
@@ -795,12 +812,21 @@ export async function fixAdoSync(
     // Credential check failed — nothing to fix automatically
   }
 
-  // Fix missing venv
+  // Fix missing venv (only if Python found but not already in a venv)
   try {
-    await deps.discoverPython(cwd);
-    // Python found — try creating venv if not from venv already
-    if (fixDeps) {
-      actions.push(...await fixDeps.createVenv(cwd));
+    const py = await deps.discoverPython(cwd);
+    if (py.source !== 'venv') {
+      if (fixDeps) {
+        actions.push(...await fixDeps.createVenv(cwd));
+      } else {
+        // Wire to real implementation
+        const { createVenv: realCreateVenv } = await import('../lib/pythonRuntime.js');
+        const adoSyncDir = join(cwd, 'ado-sync');
+        const result = await realCreateVenv(cwd, py.pythonPath, adoSyncDir);
+        if (result.created) {
+          actions.push(`Created venv at ${result.venvPath}`);
+        }
+      }
     }
   } catch {
     // No Python — can't create venv
