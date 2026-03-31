@@ -1,9 +1,10 @@
 ---
 id: BETH-64.17.3
 title: 'Test: PAT security — never in config, logs, or error messages'
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-03-30 17:12'
+updated_date: '2026-03-31 06:30'
 labels: []
 dependencies: []
 parent_task_id: BETH-64.17

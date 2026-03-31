@@ -25,6 +25,10 @@ regexes = [
 
 # Files to ignore
 paths = [
+  # Security test files contain intentional fake tokens for validation
+  '''src/cli/lib/pat-security\.test\.ts''',
+  '''src/cli/commands/ado-sync-secrets\.e2e\.test\.ts''',
+  '''src/cli/lib/security-credential-audit\.test\.ts''',
   # Test fixtures
   '''test/fixtures/.*''',
   # Generated files

@@ -1,9 +1,10 @@
 ---
 id: BETH-64.19.7
 title: 'Test E2E: no secrets in .beth/ado-sync.json'
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-03-30 17:14'
+updated_date: '2026-03-31 06:32'
 labels: []
 dependencies: []
 parent_task_id: BETH-64.19
