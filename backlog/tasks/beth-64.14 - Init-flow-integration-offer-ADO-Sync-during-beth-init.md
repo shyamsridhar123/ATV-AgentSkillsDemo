@@ -1,9 +1,10 @@
 ---
 id: BETH-64.14
 title: 'Init flow integration: offer ADO Sync during beth init'
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-03-22 16:37'
+updated_date: '2026-03-31 14:37'
 labels: []
 dependencies: []
 parent_task_id: BETH-64
