@@ -511,9 +511,15 @@ async function promptYesNo(question) {
   });
   
   return new Promise((resolve) => {
+    let answered = false;
     rl.question(`${question} (y/N) `, (answer) => {
+      answered = true;
       rl.close();
       resolve(answer.toLowerCase() === 'y' || answer.toLowerCase() === 'yes');
+    });
+    // Handle piped stdin EOF — default to No when stdin closes without input
+    rl.on('close', () => {
+      if (!answered) resolve(false);
     });
   });
 }
@@ -794,7 +800,7 @@ function ensureBethGitignore(projectDir, options = {}) {
 }
 
 async function init(options = {}) {
-  const { force = false, skipBacklog = false, skipMcp = false } = options;
+  const { force = false, skipBacklog = false, skipMcp = false, skipAdo = false } = options;
   const cwd = process.cwd();
   
   // Check for updates
@@ -939,6 +945,21 @@ ${COLORS.yellow}╔════════════════════�
     logSuccess('Updated .gitignore with beth runtime entries');
   } else {
     logSuccess('Already in .gitignore: .beth/');
+  }
+
+  // Offer ADO Sync setup (unless skipped)
+  if (!skipAdo) {
+    const wantsAdo = await promptYesNo('Do you use Azure DevOps for this project?');
+    if (wantsAdo) {
+      try {
+        const { setAdoOrg } = await loadTsCommand('set-ado-org');
+        await setAdoOrg();
+      } catch (err) {
+        logWarning('ADO Sync setup encountered an issue — you can run it later:');
+        logInfo('npx beth-copilot set-ado-org');
+        logDebug(err.message || String(err));
+      }
+    }
   }
 
   // Initialize Backlog.md project with derived task prefix (unless skipped)
@@ -1198,7 +1219,7 @@ async function uninstall() {
 
 // Input validation constants
 const ALLOWED_COMMANDS = ['init', 'help', '--help', '-h', 'doctor', 'quickstart', 'pre-push-guard', 'update', 'land', 'uninstall', 'set-ado-org', 'ado-sync'];
-const ALLOWED_FLAGS = ['--force', '--skip-backlog', '--skip-mcp', '--verbose', '--reason', '-r', '-f', '--skip-tests', '--message', '-m', '--dry-run', '--check-only', '--fix'];
+const ALLOWED_FLAGS = ['--force', '--skip-backlog', '--skip-mcp', '--skip-ado', '--verbose', '--reason', '-r', '-f', '--skip-tests', '--message', '-m', '--dry-run', '--check-only', '--fix'];
 const MAX_ARG_LENGTH = 50;
 
 // Validate and sanitize input
@@ -1231,6 +1252,7 @@ const options = {
   force: args.includes('--force'),
   skipBacklog: args.includes('--skip-backlog'),
   skipMcp: args.includes('--skip-mcp'),
+  skipAdo: args.includes('--skip-ado'),
   verbose: args.includes('--verbose'),
   fix: args.includes('--fix'),
 };

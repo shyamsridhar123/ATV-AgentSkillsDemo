@@ -1,9 +1,10 @@
 ---
 id: BETH-64.14.3
 title: 'Test: init — Enter key defaults to No for ADO prompt'
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-03-30 17:09'
+updated_date: '2026-03-31 14:37'
 labels: []
 dependencies: []
 parent_task_id: BETH-64.14
