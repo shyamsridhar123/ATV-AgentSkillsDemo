@@ -86,3 +86,7 @@ ado-sync/**/__pycache__/
 ado-sync/.env\nado-sync/.ado-sync-mappings.json
 ado-sync/ado-sync.service
 ado-sync/.ado-sync-mappings.json
+
+# >>> Beth — managed by beth-copilot init >>>
+.beth/
+# <<< Beth <<<

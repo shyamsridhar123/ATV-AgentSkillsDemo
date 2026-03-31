@@ -16,6 +16,11 @@ import { execFileSync } from 'child_process';
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import matter from 'gray-matter';
+import { isConfigured as adoIsConfigured, loadConfig as adoLoadConfig, type AdoSyncConfig } from '../lib/adoSyncConfig.js';
+import { hasCredentials as adoHasCredentials } from '../lib/credentialStore.js';
+import { checkCredentials as adoCheckCredentials, type AuthResult } from '../lib/entraAuth.js';
+import { discoverPython as adoDiscoverPython, type PythonDiscoveryResult } from '../lib/pythonRuntime.js';
+import { getWatcherStatus as adoGetWatcherStatus, type WatcherStatus } from '../lib/adoSyncProcess.js';
 
 // Colors for terminal output
 const COLORS = {
@@ -496,6 +501,352 @@ function fixBacklogInit(cwd: string): string[] {
   }
 }
 
+// ─── ADO Sync Health Checks (BETH-64.15) ─────────────────────────────
+
+/** Org reachability result */
+interface OrgReachableResult {
+  reachable: boolean;
+  statusCode: number;
+  error?: string;
+}
+
+/**
+ * Dependency injection for ADO Sync health checks.
+ * Enables unit testing without mocking modules.
+ */
+export interface AdoDeps {
+  isConfigured: (cwd: string) => boolean;
+  loadConfig: (cwd: string) => AdoSyncConfig | null;
+  hasCredentials: (cwd: string) => Promise<boolean>;
+  checkCredentials: (cwd: string) => Promise<AuthResult | null>;
+  checkOrgReachable: (org: string, token: string) => Promise<OrgReachableResult>;
+  discoverPython: (cwd: string) => Promise<PythonDiscoveryResult>;
+  hasMcpEntry: (cwd: string) => boolean;
+  getWatcherStatus: (cwd: string) => Promise<WatcherStatus>;
+}
+
+/** Fix action providers for --fix mode */
+export interface AdoFixDeps {
+  addMcpEntry: (cwd: string) => string[];
+  refreshCredentials: (cwd: string) => Promise<string[]>;
+  createVenv: (cwd: string) => Promise<string[]>;
+  startWatcher?: never; // Explicitly absent — we do NOT auto-start
+}
+
+/**
+ * Check if ado-sync MCP server entry exists in .vscode/mcp.json.
+ */
+function checkAdoMcpEntry(cwd: string): boolean {
+  const mcpPath = join(cwd, '.vscode', 'mcp.json');
+  if (!existsSync(mcpPath)) return false;
+  try {
+    const config = JSON.parse(readFileSync(mcpPath, 'utf-8'));
+    const servers = config?.servers;
+    return servers && typeof servers === 'object' && 'ado-sync' in servers;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Lightweight ADO org reachability check.
+ * Hits the project API to verify org/project access.
+ */
+async function defaultCheckOrgReachable(org: string, token: string): Promise<OrgReachableResult> {
+  const url = `https://dev.azure.com/${encodeURIComponent(org)}/_apis/projects?api-version=7.0&$top=1`;
+  try {
+    const response = await fetch(url, {
+      headers: { Authorization: `Bearer ${token}` },
+      signal: AbortSignal.timeout(10_000),
+    });
+    return { reachable: response.ok, statusCode: response.status };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'unknown';
+    return { reachable: false, statusCode: 0, error: message };
+  }
+}
+
+/** Build default AdoDeps from real implementations */
+function defaultAdoDeps(): AdoDeps {
+  return {
+    isConfigured: adoIsConfigured,
+    loadConfig: adoLoadConfig,
+    hasCredentials: adoHasCredentials,
+    checkCredentials: adoCheckCredentials,
+    checkOrgReachable: defaultCheckOrgReachable,
+    discoverPython: adoDiscoverPython,
+    hasMcpEntry: checkAdoMcpEntry,
+    getWatcherStatus: adoGetWatcherStatus,
+  };
+}
+
+/**
+ * Run ADO Sync health checks.
+ *
+ * If ADO Sync is not configured, returns a single "not configured (optional)" pass.
+ * If configured, checks: credentials, org reachability, Python, MCP entry, watcher.
+ */
+export async function checkAdoSync(cwd: string, deps: AdoDeps = defaultAdoDeps()): Promise<CheckResult[]> {
+  // Not configured → single pass result, skip everything
+  if (!deps.isConfigured(cwd)) {
+    return [{
+      name: 'ADO Sync',
+      status: 'pass',
+      message: 'not configured (optional)',
+    }];
+  }
+
+  const config = deps.loadConfig(cwd);
+  const results: CheckResult[] = [];
+
+  // ── Credentials ──
+  let hasValidToken = false;
+  let tokenValue: string | null = null;
+  try {
+    const hasCreds = await deps.hasCredentials(cwd);
+    if (!hasCreds) {
+      results.push({
+        name: 'ADO Sync: Credentials',
+        status: 'fail',
+        message: 'no credentials found',
+        fixCommand: 'npx beth-copilot set-ado-org',
+      });
+    } else {
+      const cred = await deps.checkCredentials(cwd);
+      if (!cred) {
+        results.push({
+          name: 'ADO Sync: Credentials',
+          status: 'fail',
+          message: 'no credentials found',
+          fixCommand: 'npx beth-copilot set-ado-org',
+        });
+      } else if (cred.expiresOn && cred.expiresOn.getTime() < Date.now()) {
+        results.push({
+          name: 'ADO Sync: Credentials',
+          status: 'warn',
+          message: 'token expired — run set-ado-org to refresh',
+          fixCommand: 'npx beth-copilot set-ado-org',
+          fixable: true,
+        });
+        tokenValue = cred.accessToken;
+      } else {
+        hasValidToken = true;
+        tokenValue = cred.accessToken;
+        results.push({
+          name: 'ADO Sync: Credentials',
+          status: 'pass',
+          message: `authenticated as ${cred.account.username}`,
+        });
+      }
+    }
+  } catch {
+    results.push({
+      name: 'ADO Sync: Credentials',
+      status: 'fail',
+      message: 'credential check failed',
+      fixCommand: 'npx beth-copilot set-ado-org',
+    });
+  }
+
+  // ── Org Reachability (only if we have a token) ──
+  if (config && tokenValue && hasValidToken) {
+    try {
+      const orgResult = await deps.checkOrgReachable(config.organization, tokenValue);
+      if (orgResult.reachable) {
+        results.push({
+          name: 'ADO Sync: Organization',
+          status: 'pass',
+          message: `${config.organization}/${config.project} reachable`,
+        });
+      } else if (orgResult.statusCode === 401 || orgResult.statusCode === 403) {
+        results.push({
+          name: 'ADO Sync: Organization',
+          status: 'fail',
+          message: `${config.organization} returned ${orgResult.statusCode} — re-authenticate`,
+          fixCommand: 'npx beth-copilot set-ado-org',
+        });
+      } else {
+        results.push({
+          name: 'ADO Sync: Organization',
+          status: 'warn',
+          message: `${config.organization} unreachable (network error)`,
+          details: orgResult.error,
+        });
+      }
+    } catch {
+      results.push({
+        name: 'ADO Sync: Organization',
+        status: 'warn',
+        message: `${config.organization} unreachable (network error)`,
+      });
+    }
+  }
+
+  // ── Python Runtime ──
+  try {
+    const py = await deps.discoverPython(cwd);
+    results.push({
+      name: 'ADO Sync: Python',
+      status: 'pass',
+      message: `${py.version} (${py.source})`,
+    });
+  } catch {
+    results.push({
+      name: 'ADO Sync: Python',
+      status: 'fail',
+      message: 'Python 3.10+ not found',
+      fixCommand: 'Install Python 3.10+: https://python.org/downloads/',
+      fixable: true,
+    });
+  }
+
+  // ── MCP Server Entry ──
+  if (deps.hasMcpEntry(cwd)) {
+    results.push({
+      name: 'ADO Sync: MCP Server',
+      status: 'pass',
+      message: 'ado-sync server configured',
+    });
+  } else {
+    results.push({
+      name: 'ADO Sync: MCP Server',
+      status: 'warn',
+      message: 'ado-sync server not in .vscode/mcp.json',
+      fixCommand: 'npx beth-copilot doctor --fix',
+      fixable: true,
+    });
+  }
+
+  // ── Watcher Process ──
+  try {
+    const status = await deps.getWatcherStatus(cwd);
+    if (status.state === 'running') {
+      results.push({
+        name: 'ADO Sync: Watcher',
+        status: 'pass',
+        message: `running (PID ${status.pid})`,
+      });
+    } else {
+      results.push({
+        name: 'ADO Sync: Watcher',
+        status: 'pass',
+        message: 'stopped (start with: npx beth-copilot ado-sync start)',
+      });
+    }
+  } catch {
+    results.push({
+      name: 'ADO Sync: Watcher',
+      status: 'warn',
+      message: 'could not check watcher status',
+    });
+  }
+
+  return results;
+}
+
+/**
+ * Auto-fix ADO Sync issues.
+ *
+ * Runs only when ADO Sync is configured. Attempts:
+ * - Add missing MCP entry
+ * - Refresh expired credentials
+ * - Create missing venv
+ *
+ * Does NOT auto-start the watcher.
+ */
+export async function fixAdoSync(
+  cwd: string,
+  deps: AdoDeps = defaultAdoDeps(),
+  fixDeps?: {
+    addMcpEntry: (cwd: string) => string[];
+    refreshCredentials: (cwd: string) => Promise<string[]>;
+    createVenv: (cwd: string) => Promise<string[]>;
+  },
+): Promise<string[]> {
+  if (!deps.isConfigured(cwd)) {
+    return [];
+  }
+
+  const actions: string[] = [];
+
+  // Fix MCP entry
+  if (!deps.hasMcpEntry(cwd)) {
+    if (fixDeps) {
+      actions.push(...fixDeps.addMcpEntry(cwd));
+    } else {
+      actions.push(...addAdoMcpEntry(cwd));
+    }
+  }
+
+  // Fix expired credentials
+  try {
+    const hasCreds = await deps.hasCredentials(cwd);
+    if (hasCreds) {
+      const cred = await deps.checkCredentials(cwd);
+      if (cred && cred.expiresOn && cred.expiresOn.getTime() < Date.now()) {
+        if (fixDeps) {
+          actions.push(...await fixDeps.refreshCredentials(cwd));
+        } else {
+          actions.push('Token expired — run "npx beth-copilot set-ado-org" to re-authenticate');
+        }
+      }
+    }
+  } catch {
+    // Credential check failed — nothing to fix automatically
+  }
+
+  // Fix missing venv
+  try {
+    await deps.discoverPython(cwd);
+    // Python found — try creating venv if not from venv already
+    if (fixDeps) {
+      actions.push(...await fixDeps.createVenv(cwd));
+    }
+  } catch {
+    // No Python — can't create venv
+  }
+
+  return actions;
+}
+
+/**
+ * Add ado-sync MCP server entry to .vscode/mcp.json.
+ */
+function addAdoMcpEntry(cwd: string): string[] {
+  const vsDir = join(cwd, '.vscode');
+  const mcpPath = join(vsDir, 'mcp.json');
+  const actions: string[] = [];
+
+  if (!existsSync(vsDir)) {
+    mkdirSync(vsDir, { recursive: true });
+  }
+
+  let config: Record<string, unknown> = {};
+  if (existsSync(mcpPath)) {
+    try {
+      config = JSON.parse(readFileSync(mcpPath, 'utf-8'));
+    } catch {
+      config = {};
+    }
+  }
+
+  if (!config.servers || typeof config.servers !== 'object') {
+    config.servers = {};
+  }
+  const servers = config.servers as Record<string, unknown>;
+
+  if (!servers['ado-sync']) {
+    servers['ado-sync'] = {
+      command: 'python',
+      args: ['-m', 'app.mcp_server'],
+    };
+    writeFileSync(mcpPath, JSON.stringify(config, null, 2) + '\n');
+    actions.push('Added ado-sync MCP server entry to .vscode/mcp.json');
+  }
+
+  return actions;
+}
+
 /**
  * Main doctor command
  * @param options - Command options (verbose, fix)
@@ -528,6 +879,13 @@ export async function doctor(options: DoctorOptions = {}, exitOnFailure = true):
       log(`  ${failed ? '✗' : '✓'} ${action}`, failed ? COLORS.red : COLORS.green);
     }
 
+    // Fix ADO Sync issues
+    const adoActions = await fixAdoSync(cwd);
+    for (const action of adoActions) {
+      const failed = action.startsWith('Failed');
+      log(`  ${failed ? '✗' : '✓'} ${action}`, failed ? COLORS.red : COLORS.green);
+    }
+
     console.log('');
     log('─'.repeat(40), COLORS.dim);
     console.log('');
@@ -543,6 +901,10 @@ export async function doctor(options: DoctorOptions = {}, exitOnFailure = true):
     checkBacklogInit(cwd),
     checkMcpServers(cwd),
   ];
+
+  // ADO Sync health checks (conditional — only runs if configured)
+  const adoResults = await checkAdoSync(cwd);
+  results.push(...adoResults);
   
   // Display results
   for (const result of results) {

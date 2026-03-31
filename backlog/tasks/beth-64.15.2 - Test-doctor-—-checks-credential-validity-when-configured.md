@@ -1,9 +1,10 @@
 ---
 id: BETH-64.15.2
 title: 'Test: doctor — checks credential validity when configured'
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-03-30 17:10'
+updated_date: '2026-03-31 15:13'
 labels: []
 dependencies: []
 parent_task_id: BETH-64.15
