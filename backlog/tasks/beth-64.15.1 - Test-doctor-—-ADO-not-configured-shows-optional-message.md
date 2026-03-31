@@ -1,9 +1,10 @@
 ---
 id: BETH-64.15.1
 title: 'Test: doctor — ADO not configured shows optional message'
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-03-30 17:10'
+updated_date: '2026-03-31 15:13'
 labels: []
 dependencies: []
 parent_task_id: BETH-64.15

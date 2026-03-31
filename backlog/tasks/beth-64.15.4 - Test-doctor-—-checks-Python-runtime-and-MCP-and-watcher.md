@@ -1,9 +1,10 @@
 ---
 id: BETH-64.15.4
 title: 'Test: doctor — checks Python runtime and MCP and watcher'
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-03-30 17:10'
+updated_date: '2026-03-31 15:13'
 labels: []
 dependencies: []
 parent_task_id: BETH-64.15
