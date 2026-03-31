@@ -142,7 +142,7 @@ describe('BETH-64.17.3: PAT security — never in config, logs, or error message
         authMethod: 'pat',
         taskPrefix: 'BETH',
         tasksDir: '.',
-        accessToken: 'nzp2dw4x7lqzp3ydjgbz3hs4xqjyj3h6rfgtmqe5yzpfm7ycvuq',
+        accessToken: 'test-fake-token-for-validation-check',
       });
 
       expect(errors.length).toBeGreaterThan(0);
@@ -324,7 +324,7 @@ describe('BETH-64.17.3: PAT security — never in config, logs, or error message
       // The PAT itself must NOT be stored
       expect(raw).not.toContain('the-actual-secret-pat');
       // No field should have the PAT as its value
-      for (const [key, value] of Object.entries(parsed)) {
+      for (const [, value] of Object.entries(parsed)) {
         if (typeof value === 'string') {
           expect(value).not.toBe('the-actual-secret-pat');
         }
