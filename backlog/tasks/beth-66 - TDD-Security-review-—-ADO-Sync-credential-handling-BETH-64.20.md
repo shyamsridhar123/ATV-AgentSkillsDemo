@@ -1,10 +1,10 @@
 ---
 id: BETH-66
 title: 'TDD: Security review — ADO Sync credential handling (BETH-64.20)'
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-03-31 05:56'
-updated_date: '2026-03-31 05:56'
+updated_date: '2026-03-31 06:00'
 labels: []
 dependencies: []
 ---

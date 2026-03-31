@@ -1,9 +1,10 @@
 ---
 id: BETH-64.20
 title: 'Security review: ADO Sync self-service credential handling'
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-03-22 16:38'
+updated_date: '2026-03-31 06:00'
 labels: []
 dependencies: []
 parent_task_id: BETH-64

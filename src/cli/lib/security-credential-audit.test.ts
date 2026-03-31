@@ -27,7 +27,6 @@ import {
   loadConfig,
   createConfig,
   validateConfig,
-  ensureGitignore,
   isGitignored,
   getConfigPath,
 } from './adoSyncConfig.js';
@@ -93,7 +92,7 @@ describe('Security Audit: ADO Sync Credential Handling', () => {
 
   describe('AC#2: No secrets in config file', () => {
     it('saveConfig produces a file with zero secret patterns', () => {
-      const config = createConfig(projectRoot, 'my-org', 'my-project', {
+      createConfig(projectRoot, 'my-org', 'my-project', {
         authMethod: 'entra',
         tenantId: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
         clientId: '499b84ac-1321-427f-aa17-267ca6975798',
