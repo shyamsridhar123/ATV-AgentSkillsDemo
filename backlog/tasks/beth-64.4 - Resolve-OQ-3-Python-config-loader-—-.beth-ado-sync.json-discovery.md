@@ -1,9 +1,10 @@
 ---
 id: BETH-64.4
 title: 'Resolve OQ-3: Python config loader — .beth/ado-sync.json discovery'
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-03-22 16:35'
+updated_date: '2026-03-31 15:53'
 labels: []
 dependencies: []
 parent_task_id: BETH-64

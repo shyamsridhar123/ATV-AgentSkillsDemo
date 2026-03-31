@@ -3,155 +3,23 @@
 Runs ONLY the backlog file watcher — no FastAPI, no HTTP server, no open ports.
 This is what the CLI starts via `npx beth-copilot ado-sync start`.
 
-Config resolution order:
-  1. --config flag (explicit path to .beth/ado-sync.json)
-  2. PROJECT_ROOT env var → PROJECT_ROOT/.beth/ado-sync.json
-  3. .env file in cwd (legacy fallback)
+Config resolution is handled by config.py. See config.py for precedence docs.
 """
 
 import argparse
 import asyncio
-import json
 import logging
-import os
 import signal
 import sys
-from pathlib import Path
 from typing import Optional
 
-from dotenv import dotenv_values
-
 from .backlog_watcher import watch_backlog_tasks
-from .config import Settings
+from .config import Settings, load_config, build_settings, resolve_config_path
 from .ado_client import ADOClient
 from .story_formatter import format_story, format_story_offline
 from .models import BacklogTask
 
 logger = logging.getLogger(__name__)
-
-_CONFIG_FILENAME = ".beth/ado-sync.json"
-
-
-# ---------------------------------------------------------------------------
-# Config resolution
-# ---------------------------------------------------------------------------
-
-def resolve_config_path(config_path: Optional[str] = None) -> Optional[str]:
-    """Resolve the config file path using the priority chain.
-
-    1. Explicit config_path argument (from --config flag)
-    2. PROJECT_ROOT env var → PROJECT_ROOT/.beth/ado-sync.json
-    3. None (caller should fall back to .env)
-
-    When PROJECT_ROOT is set, its .beth/ado-sync.json is authoritative —
-    if the file is missing, we return the expected path so load_config()
-    can surface a clear error rather than silently falling back to .env.
-    """
-    if config_path:
-        return config_path
-
-    project_root = os.environ.get("PROJECT_ROOT")
-    if project_root:
-        return os.path.join(project_root, _CONFIG_FILENAME)
-
-    return None
-
-
-def load_config(
-    config_path: Optional[str] = None,
-) -> dict:
-    """Load ADO Sync configuration.
-
-    Tries .beth/ado-sync.json first (via --config or PROJECT_ROOT).
-    If an explicit --config is provided but the file is missing/unreadable,
-    fails fast instead of silently falling back to .env.
-    Falls back to .env in the current directory only when no JSON config exists.
-    """
-    resolved = resolve_config_path(config_path)
-
-    if resolved and os.path.isfile(resolved):
-        with open(resolved, "r") as f:
-            try:
-                return json.load(f)
-            except json.JSONDecodeError as e:
-                raise json.JSONDecodeError(
-                    f"Failed to parse JSON config at {resolved}: {e.msg}", e.doc, e.pos
-                )
-
-    # If an explicit --config or PROJECT_ROOT was provided but the file
-    # is missing, fail fast instead of silently falling back to .env.
-    if config_path is not None or os.environ.get("PROJECT_ROOT"):
-        raise FileNotFoundError(
-            f"Config file not found: {resolved or config_path}. "
-            f"Ensure .beth/ado-sync.json exists at the expected location."
-        )
-
-    # Fallback: .env file (legacy behavior when no JSON config path is found)
-    env_path = Path.cwd() / ".env"
-    if env_path.is_file():
-        env = dotenv_values(str(env_path))
-        organization = env.get("ADO_ORGANIZATION") or env.get("ADO_ORG", "")
-        log_level = env.get("LOG_LEVEL", "INFO")
-        return {
-            "organization": organization,
-            "project": env.get("ADO_PROJECT", ""),
-            "authMethod": "pat",
-            "pat": env.get("ADO_PAT", ""),
-            "tenantId": env.get("ADO_TENANT_ID", ""),
-            "tasksDir": env.get("BACKLOG_TASKS_DIR", "./backlog/tasks"),
-            "areaPath": env.get("ADO_AREA_PATH", ""),
-            "iterationPath": env.get("ADO_ITERATION_PATH", ""),
-            "logLevel": log_level,
-        }
-
-    raise FileNotFoundError(
-        "No config found. Provide --config, set PROJECT_ROOT, or create a .env file."
-    )
-
-
-def build_settings(config: dict) -> Settings:
-    """Build a pydantic Settings object from a config dict.
-
-    Supports both the legacy watcher config keys (e.g. ``backlogTasksDir``)
-    and the CLI's ``.beth/ado-sync.json`` schema (e.g. ``tasksDir``), and
-    intentionally avoids reading secrets (PAT) from the JSON config file
-    unless explicitly provided (e.g. from .env-derived config).
-    """
-    # Prefer CLI schema ``tasksDir``, fall back to legacy ``backlogTasksDir``
-    backlog_tasks_dir = (
-        config.get("tasksDir")
-        or config.get("backlogTasksDir")
-        or "./backlog/tasks"
-    )
-
-    # Extract AI formatting settings from CLI config's nested ``aiFormatting``
-    ai = config.get("aiFormatting", {})
-
-    settings_kwargs: dict = {
-        "ado_organization": config.get("organization", ""),
-        "ado_project": config.get("project", ""),
-        "ado_tenant_id": config.get("tenantId", ""),
-        "ado_area_path": config.get("areaPath", ""),
-        "ado_iteration_path": config.get("iterationPath", ""),
-        "backlog_tasks_dir": backlog_tasks_dir,
-        "backlog_task_prefix": config.get("taskPrefix", "BETH"),
-        "log_level": config.get("logLevel", "INFO"),
-        "_env_file": None,
-    }
-
-    # Only set PAT when explicitly provided (from .env-derived config).
-    # CLI JSON config should not contain secrets.
-    pat = config.get("pat")
-    if pat:
-        settings_kwargs["ado_pat"] = pat
-
-    # Map aiFormatting block to Settings fields
-    if ai.get("endpoint"):
-        settings_kwargs["azure_openai_endpoint"] = ai["endpoint"]
-    if ai.get("deployment"):
-        settings_kwargs["azure_openai_deployment"] = ai["deployment"]
-
-    return Settings(**settings_kwargs)
 
 
 # ---------------------------------------------------------------------------
