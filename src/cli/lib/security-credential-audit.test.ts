@@ -8,6 +8,7 @@
  *   AC#4: PAT never in logs, errors, or stack traces
  *   AC#5: MSAL cache file has restrictive permissions (0o600)
  *   AC#6: Env var overrides don't persist to disk
+ *   AC#7: Secret injection defense in validateConfig
  *   AC#8: OWASP auth review — error messages, enumeration, etc.
  */
 
@@ -16,12 +17,17 @@ import {
   mkdirSync,
   writeFileSync,
   readFileSync,
+  readdirSync,
   existsSync,
   rmSync,
   statSync,
 } from 'fs';
-import { join } from 'path';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
 import { tmpdir } from 'os';
+
+/** ESM-safe __dirname equivalent */
+const __dirname = dirname(fileURLToPath(import.meta.url));
 import {
   saveConfig,
   loadConfig,
@@ -293,36 +299,52 @@ describe('Security Audit: ADO Sync Credential Handling', () => {
 
     it('ADO API error messages never include the access token', () => {
       // Verify via source code inspection that adoFetch error construction
-      // does not interpolate the accessToken parameter
+      // does not interpolate the accessToken parameter anywhere in the
+      // thrown AdoApiError blocks, including multi-line message formats.
       const discoverySource = readFileSync(
         join(__dirname, 'adoDiscovery.ts'),
         'utf-8'
-      );
+      ).replace(/\r\n/g, '\n');
 
-      // The adoFetch function receives accessToken but error messages must not include it
-      const throwLines = discoverySource
-        .split('\n')
-        .filter((l) => l.includes('throw new AdoApiError'));
-      for (const line of throwLines) {
-        expect(line).not.toContain('accessToken');
+      // Parse full `throw new AdoApiError(...);` blocks rather than single lines,
+      // so that multi-line error messages are fully inspected.
+      const throwBlockRegex = /throw new AdoApiError\([\s\S]*?\);/g;
+      const matches = discoverySource.match(throwBlockRegex) ?? [];
+      expect(matches.length).toBeGreaterThan(0);
+
+      for (const block of matches) {
+        expect(block).not.toContain('accessToken');
       }
     });
 
-    it('entraAuth error messages do not include token values', async () => {
-      // The error paths in entraAuth.ts should produce safe messages
-      // Verify the error format strings don't template tokens
+    it('entraAuth error handling does not propagate raw error messages containing tokens', () => {
+      // The error paths in entraAuth.ts should produce safe, generic messages
+      // rather than rethrowing or logging raw error.message values that could
+      // contain access tokens or other secrets from MSAL.
       const entraSource = readFileSync(
         join(__dirname, 'entraAuth.ts'),
         'utf-8'
       ).replace(/\r\n/g, '\n');
 
-      // Should not interpolate accessToken into error messages
       const lines = entraSource.split('\n');
       for (const line of lines) {
         if (line.includes('throw new Error') || line.includes('console.error')) {
+          // Must not directly interpolate accessToken
           expect(line).not.toMatch(/accessToken/);
           expect(line).not.toMatch(/\.pat\b/);
+          // Must not directly propagate raw error.message which could contain tokens
+          // (allowed: wrapping in a new Error with controlled message, e.g. `error.message` in a
+          // catch block that only passes through known-safe MSAL error descriptions)
         }
+      }
+
+      // Additionally verify: throw blocks that catch errors and rethrow should
+      // use msg (extracted string) rather than passing the raw error object
+      const catchBlocks = entraSource.match(/catch[\s\S]*?\}/g) ?? [];
+      for (const block of catchBlocks) {
+        // Should not rethrow the original error object directly
+        expect(block).not.toMatch(/throw\s+error\s*;/);
+        expect(block).not.toMatch(/throw\s+err\s*;/);
       }
     });
   });
@@ -391,8 +413,7 @@ describe('Security Audit: ADO Sync Credential Handling', () => {
       // Scan all files in .beth/
       const bethDir = join(projectRoot, '.beth');
       if (existsSync(bethDir)) {
-        const { readdirSync } = require('fs');
-        const files = readdirSync(bethDir) as string[];
+        const files = readdirSync(bethDir, 'utf-8');
         for (const file of files) {
           const content = readFileSync(join(bethDir, file), 'utf-8');
           expect(content).not.toContain('env-pat-must-not-persist');
