@@ -2,7 +2,7 @@
 
 import { fileURLToPath } from 'url';
 import { basename, dirname, join, relative } from 'path';
-import { existsSync, mkdirSync, readdirSync, statSync, lstatSync, copyFileSync, readFileSync, writeFileSync, unlinkSync, chmodSync, rmSync } from 'fs';
+import { existsSync, mkdirSync, readdirSync, statSync, lstatSync, copyFileSync, readFileSync, writeFileSync, appendFileSync, unlinkSync, chmodSync, rmSync } from 'fs';
 import { createRequire } from 'module';
 import { execSync, execFileSync, spawn } from 'child_process';
 
@@ -738,6 +738,61 @@ function deriveTaskPrefix(cwd) {
   return prefix || 'task'; // fallback to 'task' if nothing usable
 }
 
+// --- .gitignore management for beth runtime state ---
+
+const BETH_GITIGNORE_MARKER_BEGIN = '# >>> Beth — managed by beth-copilot init >>>';
+const BETH_GITIGNORE_MARKER_END = '# <<< Beth <<<';
+const BETH_GITIGNORE_ENTRIES = [
+  '.beth/',
+];
+
+/**
+ * Ensure beth runtime state entries exist in .gitignore.
+ * Creates .gitignore if it doesn't exist. Idempotent — uses marker comments
+ * to detect existing blocks. When force=true, replaces the existing block.
+ *
+ * @param {string} projectDir - The project root directory
+ * @param {object} [options] - Options
+ * @param {boolean} [options.force] - Replace existing block even if present
+ * @returns {'created' | 'updated' | 'skipped'} What happened
+ */
+function ensureBethGitignore(projectDir, options = {}) {
+  const { force = false } = options;
+  const gitignorePath = join(projectDir, '.gitignore');
+  const block = [BETH_GITIGNORE_MARKER_BEGIN, ...BETH_GITIGNORE_ENTRIES, BETH_GITIGNORE_MARKER_END].join('\n');
+
+  if (!existsSync(gitignorePath)) {
+    writeFileSync(gitignorePath, block + '\n', 'utf-8');
+    return 'created';
+  }
+
+  const existing = readFileSync(gitignorePath, 'utf-8');
+  const hasMarker = existing.includes(BETH_GITIGNORE_MARKER_BEGIN);
+
+  if (hasMarker && !force) {
+    return 'skipped';
+  }
+
+  if (hasMarker && force) {
+    // Replace existing block between markers
+    const beginIdx = existing.indexOf(BETH_GITIGNORE_MARKER_BEGIN);
+    const endIdx = existing.indexOf(BETH_GITIGNORE_MARKER_END);
+    if (beginIdx !== -1 && endIdx !== -1) {
+      const before = existing.slice(0, beginIdx);
+      const after = existing.slice(endIdx + BETH_GITIGNORE_MARKER_END.length);
+      const replaced = before + block + after;
+      writeFileSync(gitignorePath, replaced, 'utf-8');
+      return 'updated';
+    }
+  }
+
+  // Append block to existing file
+  const needsNewline = existing.length > 0 && !existing.endsWith('\n');
+  const separator = needsNewline ? '\n\n' : (existing.endsWith('\n\n') ? '' : '\n');
+  appendFileSync(gitignorePath, separator + block + '\n', 'utf-8');
+  return 'updated';
+}
+
 async function init(options = {}) {
   const { force = false, skipBacklog = false, skipMcp = false } = options;
   const cwd = process.cwd();
@@ -873,6 +928,17 @@ ${COLORS.yellow}╔════════════════════�
         copiedFiles.push('.vscode/mcp.json');
       }
     }
+  }
+
+  // Ensure .beth/ is gitignored (security — MSAL tokens, config, PID files)
+  const gitignoreResult = ensureBethGitignore(cwd, { force });
+  if (gitignoreResult === 'created') {
+    logSuccess('Created .gitignore with beth runtime entries');
+    copiedFiles.push('.gitignore');
+  } else if (gitignoreResult === 'updated') {
+    logSuccess('Updated .gitignore with beth runtime entries');
+  } else {
+    logSuccess('Already in .gitignore: .beth/');
   }
 
   // Initialize Backlog.md project with derived task prefix (unless skipped)

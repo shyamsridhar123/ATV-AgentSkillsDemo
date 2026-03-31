@@ -1,9 +1,10 @@
 ---
 id: BETH-65
 title: 'Init: append .gitignore entries for beth runtime state'
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-03-23 00:29'
+updated_date: '2026-03-31 04:28'
 labels: []
 dependencies: []
 priority: high
