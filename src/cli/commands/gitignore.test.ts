@@ -123,8 +123,8 @@ describe('ensureBethGitignore (BETH-65.4)', () => {
     runInit(testDir);
 
     const content = readFileSync(gitignorePath, 'utf-8');
-    // Should NOT have triple+ newlines
-    expect(content).not.toMatch(/\n{4,}/);
+    // Should NOT have 3+ consecutive newlines (i.e. max one blank line gap)
+    expect(content).not.toMatch(/\n{3,}/);
   });
 
   it('--force replaces existing beth section with fresh entries', () => {
