@@ -158,6 +158,8 @@ describe('BETH-64.17.3: PAT security — never in config, logs, or error message
   // ═══════════════════════════════════════════════════════════════════
 
   describe('AC#2: PAT never in console output', () => {
+    afterEach(() => vi.restoreAllMocks());
+
     it('console.log never receives PAT during config creation', () => {
       const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
       const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -175,13 +177,10 @@ describe('BETH-64.17.3: PAT security — never in config, logs, or error message
         const output = call.map(String).join(' ');
         expect(output).not.toContain(pat);
       }
-
-      logSpy.mockRestore();
-      errorSpy.mockRestore();
     });
 
     it('console.error never receives PAT during config validation failure', () => {
-      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      vi.spyOn(console, 'error').mockImplementation(() => {});
 
       const pat = 'validation-error-pat-leak-check';
 
@@ -199,12 +198,10 @@ describe('BETH-64.17.3: PAT security — never in config, logs, or error message
         // Expected to throw — we're checking console output
       }
 
-      for (const call of errorSpy.mock.calls) {
+      for (const call of vi.mocked(console.error).mock.calls) {
         const output = call.map(String).join(' ');
         expect(output).not.toContain(pat);
       }
-
-      errorSpy.mockRestore();
     });
 
     it('set-ado-org source code never logs credential values', () => {
