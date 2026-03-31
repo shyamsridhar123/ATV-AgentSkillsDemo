@@ -443,3 +443,133 @@ class TestConfigPrecedence:
 
         config = load_config()
         assert config["organization"] == "root-wins"
+
+
+# ===========================================================================
+# 7. JSON security: disallow secrets in .beth/ado-sync.json
+# ===========================================================================
+
+
+class TestJsonSecretDisallowed:
+    """JSON config must not contain secret-like keys."""
+
+    def test_pat_in_json_raises_value_error(self, tmp_path):
+        """PAT in .beth/ado-sync.json raises ValueError."""
+        from app.config import load_config
+
+        beth_dir = tmp_path / ".beth"
+        beth_dir.mkdir()
+        config_path = beth_dir / "ado-sync.json"
+        config_path.write_text(json.dumps({
+            "organization": "org",
+            "project": "proj",
+            "pat": "secret-pat-value",
+        }))
+
+        with pytest.raises(ValueError, match="Disallowed secret-like keys"):
+            load_config(config_path=str(config_path))
+
+    def test_json_without_secrets_loads_fine(self, tmp_path):
+        """Normal JSON config without secrets loads successfully."""
+        from app.config import load_config
+
+        config_path = _make_config(tmp_path, organization="clean-org")
+        config = load_config(config_path=str(config_path))
+        assert config["organization"] == "clean-org"
+
+
+# ===========================================================================
+# 8. JSON parse errors include file path
+# ===========================================================================
+
+
+class TestJsonParseErrors:
+    """Malformed JSON errors include the file path for debugging."""
+
+    def test_malformed_json_includes_path(self, tmp_path):
+        """JSONDecodeError message includes the config file path."""
+        from app.config import load_config
+
+        beth_dir = tmp_path / ".beth"
+        beth_dir.mkdir()
+        bad_config = beth_dir / "ado-sync.json"
+        bad_config.write_text("{bad json!!")
+
+        with pytest.raises(json.JSONDecodeError, match="Failed to parse JSON config file"):
+            load_config(config_path=str(bad_config))
+
+
+# ===========================================================================
+# 9. Env-var fallback: pydantic-settings fills gaps from process env
+# ===========================================================================
+
+
+class TestEnvVarFallback:
+    """Process environment variables fill gaps not covered by .env or JSON."""
+
+    def test_env_var_fills_missing_dotenv_key(self, tmp_path, monkeypatch):
+        """.env has org but not project; process env var provides project."""
+        from app.config import load_config, build_settings
+
+        monkeypatch.delenv("PROJECT_ROOT", raising=False)
+        # .env only has org, no project
+        env_path = tmp_path / ".env"
+        env_path.write_text("ADO_ORG=dotenv-org\n")
+        monkeypatch.chdir(tmp_path)
+
+        # Process env var provides the missing project
+        monkeypatch.setenv("ADO_PROJECT", "env-var-project")
+
+        config = load_config()
+        settings = build_settings(config)
+
+        assert settings.ado_organization == "dotenv-org"
+        assert settings.ado_project == "env-var-project"
+
+    def test_dotenv_value_beats_env_var(self, tmp_path, monkeypatch):
+        """.env value takes priority over process env var for the same key."""
+        from app.config import load_config, build_settings
+
+        monkeypatch.delenv("PROJECT_ROOT", raising=False)
+        _make_dotenv(tmp_path, ADO_ORG="dotenv-org")
+        monkeypatch.chdir(tmp_path)
+
+        monkeypatch.setenv("ADO_ORGANIZATION", "env-var-org")
+
+        config = load_config()
+        settings = build_settings(config)
+        assert settings.ado_organization == "dotenv-org"
+
+    def test_sparse_dotenv_does_not_override_env_vars(self, tmp_path, monkeypatch):
+        """Sparse .env (missing keys) doesn't set empty strings that override env vars."""
+        from app.config import load_config, build_settings
+
+        monkeypatch.delenv("PROJECT_ROOT", raising=False)
+        # .env only has org — no area_path, no iteration_path
+        env_path = tmp_path / ".env"
+        env_path.write_text("ADO_ORG=dotenv-org\nADO_PROJECT=dotenv-proj\n")
+        monkeypatch.chdir(tmp_path)
+
+        monkeypatch.setenv("ADO_AREA_PATH", "EnvArea")
+        monkeypatch.setenv("ADO_ITERATION_PATH", "EnvSprint")
+
+        config = load_config()
+        settings = build_settings(config)
+
+        assert settings.ado_area_path == "EnvArea"
+        assert settings.ado_iteration_path == "EnvSprint"
+
+    def test_load_settings_env_var_fallback(self, tmp_path, monkeypatch):
+        """load_settings with sparse .env still picks up process env vars."""
+        from app.config import load_settings
+
+        monkeypatch.delenv("PROJECT_ROOT", raising=False)
+        env_path = tmp_path / ".env"
+        env_path.write_text("ADO_ORG=dotenv-org\n")
+        monkeypatch.chdir(tmp_path)
+
+        monkeypatch.setenv("ADO_PROJECT", "env-var-proj")
+
+        settings = load_settings()
+        assert settings.ado_organization == "dotenv-org"
+        assert settings.ado_project == "env-var-proj"

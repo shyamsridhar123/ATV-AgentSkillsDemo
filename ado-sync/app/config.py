@@ -88,7 +88,24 @@ def load_config(config_path: Optional[str] = None) -> dict:
 
     if resolved and os.path.isfile(resolved):
         with open(resolved, "r") as f:
-            return json.load(f)
+            try:
+                data = json.load(f)
+            except json.JSONDecodeError as e:
+                raise json.JSONDecodeError(
+                    f"Failed to parse JSON config file at {resolved}: {e.msg}",
+                    e.doc,
+                    e.pos,
+                ) from e
+        # Prevent accidental storage of secrets in .beth/ado-sync.json
+        disallowed_keys = {"pat"}
+        present_disallowed = disallowed_keys.intersection(data.keys())
+        if present_disallowed:
+            raise ValueError(
+                "Disallowed secret-like keys found in .beth/ado-sync.json: "
+                f"{', '.join(sorted(present_disallowed))}. "
+                "Move these values to environment variables or a .env file instead."
+            )
+        return data
 
     # Explicit source provided but file missing → fail fast
     if config_path is not None or os.environ.get("PROJECT_ROOT"):
@@ -101,18 +118,40 @@ def load_config(config_path: Optional[str] = None) -> dict:
     env_path = Path.cwd() / ".env"
     if env_path.is_file():
         env = dotenv_values(str(env_path))
-        organization = env.get("ADO_ORGANIZATION") or env.get("ADO_ORG", "")
-        return {
-            "organization": organization,
-            "project": env.get("ADO_PROJECT", ""),
+
+        # Only include keys that are actually present so that process
+        # environment variables (pydantic-settings default) can fill gaps.
+        config: dict = {
             "authMethod": "pat",
-            "pat": env.get("ADO_PAT", ""),
-            "tenantId": env.get("ADO_TENANT_ID", ""),
             "tasksDir": env.get("BACKLOG_TASKS_DIR", "./backlog/tasks"),
-            "areaPath": env.get("ADO_AREA_PATH", ""),
-            "iterationPath": env.get("ADO_ITERATION_PATH", ""),
             "logLevel": env.get("LOG_LEVEL", "INFO"),
         }
+
+        organization = env.get("ADO_ORGANIZATION") or env.get("ADO_ORG")
+        if organization:
+            config["organization"] = organization
+
+        project = env.get("ADO_PROJECT")
+        if project:
+            config["project"] = project
+
+        pat = env.get("ADO_PAT")
+        if pat:
+            config["pat"] = pat
+
+        tenant_id = env.get("ADO_TENANT_ID")
+        if tenant_id:
+            config["tenantId"] = tenant_id
+
+        area_path = env.get("ADO_AREA_PATH")
+        if area_path:
+            config["areaPath"] = area_path
+
+        iteration_path = env.get("ADO_ITERATION_PATH")
+        if iteration_path:
+            config["iterationPath"] = iteration_path
+
+        return config
 
     raise FileNotFoundError(
         "No config found. Provide --config, set PROJECT_ROOT, or create a .env file."
@@ -127,8 +166,8 @@ def load_config(config_path: Optional[str] = None) -> dict:
 def build_settings(config: dict) -> Settings:
     """Build a pydantic Settings object from a config dict.
 
-    Supports both the legacy watcher config keys (e.g. ``backlogTasksDir``)
-    and the CLI's ``.beth/ado-sync.json`` schema (e.g. ``tasksDir``).
+    Only includes keys that are present in ``config`` so that
+    pydantic-settings can still fill gaps from process environment variables.
     PAT is only set when explicitly present (from .env-derived config).
     """
     backlog_tasks_dir = (
@@ -139,21 +178,28 @@ def build_settings(config: dict) -> Settings:
 
     ai = config.get("aiFormatting", {})
 
+    # Start with keys that always have safe defaults
     settings_kwargs: dict = {
-        "ado_organization": config.get("organization", ""),
-        "ado_project": config.get("project", ""),
-        "ado_tenant_id": config.get("tenantId", ""),
-        "ado_area_path": config.get("areaPath", ""),
-        "ado_iteration_path": config.get("iterationPath", ""),
         "backlog_tasks_dir": backlog_tasks_dir,
         "backlog_task_prefix": config.get("taskPrefix", "BETH"),
         "log_level": config.get("logLevel", "INFO"),
         "_env_file": None,
     }
 
-    pat = config.get("pat")
-    if pat:
-        settings_kwargs["ado_pat"] = pat
+    # Only include optional keys when present — let pydantic-settings
+    # fill missing values from process environment variables.
+    _optional_mappings = {
+        "organization": "ado_organization",
+        "project": "ado_project",
+        "tenantId": "ado_tenant_id",
+        "areaPath": "ado_area_path",
+        "iterationPath": "ado_iteration_path",
+        "pat": "ado_pat",
+    }
+    for config_key, settings_key in _optional_mappings.items():
+        value = config.get(config_key)
+        if value:
+            settings_kwargs[settings_key] = value
 
     if ai.get("endpoint"):
         settings_kwargs["azure_openai_endpoint"] = ai["endpoint"]
