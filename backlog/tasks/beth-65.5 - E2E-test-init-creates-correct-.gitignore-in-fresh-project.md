@@ -1,9 +1,10 @@
 ---
 id: BETH-65.5
 title: 'E2E test: init creates correct .gitignore in fresh project'
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-03-23 00:30'
+updated_date: '2026-03-31 04:28'
 labels: []
 dependencies: []
 parent_task_id: BETH-65

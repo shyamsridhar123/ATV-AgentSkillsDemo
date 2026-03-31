@@ -276,8 +276,11 @@ echo "beth guard"
       runUninstall(testDir, ['--force']);
 
       // Directory should be back to empty (or have only files that existed before)
+      // .gitignore is a user file — init creates it with beth entries but uninstall
+      // intentionally does NOT delete it (it may contain user's own entries)
       const after = readdirSync(testDir);
-      assert.deepStrictEqual(after.sort(), before.sort(), 'directory should be clean after uninstall');
+      const expected = [...before, '.gitignore'].sort();
+      assert.deepStrictEqual(after.sort(), expected, 'directory should be clean after uninstall (except .gitignore)');
     });
   });
 });
