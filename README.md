@@ -499,6 +499,7 @@ See [MCP Integrations](#mcp-integrations) above or [docs/MCP-SETUP.md](docs/MCP-
 | Doc | Purpose |
 |-----|---------|
 | [Installation Guide](docs/INSTALLATION.md) | Full setup: prerequisites, VS Code config, Backlog.md |
+| [ADO Sync Setup](docs/ADO-SYNC-SETUP.md) | Azure DevOps sync: auth, walkthrough, troubleshooting |
 | [MCP Setup](docs/MCP-SETUP.md) | Optional server integrations |
 | [CLI Architecture](docs/CLI-ARCHITECTURE.md) | Dual-interface design, implementation phases |
 | [System Flow](docs/SYSTEM-FLOW.md) | Agent orchestration diagrams |
