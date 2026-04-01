@@ -187,7 +187,7 @@ The result: your client's ADO board reflects reality without anyone doing manual
 - On Ubuntu/Debian: `sudo apt install python3`
 - Verify: `python3 --version` should show 3.10+
 
-Beth will create a virtual environment automatically at `.beth/venv/` when you run `ado-sync start`.
+Beth will create a virtual environment automatically at `.beth/ado-sync/.venv` when you run `ado-sync start`.
 
 ### Authentication error (Entra ID)
 
@@ -224,7 +224,8 @@ Beth will create a virtual environment automatically at `.beth/venv/` when you r
 **Error:** `ado-sync Python package not found` or process fails immediately
 
 **Fix:**
-- Ensure beth-copilot is installed (not just cloned): `npm install -g beth-copilot`
+- Make sure you're running commands from a **beth-copilot repo checkout** that includes the root `ado-sync/` directory (ADO Sync currently relies on those local sources).
+- Installing or reinstalling `beth-copilot` from npm alone is **not** enough to fix this error until ADO Sync is fully bundled into the npm package.
 - Check that `.beth/ado-sync.json` exists: `npx beth-copilot ado-sync status`
 - If config is missing, reconfigure: `npx beth-copilot set-ado-org`
 
@@ -301,7 +302,7 @@ The **entire `.beth/` directory is gitignored** by default. Beth adds `.beth/` t
 - `.beth/msal_token_cache.json` — gitignored (auth tokens)
 - `.beth/pat_credential` — gitignored (PAT storage)
 - `.beth/ado-sync.pid` — gitignored (process state)
-- `.beth/venv/` — gitignored (Python virtual environment)
+- `.beth/ado-sync/.venv/` — gitignored (Python virtual environment)
 
 **Do not commit tokens, PATs, or any credential files.** The `.beth/` gitignore entry prevents this by default, but if you've customized your `.gitignore`, verify that `.beth/` is listed.
 
