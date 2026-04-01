@@ -1,9 +1,10 @@
 ---
 id: BETH-64.17.2
 title: 'Test: PAT validation — validates against ADO API before storing'
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-03-30 17:12'
+updated_date: '2026-04-01 13:29'
 labels: []
 dependencies: []
 parent_task_id: BETH-64.17

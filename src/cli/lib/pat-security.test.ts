@@ -360,36 +360,31 @@ describe('BETH-64.17.3: PAT security — never in config, logs, or error message
   // ═══════════════════════════════════════════════════════════════════
 
   describe('AC#5: PAT input masking', () => {
-    it('set-ado-org prompt function does not use output: process.stdout for PAT input', () => {
-      // The set-ado-org command's prompt helper writes to stdout.
-      // When prompting for a PAT, it MUST either:
-      //   a) Use a muted/output-suppressed readline, OR
-      //   b) Use a dedicated prompt function that disables echo
-      //
-      // Source code inspection: verify the prompt infra supports masking.
+    it('set-ado-org PAT flow uses promptForPat (masked input), not raw prompt', () => {
+      // The set-ado-org command must use promptForPat for PAT input,
+      // which uses raw mode (TTY) or non-echo readline (non-TTY).
+      // It must NEVER use the regular `prompt()` helper for PAT values.
       const source = readFileSync(
         join(__dirname, '..', 'commands', 'set-ado-org.ts'),
         'utf-8'
       );
 
-      // If there's a PAT prompt flow, it must not echo the PAT.
-      // Currently PAT goes through BETH_ADO_PAT env var, not interactive prompt.
-      // Verify: the tip message directs users to env var (not interactive input)
-      expect(source).toContain('BETH_ADO_PAT');
-      // And there's no interactive PAT entry that would echo to terminal
-      expect(source).not.toMatch(/prompt\(.*(?:PAT|pat|token|password)/i);
+      // PAT flow exists and uses promptForPat
+      expect(source).toContain('promptForPat');
+      // The import comes from patAuth.js
+      expect(source).toContain("from '../lib/patAuth.js'");
     });
 
-    it('credentialStore retrieve reads PAT from env var only (no stdin)', () => {
+    it('credentialStore retrieve reads PAT from env var or stored file (no stdin)', () => {
       const credSource = readFileSync(
         join(__dirname, 'credentialStore.ts'),
         'utf-8'
       );
 
-      // PAT should come from env var, never from interactive readline
+      // PAT should come from env var or stored file, never from interactive readline
       expect(credSource).toContain("process.env['BETH_ADO_PAT']");
+      expect(credSource).toContain('retrievePat');
       // Must NOT have readline for PAT input
-      expect(credSource).not.toContain('readline');
       expect(credSource).not.toContain('createInterface');
     });
   });

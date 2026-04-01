@@ -24,6 +24,9 @@ const mockAcquireTokenSilent = vi.fn();
 const mockLoadConfig = vi.fn();
 const mockSaveConfig = vi.fn();
 const mockIsConfigured = vi.fn();
+const mockValidatePat = vi.fn();
+const mockPromptForPat = vi.fn();
+const mockStorePat = vi.fn();
 
 vi.mock('../lib/credentialStore.js', () => ({
   retrieve: (...args: unknown[]) => mockRetrieve(...args),
@@ -43,6 +46,12 @@ vi.mock('../lib/adoSyncConfig.js', () => ({
   loadConfig: (...args: unknown[]) => mockLoadConfig(...args),
   saveConfig: (...args: unknown[]) => mockSaveConfig(...args),
   isConfigured: (...args: unknown[]) => mockIsConfigured(...args),
+}));
+
+vi.mock('../lib/patAuth.js', () => ({
+  validatePat: (...args: unknown[]) => mockValidatePat(...args),
+  promptForPat: (...args: unknown[]) => mockPromptForPat(...args),
+  storePat: (...args: unknown[]) => mockStorePat(...args),
 }));
 
 import { setAdoOrg } from './set-ado-org.js';
@@ -249,17 +258,16 @@ describe('set-ado-org', () => {
     expect(mockSaveConfig).toHaveBeenCalled();
   });
 
-  it('handles auth failure with helpful message', async () => {
+  it('handles auth failure and PAT decline with exit code 1', async () => {
     mockRetrieve.mockResolvedValue(null);
     mockAcquireTokenDeviceCode.mockRejectedValue(new Error('Device code timed out'));
 
-    await setAdoOrg();
+    await setAdoOrg({ _testPatFallback: false });
 
     expect(process.exitCode).toBe(1);
-    const errors = consoleErrors.join('\n');
-    expect(errors).toContain('Device code timed out');
     const output = consoleOutput.join('\n');
-    expect(output).toContain('BETH_ADO_PAT'); // Tip about PAT fallback
+    expect(output).toContain('Entra auth failed');
+    expect(output).toContain('Authentication cancelled');
   });
 
   it('preserves existing config fields when updating org/project', async () => {
@@ -291,5 +299,162 @@ describe('set-ado-org', () => {
         tasksDir: './custom/tasks',
       })
     );
+  });
+
+  // ═══════════════════════════════════════════════════════════════════
+  // PAT Fallback Tests (BETH-64.17.1)
+  // ═══════════════════════════════════════════════════════════════════
+
+  describe('PAT fallback when Entra fails', () => {
+    const originalFetch = global.fetch;
+
+    beforeEach(() => {
+      // Entra auth always fails in these tests
+      mockRetrieve.mockResolvedValue(null);
+      mockAcquireTokenDeviceCode.mockRejectedValue(new Error('Entra auth failed'));
+
+      // Mock global.fetch for listProjectsWithPat
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        statusText: 'OK',
+        json: async () => ({ count: 1, value: [{ id: 'p1', name: 'Project Alpha', description: 'Main', state: 'wellFormed' }] }),
+      });
+    });
+
+    afterEach(() => {
+      global.fetch = originalFetch;
+    });
+
+    it('offers PAT fallback prompt after Entra auth failure', async () => {
+      await setAdoOrg({ _testPatFallback: false });
+
+      const output = consoleOutput.join('\n');
+      expect(output).toContain('Entra auth failed');
+      expect(output).toContain('Enter a PAT instead');
+    });
+
+    it('completes full PAT flow: validate → store → save config with authMethod=pat', async () => {
+      mockValidatePat.mockResolvedValue({
+        valid: true,
+        missingWorkItemsScope: false,
+        username: 'PAT (contoso)',
+      });
+
+      await setAdoOrg({
+        _testPatFallback: true,
+        _testPatOrg: 'contoso',
+        _testPatValue: 'valid-pat-value',
+        _testProjectIndex: 0,
+      });
+
+      // PAT should be validated
+      expect(mockValidatePat).toHaveBeenCalledWith('valid-pat-value', 'contoso');
+
+      // PAT should be stored
+      expect(mockStorePat).toHaveBeenCalledWith(tmpDir, 'valid-pat-value');
+
+      // Config should use authMethod: 'pat'
+      expect(mockSaveConfig).toHaveBeenCalledWith(
+        tmpDir,
+        expect.objectContaining({
+          organization: 'contoso',
+          authMethod: 'pat',
+        })
+      );
+
+      // Success output
+      const output = consoleOutput.join('\n');
+      expect(output).toContain('ADO Sync configured');
+      expect(output).toContain('pat');
+    });
+
+    it('exits with code 1 when PAT validation fails', async () => {
+      mockValidatePat.mockResolvedValue({
+        valid: false,
+        missingWorkItemsScope: false,
+        username: '',
+        error: 'PAT is invalid or has expired.',
+      });
+
+      await setAdoOrg({
+        _testPatFallback: true,
+        _testPatOrg: 'contoso',
+        _testPatValue: 'bad-pat',
+      });
+
+      expect(process.exitCode).toBe(1);
+      expect(mockStorePat).not.toHaveBeenCalled();
+      expect(mockSaveConfig).not.toHaveBeenCalled();
+    });
+
+    it('warns about missing Work Items scope but continues', async () => {
+      mockValidatePat.mockResolvedValue({
+        valid: true,
+        missingWorkItemsScope: true,
+        username: 'PAT (contoso)',
+      });
+
+      await setAdoOrg({
+        _testPatFallback: true,
+        _testPatOrg: 'contoso',
+        _testPatValue: 'limited-pat',
+        _testProjectIndex: 0,
+      });
+
+      // Should warn but still succeed
+      const output = consoleOutput.join('\n');
+      expect(output).toContain('Work Items scope');
+      expect(output).toContain('ADO Sync configured');
+    });
+
+    it('exits when empty PAT is provided', async () => {
+      await setAdoOrg({
+        _testPatFallback: true,
+        _testPatOrg: 'contoso',
+        _testPatValue: '',
+      });
+
+      expect(process.exitCode).toBe(1);
+      const output = consoleOutput.join('\n');
+      expect(output).toContain('No PAT provided');
+    });
+
+    it('PAT value never appears in console output', async () => {
+      const secretPat = 'super-secret-pat-value-12345';
+      mockValidatePat.mockResolvedValue({
+        valid: true,
+        missingWorkItemsScope: false,
+        username: 'PAT (contoso)',
+      });
+
+      await setAdoOrg({
+        _testPatFallback: true,
+        _testPatOrg: 'contoso',
+        _testPatValue: secretPat,
+        _testProjectIndex: 0,
+      });
+
+      const allOutput = [...consoleOutput, ...consoleErrors].join('\n');
+      expect(allOutput).not.toContain(secretPat);
+    });
+
+    it('skips org discovery when using PAT (org already provided)', async () => {
+      mockValidatePat.mockResolvedValue({
+        valid: true,
+        missingWorkItemsScope: false,
+        username: 'PAT (my-org)',
+      });
+
+      await setAdoOrg({
+        _testPatFallback: true,
+        _testPatOrg: 'my-org',
+        _testPatValue: 'test-pat',
+        _testProjectIndex: 0,
+      });
+
+      // Should NOT call discoverOrganizations when using PAT
+      expect(mockDiscoverOrganizations).not.toHaveBeenCalled();
+    });
   });
 });
