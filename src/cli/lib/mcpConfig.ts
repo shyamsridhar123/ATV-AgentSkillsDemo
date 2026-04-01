@@ -16,6 +16,12 @@ export const ADO_SYNC_SERVER_KEY = 'ado-sync';
 
 const MCP_SCHEMA = 'https://code.visualstudio.com/docs/copilot/chat/mcp-servers';
 
+/** Required MCP servers that must be present for doctor/agent health */
+const REQUIRED_DEFAULT_SERVERS: Record<string, Record<string, unknown>> = {
+  playwright: { command: 'npx', args: ['@playwright/mcp@0.0.68'] },
+  backlog: { command: 'backlog', args: ['mcp', 'start'] },
+};
+
 /** Shape of a single MCP server entry */
 export interface McpServerEntry {
   command: string;
@@ -81,11 +87,12 @@ export function ensureAdoSyncMcpEntry(projectRoot: string, pythonPath: string): 
     }
   }
 
-  // No valid existing config — create fresh
+  // No valid existing config — create fresh with required defaults
   if (config === null) {
     const fresh = {
       $schema: MCP_SCHEMA,
       servers: {
+        ...REQUIRED_DEFAULT_SERVERS,
         [ADO_SYNC_SERVER_KEY]: newEntry,
       },
     };
@@ -124,7 +131,10 @@ export function ensureAdoSyncMcpEntry(projectRoot: string, pythonPath: string): 
   return { action, mcpJsonPath };
 }
 
-/** Write config to disk with consistent formatting */
+/**
+ * Write config to disk with consistent 2-space JSON formatting.
+ * Note: normalizes formatting rather than preserving original indentation.
+ */
 function writeMcpConfig(path: string, config: Record<string, unknown>): void {
   writeFileSync(path, JSON.stringify(config, null, 2) + '\n', 'utf-8');
 }

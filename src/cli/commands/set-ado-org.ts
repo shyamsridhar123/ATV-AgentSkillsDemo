@@ -33,7 +33,7 @@ import {
   type AdoProject,
 } from '../lib/adoDiscovery.js';
 import { ensureAdoSyncMcpEntry } from '../lib/mcpConfig.js';
-import { discoverPython, VENV_DIR, pythonExeName } from '../lib/pythonRuntime.js';
+import { discoverPython, VENV_DIR, venvBinDir, pythonExeName } from '../lib/pythonRuntime.js';
 
 const COLORS = {
   reset: '\x1b[0m',
@@ -246,11 +246,11 @@ export async function setAdoOrg(options: SetAdoOrgOptions = {}): Promise<void> {
     try {
       const python = await discoverPython(cwd);
       // Prefer the expected venv path for consistency with ado-sync start
-      const venvPython = join(cwd, VENV_DIR, 'bin', pythonExeName());
+      const venvPython = join(cwd, VENV_DIR, venvBinDir(), pythonExeName());
       pythonPath = python.source === 'venv' ? python.pythonPath : venvPython;
     } catch {
       // No Python found — use a placeholder that ado-sync start will fix
-      pythonPath = join(cwd, VENV_DIR, 'bin', pythonExeName());
+      pythonPath = join(cwd, VENV_DIR, venvBinDir(), pythonExeName());
     }
     const mcpResult = ensureAdoSyncMcpEntry(cwd, pythonPath);
     if (mcpResult.action !== 'unchanged') {

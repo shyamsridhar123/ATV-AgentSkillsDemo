@@ -127,7 +127,7 @@ describe('mcpConfig', () => {
       expect(config._security_notice).toBe('Review each server before enabling.');
     });
 
-    it('writes valid JSON with 2-space indentation', () => {
+    it('writes valid JSON with normalized 2-space indentation', () => {
       writeMcpJson(tmpDir, { servers: {} });
 
       ensureAdoSyncMcpEntry(tmpDir, '/usr/bin/python3');
@@ -156,7 +156,7 @@ describe('mcpConfig', () => {
       expect(existsSync(join(tmpDir, '.vscode', 'mcp.json'))).toBe(true);
     });
 
-    it('creates valid mcp.json with ado-sync entry', () => {
+    it('creates valid mcp.json with ado-sync entry and required defaults', () => {
       const pythonPath = '/usr/bin/python3';
       ensureAdoSyncMcpEntry(tmpDir, pythonPath);
 
@@ -169,6 +169,10 @@ describe('mcpConfig', () => {
       expect(adoEntry.command).toBe(pythonPath);
       expect(adoEntry.args).toEqual(['-m', 'app.mcp_server']);
       expect(adoEntry.cwd).toBe(join(tmpDir, 'ado-sync'));
+
+      // Required default servers must be present (doctor depends on these)
+      expect(servers.playwright).toBeDefined();
+      expect(servers.backlog).toBeDefined();
     });
 
     it('output has $schema field', () => {
@@ -283,7 +287,7 @@ describe('mcpConfig', () => {
   // ─── Edge cases ───
 
   describe('edge cases', () => {
-    it('handles corrupted mcp.json by creating fresh config', () => {
+    it('handles corrupted mcp.json by creating fresh config with defaults', () => {
       const vsDir = join(tmpDir, '.vscode');
       mkdirSync(vsDir, { recursive: true });
       writeFileSync(join(vsDir, 'mcp.json'), '{{{{not valid json!!!!', 'utf-8');
@@ -291,10 +295,12 @@ describe('mcpConfig', () => {
       const result = ensureAdoSyncMcpEntry(tmpDir, '/usr/bin/python3');
 
       expect(result.action).toBe('created');
-      // Should now be valid
+      // Should now be valid with required defaults
       const config = readMcpJson(tmpDir);
       const servers = config.servers as Record<string, unknown>;
       expect(servers[ADO_SYNC_SERVER_KEY]).toBeDefined();
+      expect(servers.playwright).toBeDefined();
+      expect(servers.backlog).toBeDefined();
     });
 
     it('handles mcp.json with no servers key', () => {
