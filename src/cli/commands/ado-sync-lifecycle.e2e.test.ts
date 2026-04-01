@@ -83,11 +83,12 @@ function readPidFile(projectRoot: string): number | null {
 }
 
 /**
- * Spawn a long-running dummy process (sleep 3600) to simulate
- * a running watcher. Returns the PID. Caller must kill it in afterEach.
+ * Spawn a long-running dummy process to simulate a running watcher.
+ * Uses Node itself (cross-platform) instead of `sleep` (Unix-only).
+ * Returns the PID. Caller must kill it in afterEach.
  */
 function spawnDummyProcess(): number {
-  const child = spawn('sleep', ['3600'], {
+  const child = spawn(process.execPath, ['-e', 'setTimeout(() => {}, 3600000)'], {
     detached: true,
     stdio: 'ignore',
   });
@@ -97,12 +98,40 @@ function spawnDummyProcess(): number {
   return pid;
 }
 
+/**
+ * Spawn a process, kill it, and return its (now-dead) PID.
+ * Used for stale PID tests — guarantees the PID existed but is no longer alive.
+ */
+function spawnAndKillForStalePid(): number {
+  const child = spawn(process.execPath, ['-e', 'setTimeout(() => {}, 3600000)'], {
+    detached: true,
+    stdio: 'ignore',
+  });
+  child.unref();
+  const pid = child.pid;
+  if (!pid) throw new Error('Failed to spawn dummy process for stale PID');
+  try { process.kill(pid, 'SIGKILL'); } catch { /* already dead */ }
+  return pid;
+}
+
 /** Kill a process if it's still alive — safe no-op if already dead */
 function safeKill(pid: number): void {
   try {
     process.kill(pid, 'SIGTERM');
   } catch {
     // Already dead — that's fine
+  }
+}
+
+/** Poll until a process is dead, with bounded timeout. Throws if it doesn't exit. */
+async function waitForProcessDeath(pid: number, timeoutMs = 2000): Promise<void> {
+  const pollIntervalMs = 50;
+  const start = Date.now();
+  while (isProcessAlive(pid)) {
+    if (Date.now() - start > timeoutMs) {
+      throw new Error(`Process ${pid} did not exit within ${timeoutMs}ms`);
+    }
+    await new Promise(r => setTimeout(r, pollIntervalMs));
   }
 }
 
@@ -316,9 +345,8 @@ describe('E2E: ADO Sync full setup flow (BETH-64.19)', () => {
       expect(result.wasRunning).toBe(true);
       expect(result.pid).toBe(pid);
 
-      // Assert: process is dead (give OS a moment to reap)
-      // SIGTERM may take a tick — wait briefly
-      await new Promise(r => setTimeout(r, 100));
+      // Assert: process is dead — poll with bounded timeout for CI reliability
+      await waitForProcessDeath(pid);
       expect(isProcessAlive(pid)).toBe(false);
     });
 
@@ -348,8 +376,11 @@ describe('E2E: ADO Sync full setup flow (BETH-64.19)', () => {
     it('cleans stale PID file when process is already dead', async () => {
       createConfig(projectRoot, 'org', 'proj');
 
-      // Write a PID for a process that doesn't exist
-      writePidFile(projectRoot, 999999);
+      // Spawn a real process, kill it, then use its (now-dead) PID
+      // to avoid accidentally signaling an unrelated process
+      const deadPid = spawnAndKillForStalePid();
+      await waitForProcessDeath(deadPid);
+      writePidFile(projectRoot, deadPid);
 
       const result = await stopWatcher(projectRoot);
 
@@ -382,7 +413,7 @@ describe('E2E: ADO Sync full setup flow (BETH-64.19)', () => {
 
       // Stop it
       await stopWatcher(projectRoot);
-      await new Promise(r => setTimeout(r, 100));
+      await waitForProcessDeath(pid);
 
       // Verify status reports stopped
       const afterStatus = await getWatcherStatus(projectRoot);
@@ -398,7 +429,7 @@ describe('E2E: ADO Sync full setup flow (BETH-64.19)', () => {
       writePidFile(projectRoot, pid);
 
       await stopWatcher(projectRoot);
-      await new Promise(r => setTimeout(r, 100));
+      await waitForProcessDeath(pid);
 
       const status = await getWatcherStatus(projectRoot);
 
@@ -597,7 +628,7 @@ describe('E2E: ADO Sync full setup flow (BETH-64.19)', () => {
       expect(stopResult.stopped).toBe(true);
       expect(stopResult.wasRunning).toBe(true);
 
-      await new Promise(r => setTimeout(r, 100));
+      await waitForProcessDeath(pid);
 
       // 5. Status should be stopped with config still present
       const stoppedStatus = await getWatcherStatus(projectRoot);
