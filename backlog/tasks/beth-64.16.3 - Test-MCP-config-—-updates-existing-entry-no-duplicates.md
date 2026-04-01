@@ -1,9 +1,10 @@
 ---
 id: BETH-64.16.3
 title: 'Test: MCP config — updates existing entry, no duplicates'
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-03-30 17:11'
+updated_date: '2026-04-01 05:33'
 labels: []
 dependencies: []
 parent_task_id: BETH-64.16
