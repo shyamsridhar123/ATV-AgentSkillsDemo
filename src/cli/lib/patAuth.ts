@@ -3,14 +3,14 @@
  *
  * Fallback when Entra ID device code auth fails or is unavailable.
  * Validates PAT against ADO API before storing.
- * PAT is stored in MSAL cache file (same mechanism as Entra tokens) at .beth/pat_credential.
+ * PAT is stored in a dedicated credential file at .beth/pat_credential with restrictive 0o600 permissions (owner read/write only).
  * PAT NEVER appears in .beth/ado-sync.json, logs, or error messages.
  *
  * Covers US-008, AC#1–AC#9 from BETH-64.17.
  */
 
 import { createInterface, type Interface } from 'readline';
-import { existsSync, readFileSync, writeFileSync, unlinkSync } from 'fs';
+import { existsSync, readFileSync, writeFileSync, unlinkSync, chmodSync } from 'fs';
 import { join } from 'path';
 import { ensureBethDir } from './adoSyncConfig.js';
 
@@ -193,6 +193,8 @@ export function storePat(projectRoot: string, pat: string): void {
   ensureBethDir(projectRoot);
   const credPath = getPatCredentialPath(projectRoot);
   writeFileSync(credPath, pat, { encoding: 'utf-8', mode: 0o600 });
+  // Enforce permissions even if file already existed with broader mode
+  chmodSync(credPath, 0o600);
 }
 
 /**

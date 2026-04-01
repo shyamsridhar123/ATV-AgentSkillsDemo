@@ -95,46 +95,6 @@ async function selectFromList<T>(
   }
 }
 
-/** List projects using PAT authentication (Basic auth, not Bearer). */
-async function listProjectsWithPat(pat: string, organization: string): Promise<AdoProject[]> {
-  const basicAuth = Buffer.from(`:${pat}`).toString('base64');
-  const allProjects: AdoProject[] = [];
-  let skip = 0;
-  const top = 100;
-
-  while (true) {
-    const url = `https://dev.azure.com/${encodeURIComponent(organization)}/_apis/projects?api-version=7.1&$top=${top}&$skip=${skip}&stateFilter=wellFormed`;
-    const response = await fetch(url, {
-      headers: {
-        'Authorization': `Basic ${basicAuth}`,
-        'Accept': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`ADO API error: ${response.status} ${response.statusText}`);
-    }
-
-    const result = await response.json() as { count: number; value: Array<{ id: string; name: string; description: string; state: string }> };
-
-    for (const p of result.value) {
-      allProjects.push({
-        id: p.id,
-        name: p.name,
-        description: p.description || '',
-        state: p.state,
-      });
-    }
-
-    if (result.value.length < top) {
-      break;
-    }
-    skip += top;
-  }
-
-  return allProjects;
-}
-
 /** Options for the set-ado-org command */
 export interface SetAdoOrgOptions {
   /** Non-interactive mode for testing — provide these to skip prompts */
@@ -236,8 +196,8 @@ export async function setAdoOrg(options: SetAdoOrgOptions = {}): Promise<void> {
 
       const patValue = options._testPatValue ?? await promptForPat(
         '  Personal Access Token: ',
-        process.stdin,
-        process.stderr,
+        options._inputStream ?? process.stdin,
+        options._outputStream ?? process.stderr,
       );
 
       if (!patValue) {
@@ -321,13 +281,13 @@ export async function setAdoOrg(options: SetAdoOrgOptions = {}): Promise<void> {
   }
 
   // Step 5: List and select project
-  // For PAT: uses Basic auth via the listProjectsWithPat helper
-  // For Entra: uses Bearer auth via the standard listProjects
+  // PAT uses Basic auth; Entra uses Bearer — both go through adoDiscovery.listProjects
   log(`\n  Loading projects for ${COLORS.cyan}${selectedOrgName}${COLORS.reset}...`, COLORS.dim);
   let projects: AdoProject[];
   try {
     if (authMethod === 'pat') {
-      projects = await listProjectsWithPat(credential.accessToken, selectedOrgName);
+      const basicAuth = Buffer.from(`:${credential.accessToken}`).toString('base64');
+      projects = await listProjects(basicAuth, selectedOrgName, 'Basic');
     } else {
       projects = await listProjects(credential.accessToken, selectedOrgName);
     }
