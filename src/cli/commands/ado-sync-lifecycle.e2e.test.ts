@@ -41,7 +41,6 @@ import {
   isConfigured,
   getConfigPath,
   getBethDir,
-  ensureGitignore,
   isGitignored,
 } from '../lib/adoSyncConfig.js';
 
