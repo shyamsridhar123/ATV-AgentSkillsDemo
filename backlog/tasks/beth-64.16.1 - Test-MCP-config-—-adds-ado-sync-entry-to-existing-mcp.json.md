@@ -1,9 +1,10 @@
 ---
 id: BETH-64.16.1
 title: 'Test: MCP config — adds ado-sync entry to existing mcp.json'
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-03-30 17:11'
+updated_date: '2026-04-01 05:33'
 labels: []
 dependencies: []
 parent_task_id: BETH-64.16

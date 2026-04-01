@@ -1,9 +1,10 @@
 ---
 id: BETH-64.16
 title: MCP auto-configuration for ado-sync
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-03-22 16:38'
+updated_date: '2026-04-01 05:33'
 labels: []
 dependencies: []
 parent_task_id: BETH-64

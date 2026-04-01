@@ -76,7 +76,7 @@ function checkPythonVersion(pythonCmd: string): string | null {
 const IS_WIN = process.platform === 'win32';
 
 /** Get the platform-appropriate venv bin directory name */
-function venvBinDir(): string {
+export function venvBinDir(): string {
   return IS_WIN ? 'Scripts' : 'bin';
 }
 

@@ -14,6 +14,7 @@
  */
 
 import { createInterface } from 'readline';
+import { join } from 'path';
 import {
   loadConfig,
   saveConfig,
@@ -31,6 +32,8 @@ import {
   type AdoOrganization,
   type AdoProject,
 } from '../lib/adoDiscovery.js';
+import { ensureAdoSyncMcpEntry } from '../lib/mcpConfig.js';
+import { discoverPython, VENV_DIR, venvBinDir, pythonExeName } from '../lib/pythonRuntime.js';
 
 const COLORS = {
   reset: '\x1b[0m',
@@ -237,7 +240,27 @@ export async function setAdoOrg(options: SetAdoOrgOptions = {}): Promise<void> {
 
   saveConfig(cwd, configUpdate);
 
-  // Step 7: Success!
+  // Step 7: Configure MCP server entry
+  try {
+    let pythonPath: string;
+    try {
+      const python = await discoverPython(cwd);
+      // Prefer the expected venv path for consistency with ado-sync start
+      const venvPython = join(cwd, VENV_DIR, venvBinDir(), pythonExeName());
+      pythonPath = python.source === 'venv' ? python.pythonPath : venvPython;
+    } catch {
+      // No Python found — use a placeholder that ado-sync start will fix
+      pythonPath = join(cwd, VENV_DIR, venvBinDir(), pythonExeName());
+    }
+    const mcpResult = ensureAdoSyncMcpEntry(cwd, pythonPath);
+    if (mcpResult.action !== 'unchanged') {
+      log(`  ${COLORS.green}✓${COLORS.reset} MCP server entry ${mcpResult.action} in .vscode/mcp.json`);
+    }
+  } catch (error) {
+    log(`  ${COLORS.yellow}⚠${COLORS.reset} Could not update .vscode/mcp.json: ${error instanceof Error ? error.message : String(error)}`, COLORS.dim);
+  }
+
+  // Step 8: Success!
   log(`\n  ${COLORS.green}${COLORS.bright}✓ ADO Sync configured!${COLORS.reset}`);
   log(`  Organization: ${COLORS.cyan}${selectedOrg.accountName}${COLORS.reset}`);
   log(`  Project:      ${COLORS.cyan}${selectedProject.name}${COLORS.reset}`);
