@@ -45,11 +45,15 @@ export class AdoApiError extends Error {
 /**
  * Fetch JSON from an ADO API endpoint with auth header.
  * Handles common error codes: 401, 403, 429.
+ *
+ * @param url - ADO API URL
+ * @param accessToken - Token value
+ * @param authScheme - Auth scheme: 'Bearer' for Entra, 'Basic' for PAT (default: 'Bearer')
  */
-async function adoFetch<T>(url: string, accessToken: string): Promise<T> {
+async function adoFetch<T>(url: string, accessToken: string, authScheme: 'Bearer' | 'Basic' = 'Bearer'): Promise<T> {
   const response = await fetch(url, {
     headers: {
-      'Authorization': `Bearer ${accessToken}`,
+      'Authorization': `${authScheme} ${accessToken}`,
       'Accept': 'application/json',
     },
   });
@@ -137,10 +141,15 @@ export async function listOrganizations(
 /**
  * List projects within an ADO organization.
  * Supports pagination for orgs with 100+ projects.
+ *
+ * @param accessToken - Bearer token (Entra) or base64-encoded Basic token (PAT)
+ * @param organization - ADO organization name
+ * @param authScheme - Auth scheme: 'Bearer' for Entra, 'Basic' for PAT (default: 'Bearer')
  */
 export async function listProjects(
   accessToken: string,
-  organization: string
+  organization: string,
+  authScheme: 'Bearer' | 'Basic' = 'Bearer'
 ): Promise<AdoProject[]> {
   interface ProjectsResponse {
     count: number;
@@ -159,7 +168,7 @@ export async function listProjects(
   // Paginate until we have all projects
   while (true) {
     const url = `https://dev.azure.com/${encodeURIComponent(organization)}/_apis/projects?api-version=7.1&$top=${top}&$skip=${skip}&stateFilter=wellFormed`;
-    const result = await adoFetch<ProjectsResponse>(url, accessToken);
+    const result = await adoFetch<ProjectsResponse>(url, accessToken, authScheme);
 
     for (const p of result.value) {
       allProjects.push({
