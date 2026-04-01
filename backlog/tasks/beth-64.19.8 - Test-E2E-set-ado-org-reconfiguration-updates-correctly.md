@@ -1,9 +1,10 @@
 ---
 id: BETH-64.19.8
 title: 'Test E2E: set-ado-org reconfiguration updates correctly'
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-03-30 17:14'
+updated_date: '2026-04-01 06:11'
 labels: []
 dependencies: []
 parent_task_id: BETH-64.19

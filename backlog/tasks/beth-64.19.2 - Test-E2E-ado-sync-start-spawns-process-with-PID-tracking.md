@@ -1,9 +1,10 @@
 ---
 id: BETH-64.19.2
 title: 'Test E2E: ado-sync start spawns process with PID tracking'
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-03-30 17:13'
+updated_date: '2026-04-01 06:11'
 labels: []
 dependencies: []
 parent_task_id: BETH-64.19
