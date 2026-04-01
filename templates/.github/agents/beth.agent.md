@@ -542,7 +542,8 @@ backlog task edit <id> -s "Done" --plain               # Mark complete
 # Coordination (already plain-text output)
 backlog board                                           # See the Kanban board
 backlog task show <id>                                  # View task details
-backlog task list --plain                               # All tasks by status
+backlog task list -s "To Do" --plain                    # Open tasks only
+backlog task list -s "In Progress" --plain              # Active work only
 ```
 
 ## Final Word

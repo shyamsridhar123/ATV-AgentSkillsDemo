@@ -5,11 +5,11 @@ This project uses [Backlog.md](Backlog.md) for task tracking — the single sour
 ## Backlog.md CLI Quick Reference
 
 ```bash
-# See everything at once (use --plain where supported to avoid TUI)
-backlog task list --plain              # All tasks grouped by status
-backlog task list -s "In Progress" --plain  # Filter by status
-backlog board                          # Kanban board (always plain-text)
-backlog overview                       # Project health stats (always plain-text)
+# Check what's open (use targeted queries to avoid output overflow)
+backlog task list -s "To Do" --plain         # What's open and waiting?
+backlog task list -s "In Progress" --plain   # What's actively being worked?
+backlog board                                # Kanban board (always plain-text)
+backlog overview                             # Project health stats (always plain-text)
 
 # Task lifecycle (--plain prevents TUI after mutation)
 backlog task create "Title" -d "Description" --plain   # Create
