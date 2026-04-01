@@ -1,10 +1,10 @@
 ---
 id: BETH-71
 title: 'E2E tests: ADO Sync full setup flow (TDD)'
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-04-01 06:04'
-updated_date: '2026-04-01 06:04'
+updated_date: '2026-04-01 06:11'
 labels: []
 dependencies: []
 ---

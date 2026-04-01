@@ -1,9 +1,10 @@
 ---
 id: BETH-64.19
 title: 'E2E integration test: full ADO Sync setup flow'
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-03-22 16:38'
+updated_date: '2026-04-01 06:11'
 labels: []
 dependencies: []
 parent_task_id: BETH-64
