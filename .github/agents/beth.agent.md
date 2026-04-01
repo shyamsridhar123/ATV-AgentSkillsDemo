@@ -126,13 +126,25 @@ If the tracker says "done" but the code disagrees, reopen the task and re-apply 
 
 ### Step 4: Review the task board
 
-Before starting new work, see what's already open:
+Before starting new work, use **targeted status queries** — not a bulk dump that can overflow output limits:
 ```bash
-backlog task list --plain              # All tasks grouped by status
-backlog task list -s "In Progress" --plain  # What's supposed to be active?
+# Targeted queries (USE THESE — small, focused output)
+backlog task list -s "To Do" --plain         # What's open and waiting?
+backlog task list -s "In Progress" --plain   # What's supposed to be active?
+
+# Only if you need a count of completed work
+grep -rl 'status: Done' backlog/tasks/ | wc -l  # How many done tasks?
 ```
+
+**CRITICAL:** If any command output gets written to a temp file ("Large tool result written to file"), you MUST `read_file` that temp file before proceeding. Do NOT report based on memory.
+
 If a task says "In Progress" but the work is done, close it: `backlog task edit BETH-X -s "Done" --plain`
 If a task says "Done" but the code disagrees, reopen it: `backlog task edit BETH-X -s "In Progress" --plain`
+
+**Reporting discipline:** When presenting backlog status to the user:
+- Only report tasks that the data shows as open. Never list tasks from memory.
+- If suggesting NEW work ideas, verify they don't already exist as completed tasks first.
+- Never mix "completed work summaries" with "open work suggestions" in the same table.
 
 ### Step 5: Then proceed with tracking
 
@@ -545,7 +557,8 @@ backlog task edit <id> -s "Done" --plain               # Mark complete
 # Coordination (already plain-text output)
 backlog board                                           # See the Kanban board
 backlog task show <id>                                  # View task details
-backlog task list --plain                               # All tasks by status
+backlog task list -s "To Do" --plain                    # Open tasks only
+backlog task list -s "In Progress" --plain              # Active work only
 ```
 
 ## Final Word
