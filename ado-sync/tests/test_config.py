@@ -589,6 +589,42 @@ class TestJsonAllowlist:
         missing = expected_keys - JSON_CONFIG_ALLOWED_KEYS
         assert not missing, f"Allowlist missing schema keys: {missing}"
 
+    # -- aiFormatting subkey filtering ---------------------------------
+
+    def test_ai_formatting_unknown_subkeys_dropped(self, tmp_path):
+        """Unknown subkeys inside aiFormatting are silently removed."""
+        from app.config import load_config
+
+        beth_dir = tmp_path / ".beth"
+        beth_dir.mkdir()
+        config_path = beth_dir / "ado-sync.json"
+        config_path.write_text(json.dumps({
+            "organization": "org",
+            "project": "proj",
+            "aiFormatting": {
+                "enabled": True,
+                "endpoint": "https://my.openai.azure.com/",
+                "deployment": "gpt-4o",
+                "api_key": "sk-should-vanish",
+                "randomNested": "also-gone",
+            },
+        }))
+
+        config = load_config(config_path=str(config_path))
+        ai = config["aiFormatting"]
+        assert ai["enabled"] is True
+        assert ai["endpoint"] == "https://my.openai.azure.com/"
+        assert ai["deployment"] == "gpt-4o"
+        assert "api_key" not in ai
+        assert "randomNested" not in ai
+
+    def test_ai_formatting_allowed_subkeys_constant(self):
+        """AI_FORMATTING_ALLOWED_KEYS is a frozenset with expected keys."""
+        from app.config import AI_FORMATTING_ALLOWED_KEYS
+
+        assert isinstance(AI_FORMATTING_ALLOWED_KEYS, frozenset)
+        assert {"enabled", "endpoint", "deployment"} == AI_FORMATTING_ALLOWED_KEYS
+
 
 # ===========================================================================
 # 8. JSON parse errors include file path

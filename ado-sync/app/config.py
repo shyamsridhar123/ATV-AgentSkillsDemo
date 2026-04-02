@@ -42,6 +42,13 @@ JSON_CONFIG_SECRET_KEYS = frozenset({
     "github_webhook_secret",
 })
 
+# Allowlist of subkeys permitted inside the aiFormatting object.
+AI_FORMATTING_ALLOWED_KEYS = frozenset({
+    "enabled",
+    "endpoint",
+    "deployment",
+})
+
 
 class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
@@ -129,7 +136,14 @@ def load_config(config_path: Optional[str] = None) -> dict:
                 "Move these values to environment variables or a .env file instead."
             )
         # Only allow known config keys through (ADR-004 allowlist)
-        return {k: v for k, v in data.items() if k in JSON_CONFIG_ALLOWED_KEYS}
+        filtered = {k: v for k, v in data.items() if k in JSON_CONFIG_ALLOWED_KEYS}
+        # Also filter aiFormatting subkeys to prevent secret leakage
+        if "aiFormatting" in filtered and isinstance(filtered["aiFormatting"], dict):
+            filtered["aiFormatting"] = {
+                k: v for k, v in filtered["aiFormatting"].items()
+                if k in AI_FORMATTING_ALLOWED_KEYS
+            }
+        return filtered
 
     # Explicit source provided but file missing → fail fast
     if config_path is not None or os.environ.get("PROJECT_ROOT"):

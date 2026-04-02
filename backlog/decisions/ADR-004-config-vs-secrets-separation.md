@@ -64,8 +64,10 @@ Both assessments converge on the same root cause: **secrets and config are co-mi
 
 ## Config Precedence (Post-ADR-004)
 
+> **Note:** The precedence below is the *target* architecture. The current code still follows legacy precedence (JSON > `.env` > env vars) pending BETH-76+ changes. Once `load_config()` stops parsing `.env` manually and pydantic-settings handles it natively, the inversion below takes effect.
+
 ```
-Settings resolution order (highest wins):
+Target settings resolution order (highest wins):
 
 1. Process environment variables (always highest — lets CI/containers override everything)
 2. .env file (pydantic-settings native env_file, mode 600, local dev convenience)
@@ -73,14 +75,14 @@ Settings resolution order (highest wins):
 4. Defaults in Settings class
 ```
 
-Note the inversion: `.env` no longer competes with JSON config as a "config source" parsed by `load_config()`. Instead:
+The target inversion: `.env` no longer competes with JSON config as a "config source" parsed by `load_config()`. Instead:
 - JSON config provides **non-secret configuration**
 - `.env` / env vars provide **secrets and overrides**
 - pydantic-settings merges them with its standard precedence
 
 ## Implementation Checklist
 
-- [ ] Replace `disallowed_keys` blocklist with allowlist in `load_config()`
+- [x] Replace `disallowed_keys` blocklist with allowlist in `load_config()` (PR #134, BETH-75)
 - [ ] Remove manual `.env` parsing block from `load_config()` (the `dotenv_values()` section)
 - [ ] Add `SecretStr` to `ado_pat`, `azure_openai_api_key`, `github_webhook_secret` in `Settings`
 - [ ] Update all `.get_secret_value()` call sites in `ado_client.py`, `story_formatter.py`, `main.py`
