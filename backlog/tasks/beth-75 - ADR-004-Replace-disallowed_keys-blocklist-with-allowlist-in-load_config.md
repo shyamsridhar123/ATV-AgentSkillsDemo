@@ -1,9 +1,10 @@
 ---
 id: BETH-75
 title: 'ADR-004: Replace disallowed_keys blocklist with allowlist in load_config()'
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-04-01 19:22'
+updated_date: '2026-04-02 04:43'
 labels: []
 dependencies: []
 priority: high
