@@ -1,9 +1,10 @@
 ---
 id: BETH-64.5
 title: 'Resolve OQ-6: .env backward compat — support both or deprecate?'
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-03-22 16:35'
+updated_date: '2026-04-01 19:20'
 labels: []
 dependencies: []
 parent_task_id: BETH-64
@@ -22,3 +23,9 @@ Design decision: Phase 1 uses .env for config. Should we support .env alongside 
 - [ ] #2 Migration path for Phase 1 users defined (if deprecating)
 - [ ] #3 Config precedence documented in ado-sync README
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Resolved by ADR-004. Decision: .env stays as local env var convenience (pydantic-settings native). Not deprecated. Config lives in .beth/ado-sync.json, secrets in env vars, tokens in MSAL cache. See backlog/decisions/ADR-004-config-vs-secrets-separation.md.
+<!-- SECTION:NOTES:END -->

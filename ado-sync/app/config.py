@@ -18,6 +18,37 @@ from pydantic_settings import BaseSettings
 
 _CONFIG_FILENAME = ".beth/ado-sync.json"
 
+# Allowlist of keys permitted in .beth/ado-sync.json (ADR-004).
+# Keys not on this list are silently dropped. Fail-safe.
+JSON_CONFIG_ALLOWED_KEYS = frozenset({
+    "organization",
+    "project",
+    "authMethod",
+    "tenantId",
+    "areaPath",
+    "iterationPath",
+    "taskPrefix",
+    "tasksDir",
+    "backlogTasksDir",  # legacy alias for tasksDir
+    "aiFormatting",
+    "logLevel",
+})
+
+# Keys that are known secrets — raise ValueError if found in JSON config.
+JSON_CONFIG_SECRET_KEYS = frozenset({
+    "pat",
+    "ado_pat",
+    "azure_openai_api_key",
+    "github_webhook_secret",
+})
+
+# Allowlist of subkeys permitted inside the aiFormatting object.
+AI_FORMATTING_ALLOWED_KEYS = frozenset({
+    "enabled",
+    "endpoint",
+    "deployment",
+})
+
 
 class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
@@ -96,16 +127,23 @@ def load_config(config_path: Optional[str] = None) -> dict:
                     e.doc,
                     e.pos,
                 ) from e
-        # Prevent accidental storage of secrets in .beth/ado-sync.json
-        disallowed_keys = {"pat"}
-        present_disallowed = disallowed_keys.intersection(data.keys())
-        if present_disallowed:
+        # Reject secret keys explicitly (fail-fast with clear message)
+        present_secrets = JSON_CONFIG_SECRET_KEYS.intersection(data.keys())
+        if present_secrets:
             raise ValueError(
-                "Disallowed secret-like keys found in .beth/ado-sync.json: "
-                f"{', '.join(sorted(present_disallowed))}. "
+                f"Secret keys found in .beth/ado-sync.json: "
+                f"{', '.join(sorted(present_secrets))}. "
                 "Move these values to environment variables or a .env file instead."
             )
-        return data
+        # Only allow known config keys through (ADR-004 allowlist)
+        filtered = {k: v for k, v in data.items() if k in JSON_CONFIG_ALLOWED_KEYS}
+        # Also filter aiFormatting subkeys to prevent secret leakage
+        if "aiFormatting" in filtered and isinstance(filtered["aiFormatting"], dict):
+            filtered["aiFormatting"] = {
+                k: v for k, v in filtered["aiFormatting"].items()
+                if k in AI_FORMATTING_ALLOWED_KEYS
+            }
+        return filtered
 
     # Explicit source provided but file missing → fail fast
     if config_path is not None or os.environ.get("PROJECT_ROOT"):

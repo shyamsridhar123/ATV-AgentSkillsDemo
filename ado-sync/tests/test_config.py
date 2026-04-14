@@ -446,12 +446,56 @@ class TestConfigPrecedence:
 
 
 # ===========================================================================
-# 7. JSON security: disallow secrets in .beth/ado-sync.json
+# 7. JSON security: allowlist enforcement (ADR-004, BETH-75)
 # ===========================================================================
 
 
-class TestJsonSecretDisallowed:
-    """JSON config must not contain secret-like keys."""
+class TestJsonAllowlist:
+    """JSON config uses an allowlist. Unknown keys are silently dropped.
+    Known secret keys raise ValueError. Fail-safe, not fail-open."""
+
+    # -- Allowlisted keys pass through ---------------------------------
+
+    def test_allowlisted_keys_pass_through(self, tmp_path):
+        """All allowlisted keys are preserved in the returned dict."""
+        from app.config import load_config, JSON_CONFIG_ALLOWED_KEYS
+
+        config_path = _make_config(tmp_path, organization="allow-org")
+        config = load_config(config_path=str(config_path))
+        # Every key in the result must be on the allowlist
+        for key in config:
+            assert key in JSON_CONFIG_ALLOWED_KEYS, f"Unexpected key '{key}' not in allowlist"
+
+    def test_standard_config_loads_fine(self, tmp_path):
+        """Normal JSON config without secrets loads successfully."""
+        from app.config import load_config
+
+        config_path = _make_config(tmp_path, organization="clean-org")
+        config = load_config(config_path=str(config_path))
+        assert config["organization"] == "clean-org"
+
+    # -- Unknown keys are silently dropped -----------------------------
+
+    def test_unknown_keys_silently_dropped(self, tmp_path):
+        """Keys not on the allowlist are silently removed from the result."""
+        from app.config import load_config
+
+        beth_dir = tmp_path / ".beth"
+        beth_dir.mkdir()
+        config_path = beth_dir / "ado-sync.json"
+        config_path.write_text(json.dumps({
+            "organization": "org",
+            "project": "proj",
+            "totallyMadeUpKey": "should-vanish",
+            "anotherRandom": 42,
+        }))
+
+        config = load_config(config_path=str(config_path))
+        assert "totallyMadeUpKey" not in config
+        assert "anotherRandom" not in config
+        assert config["organization"] == "org"
+
+    # -- Secret keys raise ValueError ----------------------------------
 
     def test_pat_in_json_raises_value_error(self, tmp_path):
         """PAT in .beth/ado-sync.json raises ValueError."""
@@ -466,16 +510,120 @@ class TestJsonSecretDisallowed:
             "pat": "secret-pat-value",
         }))
 
-        with pytest.raises(ValueError, match="Disallowed secret-like keys"):
+        with pytest.raises(ValueError, match="Secret"):
             load_config(config_path=str(config_path))
 
-    def test_json_without_secrets_loads_fine(self, tmp_path):
-        """Normal JSON config without secrets loads successfully."""
+    def test_azure_openai_api_key_in_json_raises(self, tmp_path):
+        """azure_openai_api_key in JSON config raises ValueError."""
         from app.config import load_config
 
-        config_path = _make_config(tmp_path, organization="clean-org")
+        beth_dir = tmp_path / ".beth"
+        beth_dir.mkdir()
+        config_path = beth_dir / "ado-sync.json"
+        config_path.write_text(json.dumps({
+            "organization": "org",
+            "project": "proj",
+            "azure_openai_api_key": "sk-secret-key",
+        }))
+
+        with pytest.raises(ValueError, match="Secret"):
+            load_config(config_path=str(config_path))
+
+    def test_github_webhook_secret_in_json_raises(self, tmp_path):
+        """github_webhook_secret in JSON config raises ValueError."""
+        from app.config import load_config
+
+        beth_dir = tmp_path / ".beth"
+        beth_dir.mkdir()
+        config_path = beth_dir / "ado-sync.json"
+        config_path.write_text(json.dumps({
+            "organization": "org",
+            "project": "proj",
+            "github_webhook_secret": "whsec_1234",
+        }))
+
+        with pytest.raises(ValueError, match="Secret"):
+            load_config(config_path=str(config_path))
+
+    def test_ado_pat_in_json_raises(self, tmp_path):
+        """ado_pat (env-var style) in JSON config raises ValueError."""
+        from app.config import load_config
+
+        beth_dir = tmp_path / ".beth"
+        beth_dir.mkdir()
+        config_path = beth_dir / "ado-sync.json"
+        config_path.write_text(json.dumps({
+            "organization": "org",
+            "project": "proj",
+            "ado_pat": "my-ado-token",
+        }))
+
+        with pytest.raises(ValueError, match="Secret"):
+            load_config(config_path=str(config_path))
+
+    # -- Allowlist constant is well-formed -----------------------------
+
+    def test_allowlist_constant_is_frozenset(self):
+        """JSON_CONFIG_ALLOWED_KEYS is a frozenset (immutable)."""
+        from app.config import JSON_CONFIG_ALLOWED_KEYS
+
+        assert isinstance(JSON_CONFIG_ALLOWED_KEYS, frozenset)
+
+    def test_allowlist_does_not_contain_secrets(self):
+        """The allowlist must never include known secret key names."""
+        from app.config import JSON_CONFIG_ALLOWED_KEYS
+
+        secret_names = {"pat", "ado_pat", "azure_openai_api_key", "github_webhook_secret"}
+        overlap = secret_names & JSON_CONFIG_ALLOWED_KEYS
+        assert not overlap, f"Allowlist contains secret keys: {overlap}"
+
+    def test_allowlist_covers_helper_config_keys(self):
+        """Allowlist includes all keys used by _make_config helper (our schema)."""
+        from app.config import JSON_CONFIG_ALLOWED_KEYS
+
+        expected_keys = {
+            "organization", "project", "authMethod", "tenantId",
+            "areaPath", "iterationPath", "taskPrefix", "tasksDir",
+            "aiFormatting", "logLevel",
+        }
+        missing = expected_keys - JSON_CONFIG_ALLOWED_KEYS
+        assert not missing, f"Allowlist missing schema keys: {missing}"
+
+    # -- aiFormatting subkey filtering ---------------------------------
+
+    def test_ai_formatting_unknown_subkeys_dropped(self, tmp_path):
+        """Unknown subkeys inside aiFormatting are silently removed."""
+        from app.config import load_config
+
+        beth_dir = tmp_path / ".beth"
+        beth_dir.mkdir()
+        config_path = beth_dir / "ado-sync.json"
+        config_path.write_text(json.dumps({
+            "organization": "org",
+            "project": "proj",
+            "aiFormatting": {
+                "enabled": True,
+                "endpoint": "https://my.openai.azure.com/",
+                "deployment": "gpt-4o",
+                "api_key": "sk-should-vanish",
+                "randomNested": "also-gone",
+            },
+        }))
+
         config = load_config(config_path=str(config_path))
-        assert config["organization"] == "clean-org"
+        ai = config["aiFormatting"]
+        assert ai["enabled"] is True
+        assert ai["endpoint"] == "https://my.openai.azure.com/"
+        assert ai["deployment"] == "gpt-4o"
+        assert "api_key" not in ai
+        assert "randomNested" not in ai
+
+    def test_ai_formatting_allowed_subkeys_constant(self):
+        """AI_FORMATTING_ALLOWED_KEYS is a frozenset with expected keys."""
+        from app.config import AI_FORMATTING_ALLOWED_KEYS
+
+        assert isinstance(AI_FORMATTING_ALLOWED_KEYS, frozenset)
+        assert {"enabled", "endpoint", "deployment"} == AI_FORMATTING_ALLOWED_KEYS
 
 
 # ===========================================================================
