@@ -52,7 +52,7 @@
     "prepublishOnly": "npm run build && npm run sbom:generate"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=20.19.0"
   },
   "packageManager": "npm@11.9.0",
   "type": "module",
@@ -66,5 +66,8 @@
     "@azure/msal-node": "^5.1.1",
     "@azure/msal-node-extensions": "^5.1.1",
     "gray-matter": "^4.0.3"
+  },
+  "overrides": {
+    "uuid": "^14.0.0"
   }
 }
