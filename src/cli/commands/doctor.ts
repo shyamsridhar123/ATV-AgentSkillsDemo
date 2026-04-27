@@ -2,7 +2,7 @@
  * Doctor Command
  *
  * Checks system health and verifies Beth installation requirements:
- * - Node.js version (≥18)
+ * - Node.js version (≥20.19)
  * - backlog.md CLI available
  * - .github/agents/ exists with valid frontmatter
  * - .github/skills/ exists
@@ -90,40 +90,129 @@ function logResult(result: CheckResult, verbose: boolean): void {
  * Parse the minimum major Node.js version from package.json engines.node.
  * Supports formats like ">=18", "^18", ">=18.0.0", etc.
  * Returns the parsed major version, or a fallback if parsing fails.
+ *
+ * @deprecated Prefer getEnginesNodeRange / satisfiesEnginesNode for full
+ *   range support (compound ranges like ">=20.19.0 <21 || >=22.12.0").
  */
 export function getMinNodeVersion(cwd: string): number {
-  const fallback = 18;
+  return getMinNodeSemver(cwd).major;
+}
+
+/**
+ * Parse the lowest minimum semver from engines.node — for a compound range
+ * like ">=20.19.0 <21 || >=22.12.0" this returns 20.19.0. Used by the
+ * doctor's display string. Range-validity decisions go through
+ * {@link satisfiesEnginesNode} which evaluates the full constraint.
+ */
+export function getMinNodeSemver(cwd: string): { major: number; minor: number; patch: number } {
+  const fallback = { major: 20, minor: 19, patch: 0 };
   try {
     const pkg = JSON.parse(readFileSync(join(cwd, 'package.json'), 'utf-8'));
     const constraint = pkg?.engines?.node;
     if (typeof constraint !== 'string') return fallback;
-    const match = constraint.match(/(\d+)/);
-    return match ? parseInt(match[1], 10) : fallback;
+    const match = constraint.match(/(\d+)(?:\.(\d+))?(?:\.(\d+))?/);
+    if (!match) return fallback;
+    return {
+      major: parseInt(match[1], 10),
+      minor: match[2] ? parseInt(match[2], 10) : 0,
+      patch: match[3] ? parseInt(match[3], 10) : 0,
+    };
   } catch {
     return fallback;
   }
 }
 
+/** Read the raw engines.node string from package.json, or null. */
+export function getEnginesNodeRange(cwd: string): string | null {
+  try {
+    const pkg = JSON.parse(readFileSync(join(cwd, 'package.json'), 'utf-8'));
+    const constraint = pkg?.engines?.node;
+    return typeof constraint === 'string' ? constraint : null;
+  } catch {
+    return null;
+  }
+}
+
+type Semver = { major: number; minor: number; patch: number };
+
+function parseSemver(s: string): Semver | null {
+  const m = s.match(/^(\d+)(?:\.(\d+))?(?:\.(\d+))?/);
+  if (!m) return null;
+  return {
+    major: parseInt(m[1], 10),
+    minor: m[2] ? parseInt(m[2], 10) : 0,
+    patch: m[3] ? parseInt(m[3], 10) : 0,
+  };
+}
+
+function compareSemver(a: Semver, b: Semver): number {
+  if (a.major !== b.major) return a.major - b.major;
+  if (a.minor !== b.minor) return a.minor - b.minor;
+  return a.patch - b.patch;
+}
+
+function formatSemver(v: Semver): string {
+  return v.patch > 0 ? `${v.major}.${v.minor}.${v.patch}` : `${v.major}.${v.minor}`;
+}
+
 /**
- * Check Node.js version against the minimum from package.json engines.node
+ * Evaluate a node engines range against a version. Supports the operators
+ * `>=`, `>`, `<=`, `<`, `=`, AND'd within a clause (space- or comma-
+ * separated), and OR'd across clauses with `||`. This is intentionally a
+ * narrow subset of the full semver-range grammar — sufficient for the
+ * shapes this repo's package.json uses, without pulling in a dependency.
+ */
+export function satisfiesEnginesNode(version: Semver, range: string): boolean {
+  const clauses = range.split('||').map(c => c.trim()).filter(Boolean);
+  if (clauses.length === 0) return true;
+  return clauses.some(clause => {
+    const parts = clause.split(/[\s,]+/).filter(Boolean);
+    return parts.every(part => {
+      const m = part.match(/^(>=|<=|>|<|=)?(.+)$/);
+      if (!m) return false;
+      const op = m[1] || '>=';
+      const ver = parseSemver(m[2]);
+      if (!ver) return false;
+      const cmp = compareSemver(version, ver);
+      switch (op) {
+        case '>=': return cmp >= 0;
+        case '>':  return cmp > 0;
+        case '<=': return cmp <= 0;
+        case '<':  return cmp < 0;
+        case '=':  return cmp === 0;
+        default:   return false;
+      }
+    });
+  });
+}
+
+/**
+ * Check the running Node.js version against the full engines.node range
+ * declared in package.json. Falls back to a simple major.minor.patch
+ * comparison only when no engines.node string is present.
  */
 function checkNodeVersion(cwd: string): CheckResult {
   const version = process.version;
-  const major = parseInt(version.slice(1).split('.')[0], 10);
-  const minMajor = getMinNodeVersion(cwd);
-  
-  if (major >= minMajor) {
+  const [maj, min, pat] = version.slice(1).split('.').map(n => parseInt(n, 10));
+  const current: Semver = { major: maj || 0, minor: min || 0, patch: pat || 0 };
+  const range = getEnginesNodeRange(cwd);
+  const min_ = getMinNodeSemver(cwd);
+  const required = range ?? `≥${formatSemver(min_)}`;
+
+  const ok = range ? satisfiesEnginesNode(current, range) : compareSemver(current, min_) >= 0;
+
+  if (ok) {
     return {
       name: 'Node.js',
       status: 'pass',
-      message: `${version} (≥${minMajor} required)`,
+      message: `${version} (${required} required)`,
     };
   }
-  
+
   return {
     name: 'Node.js',
     status: 'fail',
-    message: `${version} (≥${minMajor} required)`,
+    message: `${version} (${required} required)`,
     fixCommand: 'Upgrade Node.js: https://nodejs.org/',
   };
 }

@@ -177,6 +177,17 @@ npm run sbom:generate
 npx @cyclonedx/cyclonedx-npm --output-file sbom.json --output-format JSON
 ```
 
+## Dependency Overrides
+
+We use `package.json` `overrides` to pin transitive dependencies when an upstream package has not yet shipped a patched release.
+
+### `uuid` → `^14.0.0`
+
+- **Reason:** [GHSA-w5hq-g745-h8pq](https://github.com/advisories/GHSA-w5hq-g745-h8pq) — moderate-severity bounds-check issue in `uuid` `< 14.0.0`. Pulled in transitively by `@azure/msal-node`, which (as of `5.1.4`) still depends on `uuid@^8.3.0`.
+- **Reachability:** The advisory affects `uuid`'s legacy multi-arg signature (`uuid.vN(options, buf, offset)` for v1/v3/v5) — bounds aren't checked on caller-supplied `buf`. `@azure/msal-node` only calls `uuid.v4()` with no arguments, so this codebase was not actually exploitable — the override exists to clear the audit signal, not to patch a live exposure.
+- **Runtime compatibility:** `uuid@14` is ESM-only. `@azure/msal-node`'s CJS bundle does `require('uuid')`, which works on Node ≥ 20.19 / ≥ 22.12 via `require(esm)`. We bumped `engines.node` to `>=20.19.0` to make this requirement explicit.
+- **Removal trigger:** Remove this override once `@azure/msal-node` ships a release that depends on `uuid@>=14.0.0` directly. Re-run `npm audit --audit-level=moderate` after removal to confirm the advisory stays clear.
+
 ## Security Best Practices for Users
 
 1. **Review before running**: Inspect template files before using in production
