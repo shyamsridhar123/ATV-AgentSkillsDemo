@@ -45,7 +45,7 @@ flowchart LR
 
 | Category | Technology | Notes |
 |----------|-----------|-------|
-| **Runtime** | Node.js ≥ 20.19 (or ≥ 22.12) | ES modules, built-in test runner |
+| **Runtime** | Node.js 20.19.x or ≥ 22.12 (Node 21.x not supported) | ES modules, built-in test runner |
 | **Language** | TypeScript (strict mode) | No `any`. Zod for runtime validation |
 | **Target Framework** | React 19 + Next.js App Router | Server Components, Server Actions, Suspense, streaming |
 | **Styling** | Tailwind CSS + `class-variance-authority` (cva) | Utility-first with typed variants |

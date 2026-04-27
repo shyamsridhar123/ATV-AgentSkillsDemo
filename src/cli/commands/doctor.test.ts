@@ -9,7 +9,7 @@ import { execSync } from 'child_process';
 import { existsSync, mkdirSync, writeFileSync, rmSync, readFileSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
-import { getMinNodeVersion, checkMcpServers, isValidServerEntry, fixMcpServers } from './doctor.js';
+import { getMinNodeVersion, checkMcpServers, isValidServerEntry, fixMcpServers, satisfiesEnginesNode } from './doctor.js';
 
 // Test utilities - we can't import the private functions from doctor.ts
 // but we can test the overall behavior
@@ -71,6 +71,44 @@ describe('doctor command integration', () => {
       mkdirSync(testDir, { recursive: true });
       writeFileSync(join(testDir, 'package.json'), JSON.stringify({ engines: { node: 18 } }));
       assert.strictEqual(getMinNodeVersion(testDir), 20);
+    });
+
+    it('returns the lowest minimum from a compound range', () => {
+      mkdirSync(testDir, { recursive: true });
+      writeFileSync(
+        join(testDir, 'package.json'),
+        JSON.stringify({ engines: { node: '>=20.19.0 <21 || >=22.12.0' } }),
+      );
+      // The display uses major; the full range is enforced via satisfiesEnginesNode.
+      assert.strictEqual(getMinNodeVersion(testDir), 20);
+    });
+  });
+
+  describe('satisfiesEnginesNode', () => {
+    const range = '>=20.19.0 <21 || >=22.12.0';
+
+    it('accepts versions inside the 20.19.x..<21 window', () => {
+      assert.strictEqual(satisfiesEnginesNode({ major: 20, minor: 19, patch: 0 }, range), true);
+      assert.strictEqual(satisfiesEnginesNode({ major: 20, minor: 20, patch: 5 }, range), true);
+    });
+
+    it('rejects 20.x below 20.19.0', () => {
+      assert.strictEqual(satisfiesEnginesNode({ major: 20, minor: 0, patch: 0 }, range), false);
+      assert.strictEqual(satisfiesEnginesNode({ major: 20, minor: 18, patch: 99 }, range), false);
+    });
+
+    it('rejects Node 21.x — the gap between the two allowed clauses', () => {
+      assert.strictEqual(satisfiesEnginesNode({ major: 21, minor: 0, patch: 0 }, range), false);
+      assert.strictEqual(satisfiesEnginesNode({ major: 21, minor: 9, patch: 9 }, range), false);
+    });
+
+    it('rejects Node 22.x below 22.12.0', () => {
+      assert.strictEqual(satisfiesEnginesNode({ major: 22, minor: 11, patch: 0 }, range), false);
+    });
+
+    it('accepts Node 22.12.0 and above', () => {
+      assert.strictEqual(satisfiesEnginesNode({ major: 22, minor: 12, patch: 0 }, range), true);
+      assert.strictEqual(satisfiesEnginesNode({ major: 23, minor: 0, patch: 0 }, range), true);
     });
   });
 

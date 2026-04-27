@@ -62,7 +62,7 @@ The strict audit gate exists to block merges/scheduled runs when moderate-or-hig
 
 - **Fix postcss via dependency refresh (`npm audit fix` or `npm update vite vitest`)** rather than an override. Rationale: a patched version exists upstream, so the lockfile-level upgrade is the cleanest fix and matches the prior remediation pattern in this repo.
 - **Fix uuid via `npm` `overrides` to `^14.0.0`** rather than waiting for `@azure/msal-node` to ship a new release or replacing the dep. Rationale: `@azure/msal-node@5.1.4` (latest) still pins `uuid@^8.3.0`; the advisory's first patched version is `14.0.0`; the advisory path is unreachable from msal-node's `v4()` usage. Although `uuid@14` is ESM-only, msal-node's CJS `require('uuid')` path resolves correctly on Node `>=20.19.0` / `>=22.12.0` via Node's synchronous `require(esm)` support. We therefore bump `engines.node` to `>=20.19.0` to make this prerequisite explicit, and CI is pinned to Node 22.
-- **Document the override in `package.json`** with a short comment-equivalent (a `// override-rationale` sibling field is not portable; instead, link to this plan from the PR body and from a top-of-file comment in `.github/workflows/security.yml` if helpful — final placement TBD in implementation).
+- **Document the chosen override strategy consistently**: the PR body, plan, and `SECURITY.md` all explain that we intentionally use `overrides.uuid: ^14.0.0` and rely on Node `require(esm)` (Node ≥ 20.19.0 / ≥ 22.12.0). The plan's earlier preference for a CJS-compatible `^11.x` line is superseded — see the updated Key Technical Decision above.
 - **Do not relax `--audit-level`** and do not add `continue-on-error: true` to the strict step.
 
 ## Open Questions

@@ -469,10 +469,16 @@ describe('doctor command E2E', () => {
     it('should show Node.js version in output', () => {
       const result = runDoctor(testDir);
 
-      // Should include version number
+      // Should include the running version AND the engines constraint
+      // (or at least the lowest minimum minor — guards against regression
+      // to a major-only check).
       assert.ok(
-        result.stdout.includes(process.version) || result.stdout.includes('≥20'),
-        'Should show Node.js version info'
+        result.stdout.includes(process.version),
+        'Should show running Node.js version',
+      );
+      assert.ok(
+        result.stdout.includes('20.19') || result.stdout.includes('22.12'),
+        'Should display the engines.node minor-version requirement',
       );
     });
   });
