@@ -250,7 +250,7 @@ We use **squash and merge** to keep the main branch history clean:
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js ≥ 20.19 (or ≥ 22.12)
 - npm 9+
 - Git
 

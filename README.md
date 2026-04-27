@@ -45,7 +45,7 @@ flowchart LR
 
 | Category | Technology | Notes |
 |----------|-----------|-------|
-| **Runtime** | Node.js ≥ 18 | ES modules, built-in test runner |
+| **Runtime** | Node.js ≥ 20.19 (or ≥ 22.12) | ES modules, built-in test runner |
 | **Language** | TypeScript (strict mode) | No `any`. Zod for runtime validation |
 | **Target Framework** | React 19 + Next.js App Router | Server Components, Server Actions, Suspense, streaming |
 | **Styling** | Tailwind CSS + `class-variance-authority` (cva) | Utility-first with typed variants |
@@ -92,7 +92,7 @@ For detailed setup (prerequisites, task tracking, MCP servers): [docs/INSTALLATI
 |---------|-------------|
 | `beth init` | Install agents, skills, VS Code settings, MCP config, Backlog.md tracking, pre-push hook. Auto-derives backlog prefix from project name. |
 | `beth init --force` | Overwrite existing files |
-| `beth doctor` | Validate Node.js ≥18, agents frontmatter, skills, required MCP servers |
+| `beth doctor` | Validate Node.js ≥20.19, agents frontmatter, skills, required MCP servers |
 | `beth quickstart` | Run init + doctor in one shot |
 | `beth land` | Automate session completion: tests, commit, push, verify sync |
 | `beth update` | Update project files to latest templates without full re-init |
@@ -484,7 +484,7 @@ Is it magic? No. It's just competence with very good hair.
 
 ## Requirements
 
-- **Node.js** ≥ 18
+- **Node.js** ≥ 20.19 (or ≥ 22.12)
 - **VS Code** with GitHub Copilot extension
 - **GitHub Copilot Chat** in Agent mode
 

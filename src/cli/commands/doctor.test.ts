@@ -58,19 +58,19 @@ describe('doctor command integration', () => {
     });
 
     it('should return fallback when package.json is missing', () => {
-      assert.strictEqual(getMinNodeVersion(testDir), 18);
+      assert.strictEqual(getMinNodeVersion(testDir), 20);
     });
 
     it('should return fallback when engines field is missing', () => {
       mkdirSync(testDir, { recursive: true });
       writeFileSync(join(testDir, 'package.json'), JSON.stringify({ name: 'test' }));
-      assert.strictEqual(getMinNodeVersion(testDir), 18);
+      assert.strictEqual(getMinNodeVersion(testDir), 20);
     });
 
     it('should return fallback when engines.node is not a string', () => {
       mkdirSync(testDir, { recursive: true });
       writeFileSync(join(testDir, 'package.json'), JSON.stringify({ engines: { node: 18 } }));
-      assert.strictEqual(getMinNodeVersion(testDir), 18);
+      assert.strictEqual(getMinNodeVersion(testDir), 20);
     });
   });
 

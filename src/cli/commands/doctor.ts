@@ -2,7 +2,7 @@
  * Doctor Command
  *
  * Checks system health and verifies Beth installation requirements:
- * - Node.js version (≥18)
+ * - Node.js version (≥20.19)
  * - backlog.md CLI available
  * - .github/agents/ exists with valid frontmatter
  * - .github/skills/ exists
@@ -92,7 +92,7 @@ function logResult(result: CheckResult, verbose: boolean): void {
  * Returns the parsed major version, or a fallback if parsing fails.
  */
 export function getMinNodeVersion(cwd: string): number {
-  const fallback = 18;
+  const fallback = 20;
   try {
     const pkg = JSON.parse(readFileSync(join(cwd, 'package.json'), 'utf-8'));
     const constraint = pkg?.engines?.node;

@@ -471,7 +471,7 @@ describe('doctor command E2E', () => {
 
       // Should include version number
       assert.ok(
-        result.stdout.includes(process.version) || result.stdout.includes('≥18'),
+        result.stdout.includes(process.version) || result.stdout.includes('≥20'),
         'Should show Node.js version info'
       );
     });
