@@ -90,18 +90,47 @@ function logResult(result: CheckResult, verbose: boolean): void {
  * Parse the minimum major Node.js version from package.json engines.node.
  * Supports formats like ">=18", "^18", ">=18.0.0", etc.
  * Returns the parsed major version, or a fallback if parsing fails.
+ *
+ * @deprecated Prefer getMinNodeSemver for sub-major precision.
  */
 export function getMinNodeVersion(cwd: string): number {
-  const fallback = 20;
+  return getMinNodeSemver(cwd).major;
+}
+
+/**
+ * Parse the minimum Node.js version (major.minor.patch) from package.json
+ * engines.node. Returns a fallback when parsing fails.
+ */
+export function getMinNodeSemver(cwd: string): { major: number; minor: number; patch: number } {
+  const fallback = { major: 20, minor: 19, patch: 0 };
   try {
     const pkg = JSON.parse(readFileSync(join(cwd, 'package.json'), 'utf-8'));
     const constraint = pkg?.engines?.node;
     if (typeof constraint !== 'string') return fallback;
-    const match = constraint.match(/(\d+)/);
-    return match ? parseInt(match[1], 10) : fallback;
+    // Match the first version-like token: e.g. "20", "20.19", "20.19.0".
+    const match = constraint.match(/(\d+)(?:\.(\d+))?(?:\.(\d+))?/);
+    if (!match) return fallback;
+    return {
+      major: parseInt(match[1], 10),
+      minor: match[2] ? parseInt(match[2], 10) : 0,
+      patch: match[3] ? parseInt(match[3], 10) : 0,
+    };
   } catch {
     return fallback;
   }
+}
+
+function compareSemver(
+  a: { major: number; minor: number; patch: number },
+  b: { major: number; minor: number; patch: number },
+): number {
+  if (a.major !== b.major) return a.major - b.major;
+  if (a.minor !== b.minor) return a.minor - b.minor;
+  return a.patch - b.patch;
+}
+
+function formatSemver(v: { major: number; minor: number; patch: number }): string {
+  return v.patch > 0 ? `${v.major}.${v.minor}.${v.patch}` : `${v.major}.${v.minor}`;
 }
 
 /**
@@ -109,21 +138,23 @@ export function getMinNodeVersion(cwd: string): number {
  */
 function checkNodeVersion(cwd: string): CheckResult {
   const version = process.version;
-  const major = parseInt(version.slice(1).split('.')[0], 10);
-  const minMajor = getMinNodeVersion(cwd);
-  
-  if (major >= minMajor) {
+  const [maj, min, pat] = version.slice(1).split('.').map(n => parseInt(n, 10));
+  const current = { major: maj || 0, minor: min || 0, patch: pat || 0 };
+  const min_ = getMinNodeSemver(cwd);
+  const required = `≥${formatSemver(min_)}`;
+
+  if (compareSemver(current, min_) >= 0) {
     return {
       name: 'Node.js',
       status: 'pass',
-      message: `${version} (≥${minMajor} required)`,
+      message: `${version} (${required} required)`,
     };
   }
-  
+
   return {
     name: 'Node.js',
     status: 'fail',
-    message: `${version} (≥${minMajor} required)`,
+    message: `${version} (${required} required)`,
     fixCommand: 'Upgrade Node.js: https://nodejs.org/',
   };
 }

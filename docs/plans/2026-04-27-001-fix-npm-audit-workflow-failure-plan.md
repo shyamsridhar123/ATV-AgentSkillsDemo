@@ -42,7 +42,7 @@ The strict audit gate exists to block merges/scheduled runs when moderate-or-hig
 ### Relevant Code and Patterns
 
 - `.github/workflows/security.yml` — `audit` job; the failing step is `Run npm audit (strict)` (line ~36, `npm audit --audit-level=moderate`).
-- `package.json` — declares `@azure/msal-node ^5.1.1`; no `overrides` block currently present; `engines.node >= 18`.
+- `package.json` — declares `@azure/msal-node ^5.1.1`; adds an `overrides.uuid` block; `engines.node >=20.19.0` (bumped from `>=18` in this PR to enable `require(esm)` for the uuid override).
 - `src/cli/lib/entraAuth.ts` — only consumer of `@azure/msal-node`. Uses `PublicClientApplication` device code flow; does not pass buffer args anywhere.
 - `package-lock.json` — must be regenerated alongside any `overrides` change.
 - Prior plan: `docs/plans/2026-04-14-001-fix-security-workflow-vite-cve-plan.md` (similar pattern: vite/postcss CVE, also touched the same workflow).
@@ -54,14 +54,14 @@ The strict audit gate exists to block merges/scheduled runs when moderate-or-hig
 
 ### External References
 
-- npm `overrides` (npm v8.3+, supported by current npm 10.9.7): https://docs.npmjs.com/cli/v10/configuring-npm/package-json#overrides — allows pinning a transitive dep without forking the parent.
+- npm `overrides` (npm v8.3+, supported by current npm 11.9.0 declared via `packageManager`): https://docs.npmjs.com/cli/v10/configuring-npm/package-json#overrides — allows pinning a transitive dep without forking the parent.
 - GHSA-w5hq-g745-h8pq (uuid): The advisory affects `v3`, `v5`, `v6` only when a caller-supplied `buf` argument lacks bounds checking. `v4()` (which `@azure/msal-node` calls in `crypto/GuidGenerator.mjs`) is unaffected.
 - GHSA-qx2v-qp2m-jg93 (postcss): Fixed in `8.5.10`. Newer `vite@7.x` already depends on `postcss@^8.5.10`; updating `vite`/`vitest` minor pulls the patched version transitively.
 
 ## Key Technical Decisions
 
 - **Fix postcss via dependency refresh (`npm audit fix` or `npm update vite vitest`)** rather than an override. Rationale: a patched version exists upstream, so the lockfile-level upgrade is the cleanest fix and matches the prior remediation pattern in this repo.
-- **Fix uuid via `npm` `overrides` to `^11.0.0` (or latest v9+)** rather than waiting for `@azure/msal-node` to ship a new release or replacing the dep. Rationale: `@azure/msal-node@5.1.4` (latest) still pins `uuid@^8.3.0`; the advisory path is unreachable from msal-node's `v4()` usage; the override resolves the audit signal without runtime risk. Note: using `^11.0.0` (still CommonJS-compatible) avoids the ESM-only `uuid@13+` packaging change, which would break msal-node's `require('uuid')` path. (uuid `14.0.0` is the advisory-fixed version but is ESM-only — use the highest CJS-compatible `>=11` line that the advisory considers patched, which per GHSA-w5hq-g745-h8pq is `uuid@>=11.1.0`.)
+- **Fix uuid via `npm` `overrides` to `^14.0.0`** rather than waiting for `@azure/msal-node` to ship a new release or replacing the dep. Rationale: `@azure/msal-node@5.1.4` (latest) still pins `uuid@^8.3.0`; the advisory's first patched version is `14.0.0`; the advisory path is unreachable from msal-node's `v4()` usage. Although `uuid@14` is ESM-only, msal-node's CJS `require('uuid')` path resolves correctly on Node `>=20.19.0` / `>=22.12.0` via Node's synchronous `require(esm)` support. We therefore bump `engines.node` to `>=20.19.0` to make this prerequisite explicit, and CI is pinned to Node 22.
 - **Document the override in `package.json`** with a short comment-equivalent (a `// override-rationale` sibling field is not portable; instead, link to this plan from the PR body and from a top-of-file comment in `.github/workflows/security.yml` if helpful — final placement TBD in implementation).
 - **Do not relax `--audit-level`** and do not add `continue-on-error: true` to the strict step.
 
@@ -71,7 +71,7 @@ The strict audit gate exists to block merges/scheduled runs when moderate-or-hig
 
 - Q: Is the uuid advisory reachable from our use of `@azure/msal-node`? A: No. msal-node uses `uuid.v4()`; the advisory only impacts `v3/v5/v6` with a caller-supplied `buf`.
 - Q: Can we just bump `@azure/msal-node`? A: No — `5.1.4` (latest) still pins vulnerable `uuid@^8.3.0`.
-- Q: Can we override to `uuid@14`? A: Risky — `uuid@13+` is ESM-only and `@azure/msal-node` is published as CJS+ESM dual; an override to `14` may break the `require('uuid')` resolution in msal-node's CJS entrypoint. Use the highest CJS-compatible patched line (`^11.1.0`) confirmed against the advisory.
+- Q: Can we override to `uuid@14`? A: Yes — that is the final decision for this PR. `uuid@14` is ESM-only, but msal-node's `require('uuid')` resolves correctly on Node `>=20.19.0` / `>=22.12.0` via `require(esm)`. The PR raises `engines.node` to `>=20.19.0` to make the prerequisite explicit. `uuid@14` is also the advisory's first patched version, so it clears the audit signal definitively.
 
 ### Deferred to Implementation
 
